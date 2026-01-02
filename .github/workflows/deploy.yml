@@ -1,4 +1,4 @@
-name: Deploy frontend to VM
+name: Deploy frontend (self-hosted)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, abqd, frontend]
 
     steps:
       - name: Checkout
@@ -24,40 +24,28 @@ jobs:
             echo "Deploying to STAGE"
           fi
 
-      - name: Setup SSH
+      - name: Ensure frontend folder exists
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p "${{ secrets.PROD_SSH_PORT }}" -H "${{ secrets.PROD_HOST }}" >> ~/.ssh/known_hosts
+          test -d "./frontend" || (echo "ERROR: ./frontend not found" && exit 1)
 
-      - name: Ensure frontend folder exists in repo
+      - name: Install rsync (if missing)
         shell: bash
         run: |
           set -euo pipefail
-          if [ ! -d "./frontend" ]; then
-            echo "ERROR: ./frontend folder not found in repo root."
-            echo "Create it (e.g. frontend/index.html) and commit."
-            exit 1
-          fi
+          command -v rsync >/dev/null 2>&1 || (sudo apt-get update -y && sudo apt-get install -y rsync)
 
-      - name: Rsync frontend to server
+      - name: Deploy files locally
         shell: bash
         run: |
           set -euo pipefail
-          # TARGET_DIR will be available here because it was written to GITHUB_ENV above
-          rsync -az --delete \
-            -e "ssh -p ${{ secrets.PROD_SSH_PORT }} -i ~/.ssh/id_ed25519" \
-            ./frontend/ \
-            "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:${TARGET_DIR}/frontend/"
+          sudo mkdir -p "${TARGET_DIR}/frontend"
+          sudo rsync -az --delete ./frontend/ "${TARGET_DIR}/frontend/"
 
       - name: Reload nginx
         shell: bash
         run: |
           set -euo pipefail
-          ssh -p "${{ secrets.PROD_SSH_PORT }}" -i ~/.ssh/id_ed25519 \
-            "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
-            "sudo nginx -t && sudo systemctl reload nginx"
+          sudo nginx -t
+          sudo systemctl reload nginx
