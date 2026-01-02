@@ -18,10 +18,11 @@ jobs:
           set -euo pipefail
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
             echo "TARGET_DIR=/var/www/abqd/prod" >> "$GITHUB_ENV"
+            echo "Deploying to PROD"
           else
             echo "TARGET_DIR=/var/www/abqd/stage" >> "$GITHUB_ENV"
+            echo "Deploying to STAGE"
           fi
-          echo "Deploy target: $TARGET_DIR"
 
       - name: Setup SSH
         shell: bash
@@ -47,6 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # TARGET_DIR will be available here because it was written to GITHUB_ENV above
           rsync -az --delete \
             -e "ssh -p ${{ secrets.PROD_SSH_PORT }} -i ~/.ssh/id_ed25519" \
             ./frontend/ \
