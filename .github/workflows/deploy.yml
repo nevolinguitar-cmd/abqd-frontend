@@ -16,7 +16,7 @@ jobs:
       - name: Decide target (prod/stage)
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           if [ "${{ github.ref_name }}" = "main" ]; then
             TARGET_DIR="/var/www/abqd/prod"
           else
@@ -28,28 +28,38 @@ jobs:
       - name: Ensure target dir exists
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           mkdir -p "${TARGET_DIR}/frontend"
 
       - name: Ensure frontend folder exists in repo
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           test -d "./frontend" || (echo "ERROR: ./frontend not found in repo root" && exit 1)
           test -f "./frontend/index.html" || echo "WARN: frontend/index.html not found (but deploying folder anyway)"
 
-      - name: Deploy (rsync)
+      - name: Deploy (rsync without owner/group)
         shell: bash
         run: |
-          set -e
-          rsync -az --delete ./frontend/ "${TARGET_DIR}/frontend/"
+          set -euo pipefail
+          # ВАЖНО: не трогаем владельцев/группы (иначе падает chgrp)
+          rsync -rltz --delete --no-owner --no-group ./frontend/ "${TARGET_DIR}/frontend/"
           echo "Deployed files:"
-          ls -la "${TARGET_DIR}/frontend" | head -n 50
+          ls -la "${TARGET_DIR}/frontend" | head -n 80
+
+      - name: Fix permissions for nginx read (no chown/chgrp)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Только права, чтобы nginx (www-data) мог читать статику
+          find "${TARGET_DIR}/frontend" -type d -exec chmod 755 {} \;
+          find "${TARGET_DIR}/frontend" -type f -exec chmod 644 {} \;
+          echo "✅ perms fixed (755 dirs / 644 files)"
 
       - name: Reload nginx
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           sudo nginx -t
           sudo systemctl reload nginx
           echo "✅ nginx reloaded"
