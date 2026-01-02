@@ -1,4 +1,4 @@
-name: Deploy frontend (self-hosted)
+name: Deploy frontend (self-hosted) v3 (no-sudo)
 
 on:
   push:
@@ -25,11 +25,11 @@ jobs:
           echo "TARGET_DIR=$TARGET_DIR" >> "$GITHUB_ENV"
           echo "Deploy target: $TARGET_DIR"
 
-      - name: Ensure target dir exists (owned by deploy)
+      - name: Ensure target dir exists (no sudo)
         shell: bash
         run: |
           set -euo pipefail
-          sudo install -d -m 775 -o deploy -g deploy "$TARGET_DIR"
+          mkdir -p "$TARGET_DIR"
 
       - name: Ensure frontend folder exists in repo
         shell: bash
@@ -41,6 +41,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           rsync -rltDz --delete \
             --no-owner --no-group --no-perms --omit-dir-times \
             --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
@@ -48,11 +49,3 @@ jobs:
 
           echo "Deployed files:"
           ls -la "$TARGET_DIR" | head -n 80
-
-      - name: Reload nginx
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo nginx -t
-          sudo systemctl reload nginx
-          echo "✅ nginx reloaded"
