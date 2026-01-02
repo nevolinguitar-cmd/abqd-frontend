@@ -2,36 +2,60 @@ name: Deploy frontend to VM
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Decide target
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Decide target (prod/stage)
+        shell: bash
         run: |
+          set -euo pipefail
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "TARGET_DIR=/var/www/abqd/prod" >> $GITHUB_ENV
+            echo "TARGET_DIR=/var/www/abqd/prod" >> "$GITHUB_ENV"
           else
-            echo "TARGET_DIR=/var/www/abqd/stage" >> $GITHUB_ENV
+            echo "TARGET_DIR=/var/www/abqd/stage" >> "$GITHUB_ENV"
           fi
+          echo "Deploy target: $TARGET_DIR"
 
       - name: Setup SSH
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p ${{ secrets.PROD_SSH_PORT }} -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${{ secrets.PROD_SSH_PORT }}" -H "${{ secrets.PROD_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Rsync frontend
+      - name: Ensure frontend folder exists in repo
+        shell: bash
         run: |
-          rsync -az --delete -e "ssh -p ${{ secrets.PROD_SSH_PORT }}" \
+          set -euo pipefail
+          if [ ! -d "./frontend" ]; then
+            echo "ERROR: ./frontend folder not found in repo root."
+            echo "Create it (e.g. frontend/index.html) and commit."
+            exit 1
+          fi
+
+      - name: Rsync frontend to server
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -az --delete \
+            -e "ssh -p ${{ secrets.PROD_SSH_PORT }} -i ~/.ssh/id_ed25519" \
             ./frontend/ \
-            ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:${TARGET_DIR}/frontend/
+            "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:${TARGET_DIR}/frontend/"
 
       - name: Reload nginx
+        shell: bash
         run: |
-          ssh -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} \
+          set -euo pipefail
+          ssh -p "${{ secrets.PROD_SSH_PORT }}" -i ~/.ssh/id_ed25519 \
+            "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
             "sudo nginx -t && sudo systemctl reload nginx"
