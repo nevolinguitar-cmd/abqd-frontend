@@ -18,43 +18,36 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ github.ref_name }}" = "main" ]; then
-            TARGET_DIR="/var/www/abqd/prod"
+            TARGET_DIR="/var/www/abqd/prod/frontend"
           else
-            TARGET_DIR="/var/www/abqd/stage"
+            TARGET_DIR="/var/www/abqd/stage/frontend"
           fi
           echo "TARGET_DIR=$TARGET_DIR" >> "$GITHUB_ENV"
           echo "Deploy target: $TARGET_DIR"
 
-      - name: Ensure target dir exists
+      - name: Ensure target dir exists (owned by deploy)
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "${TARGET_DIR}/frontend"
+          sudo install -d -m 775 -o deploy -g deploy "$TARGET_DIR"
 
       - name: Ensure frontend folder exists in repo
         shell: bash
         run: |
           set -euo pipefail
-          test -d "./frontend" || (echo "ERROR: ./frontend not found in repo root" && exit 1)
-          test -f "./frontend/index.html" || echo "WARN: frontend/index.html not found (but deploying folder anyway)"
+          test -d "./frontend" || { echo "ERROR: ./frontend not found in repo root"; exit 1; }
 
-      - name: Deploy (rsync without owner/group)
+      - name: Deploy (rsync without owner/group/perms)
         shell: bash
         run: |
           set -euo pipefail
-          # ВАЖНО: не трогаем владельцев/группы (иначе падает chgrp)
-          rsync -rltz --delete --no-owner --no-group ./frontend/ "${TARGET_DIR}/frontend/"
+          rsync -rltDz --delete \
+            --no-owner --no-group --no-perms --omit-dir-times \
+            --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
+            ./frontend/ "$TARGET_DIR/"
+
           echo "Deployed files:"
-          ls -la "${TARGET_DIR}/frontend" | head -n 80
-
-      - name: Fix permissions for nginx read (no chown/chgrp)
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Только права, чтобы nginx (www-data) мог читать статику
-          find "${TARGET_DIR}/frontend" -type d -exec chmod 755 {} \;
-          find "${TARGET_DIR}/frontend" -type f -exec chmod 644 {} \;
-          echo "✅ perms fixed (755 dirs / 644 files)"
+          ls -la "$TARGET_DIR" | head -n 80
 
       - name: Reload nginx
         shell: bash
