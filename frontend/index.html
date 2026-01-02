@@ -3,9 +3,761 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ABQD • Stage</title>
+  <title>ABQD</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --bg0:#07080b; --bg1:#0b0d12;
+      --txt:#e9eef7; --muted:#a8b3c7;
+      --glass: rgba(255,255,255,.06);
+      --glass2: rgba(255,255,255,.10);
+      --stroke: rgba(255,255,255,.10);
+      --accent:#7cffb5;
+      --warn:#ffcf5c;
+      --danger:#ff6b6b;
+      --radius: 18px;
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--txt);
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(124,255,181,.10), transparent 60%),
+        radial-gradient(900px 600px at 90% 30%, rgba(130,180,255,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+    a{color:inherit; text-decoration:none}
+    .wrap{max-width:1060px; margin:0 auto; padding:18px 16px 60px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      border:1px solid var(--stroke);
+      background:var(--glass);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      position:sticky; top:12px; z-index:10;
+    }
+    .brand{display:flex; align-items:center; gap:10px}
+    .logo{
+      width:38px; height:38px; border-radius:12px;
+      border:1px solid var(--stroke);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(124,255,181,.9), transparent 60%),
+        radial-gradient(18px 18px at 70% 70%, rgba(130,180,255,.7), transparent 60%),
+        rgba(255,255,255,.04);
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    }
+    .brand h1{margin:0; font-size:14px; letter-spacing:.14em; text-transform:uppercase}
+    .brand .sub{margin:0; font-size:12px; color:var(--muted)}
+    .nav{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+    .btn{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color:var(--txt);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:600;
+      transition:.15s ease;
+      display:inline-flex; align-items:center; gap:8px;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.18)}
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(124,255,181,.18), rgba(124,255,181,.06));
+      border-color: rgba(124,255,181,.35);
+    }
+    .btn.danger{
+      background: rgba(255,107,107,.10);
+      border-color: rgba(255,107,107,.25);
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .dot{width:8px; height:8px; border-radius:99px; background: var(--accent); box-shadow:0 0 18px rgba(124,255,181,.45)}
+    .dot.warn{background: var(--warn); box-shadow:0 0 18px rgba(255,207,92,.35)}
+    .dot.danger{background: var(--danger); box-shadow:0 0 18px rgba(255,107,107,.35)}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (max-width: 920px){
+      .grid{grid-template-columns: 1fr}
+      .topbar{position:relative; top:auto}
+    }
+    .card{
+      border:1px solid var(--stroke);
+      background: var(--glass);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      padding:16px;
+    }
+    .card h2{margin:0 0 10px; font-size:18px}
+    .muted{color:var(--muted)}
+    .hr{height:1px; background: rgba(255,255,255,.08); margin:14px 0}
+    .field{display:flex; flex-direction:column; gap:6px; margin:10px 0}
+    .field label{font-size:12px; color:var(--muted)}
+    .input, .textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: var(--txt);
+      border-radius: 14px;
+      padding: 11px 12px;
+      outline:none;
+      font-family: var(--font);
+    }
+    .textarea{min-height:92px; resize:vertical}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .kpi{display:flex; flex-direction:column; gap:6px}
+    .kpi b{font-size:14px}
+    .kpi span{font-size:12px; color:var(--muted)}
+    .big{
+      font-size:34px; line-height:1.08; margin:8px 0 6px;
+      letter-spacing:-.02em;
+    }
+    .hero{
+      padding:18px;
+      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,.10);
+      background:
+        radial-gradient(600px 200px at 10% 20%, rgba(124,255,181,.16), transparent 60%),
+        radial-gradient(600px 220px at 85% 40%, rgba(130,180,255,.14), transparent 60%),
+        rgba(255,255,255,.03);
+    }
+    .toast{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      color: var(--muted);
+      font-size:13px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      font-size:12px;
+      color: var(--muted);
+    }
+    .u-card{
+      border-radius: 22px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      padding:18px;
+      box-shadow: 0 18px 55px rgba(0,0,0,.55);
+    }
+    .u-title{font-size:20px; margin:0}
+    .u-sub{margin:6px 0 0; color:var(--muted)}
+    .btnblock{display:flex; flex-direction:column; gap:10px; margin-top:14px}
+    .u-btn{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+    }
+    .u-btn strong{font-size:14px}
+    .u-btn span{color:var(--muted); font-size:12px}
+  </style>
 </head>
 <body>
-  <h1>ABQD stage deploy OK</h1>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand" role="button" tabindex="0" id="goHome">
+        <div class="logo"></div>
+        <div>
+          <h1>ABQD</h1>
+          <p class="sub">frontend • auth / tariffs / constructor / crm / u</p>
+        </div>
+      </div>
+
+      <div class="nav">
+        <span class="pill" id="envPill"><span class="dot" id="envDot"></span><span id="envText">env</span></span>
+        <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">status</span></span>
+        <button class="btn" id="navAuth">Auth</button>
+        <button class="btn" id="navTariffs">Tariffs</button>
+        <button class="btn" id="navConstructor">Constructor</button>
+        <button class="btn" id="navCrm">CRM</button>
+        <button class="btn danger" id="navLogout" style="display:none;">Logout</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card" id="view"></div>
+      <div class="card">
+        <h2>Правила продукта (UI-логика)</h2>
+        <div class="toast">
+          <div><b>1)</b> Нет токена → нельзя в tariffs / constructor / crm</div>
+          <div><b>2)</b> Trial 7 дней → доступ только к constructor (+ публикация /u)</div>
+          <div><b>3)</b> CRM → только при тарифе 1/2/3</div>
+          <div class="hr"></div>
+          <div class="muted">
+            Это не “безопасность”, это UX-щит. Настоящую защиту потом закрепим в API.
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <div class="row">
+          <div class="kpi">
+            <b id="kpiSlug">slug: —</b>
+            <span class="muted">публичная ссылка: /u/&lt;slug&gt;</span>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="muted" style="font-size:12px">
+          Совет на будущее: не усложняй сейчас “мега-архитектурой”. Твоя цель — рабочий поток пользователя + стабильный деплой.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ---------- ENV / BASE ----------
+  const path = window.location.pathname || "/";
+  const BASE = path.startsWith("/__stage/") ? "/__stage" : (path.startsWith("/__prod/") ? "/__prod" : "");
+  const envName = BASE === "/__stage" ? "STAGE" : (BASE === "/__prod" ? "PROD" : "ROOT");
+  const $ = (id) => document.getElementById(id);
+
+  $("envText").textContent = envName + (BASE ? ` (${BASE})` : "");
+  $("envDot").className = "dot" + (envName === "STAGE" ? " warn" : "");
+
+  // ---------- STORAGE KEYS ----------
+  const K = {
+    token: "abqd_token",
+    slug: "abqd_user_slug",
+    plan: "abqd_plan",                 // "trial" | "p1" | "p2" | "p3"
+    trialStart: "abqd_trial_started_at" // epoch ms
+  };
+
+  // ---------- HELPERS ----------
+  const now = () => Date.now();
+  const days = (ms) => ms / (24*60*60*1000);
+
+  const getToken = () => localStorage.getItem(K.token) || "";
+  const setToken = (t) => localStorage.setItem(K.token, t);
+  const clearToken = () => localStorage.removeItem(K.token);
+
+  const getSlug = () => localStorage.getItem(K.slug) || "";
+  const setSlug = (s) => localStorage.setItem(K.slug, s);
+
+  const getPlan = () => localStorage.getItem(K.plan) || "trial";
+  const setPlan = (p) => localStorage.setItem(K.plan, p);
+
+  const ensureTrialStart = () => {
+    let v = localStorage.getItem(K.trialStart);
+    if (!v) { v = String(now()); localStorage.setItem(K.trialStart, v); }
+    return Number(v);
+  };
+
+  const trialActive = () => {
+    const t0 = Number(localStorage.getItem(K.trialStart) || "0");
+    if (!t0) return false;
+    return days(now() - t0) < 7;
+  };
+
+  const hasPaid = () => ["p1","p2","p3"].includes(getPlan());
+  const canUseConstructor = () => !!getToken() && (trialActive() || hasPaid());
+  const canUseCRM = () => !!getToken() && hasPaid();
+  const canEditProfile = () => !!getToken() && (trialActive() || hasPaid());
+
+  const normalize = (p) => {
+    // remove BASE prefix
+    if (BASE && p.startsWith(BASE)) p = p.slice(BASE.length);
+    if (!p.startsWith("/")) p = "/" + p;
+    return p;
+  };
+
+  const go = (p) => {
+    p = normalize(p);
+    const full = BASE ? (BASE + p) : p;
+    window.history.pushState({}, "", full);
+    render();
+  };
+
+  const parseRoute = () => {
+    const p = normalize(window.location.pathname);
+    // /u/<slug>
+    const m = p.match(/^\/u\/([^\/?#]+)/);
+    if (m) return {name:"u", slug: decodeURIComponent(m[1])};
+
+    if (p === "/" || p === "") return {name:"home"};
+    const seg = p.split("/").filter(Boolean)[0] || "home";
+    if (["auth","tariffs","constructor","crm"].includes(seg)) return {name:seg};
+    return {name:"notfound"};
+  };
+
+  // ---------- UI STATUS ----------
+  const updateStatus = () => {
+    const t = !!getToken();
+    $("navLogout").style.display = t ? "inline-flex" : "none";
+    $("kpiSlug").textContent = "slug: " + (getSlug() || "—");
+
+    let dot = "dot";
+    let text = "Гость";
+    if (t) {
+      if (hasPaid()) { dot = "dot"; text = "Тариф активен ("+getPlan()+")"; }
+      else if (trialActive()) { dot = "dot warn"; text = "Trial активен (до 7 дней)"; }
+      else { dot = "dot danger"; text = "Trial закончился → нужен тариф"; }
+    }
+    $("statusDot").className = dot;
+    $("statusText").textContent = text;
+  };
+
+  // ---------- API (optional) ----------
+  async function apiGetProfile(slug){
+    // assumes nginx proxy (app.abqd.ru/api/v1/...) exists
+    const r = await fetch(`/api/v1/profile/${encodeURIComponent(slug)}`, {
+      headers: { "Accept": "application/json" }
+    });
+    if (!r.ok) throw new Error("GET profile failed: " + r.status);
+    return await r.json();
+  }
+
+  async function apiPutProfile(slug, profile){
+    const token = getToken();
+    const r = await fetch(`/api/v1/profile/${encodeURIComponent(slug)}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        ...(token ? {"Authorization": "Bearer " + token} : {})
+      },
+      body: JSON.stringify(profile)
+    });
+    if (!r.ok) throw new Error("PUT profile failed: " + r.status);
+    return await r.json();
+  }
+
+  // ---------- VIEWS ----------
+  const view = $("view");
+
+  function vHome(){
+    view.innerHTML = `
+      <div class="hero">
+        <div class="badge"><span class="dot"></span> Главная (рука) — всегда доступна</div>
+        <div class="big">Один понятный путь пользователя.</div>
+        <div class="muted">Сейчас важнее довести навигацию и публикацию /u, чем “добавлять функции ради функций”.</div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn primary" id="ctaAuth">Войти / Зарегистрироваться</button>
+          <button class="btn" id="ctaU">Открыть мой /u</button>
+        </div>
+        <div class="toast">
+          <b>Цель:</b> auth → tariffs → constructor → публикация /u → (после оплаты) crm.
+        </div>
+      </div>
+    `;
+    $("ctaAuth").onclick = () => go("/auth");
+    $("ctaU").onclick = () => {
+      const s = getSlug();
+      if (!s) return go("/auth");
+      go("/u/" + encodeURIComponent(s));
+    };
+  }
+
+  function vAuth(){
+    view.innerHTML = `
+      <h2>Auth</h2>
+      <div class="muted">Пока это “UI-авторизация”. Потом подключим реальные эндпоинты логина.</div>
+
+      <div class="field">
+        <label>Slug (будет в ссылке /u/&lt;slug&gt;)</label>
+        <input class="input" id="fSlug" placeholder="например: alex_nevolin" value="${escapeHtml(getSlug())}">
+      </div>
+
+      <div class="field">
+        <label>Токен (можно оставить пустым — мы сгенерируем)</label>
+        <input class="input" id="fToken" placeholder="abqd_xxx" value="${escapeHtml(getToken())}">
+      </div>
+
+      <div class="row">
+        <button class="btn primary" id="btnLogin">Войти</button>
+        <button class="btn" id="btnLogout">Сбросить</button>
+      </div>
+
+      <div class="toast">
+        При первом входе стартует <b>trial 7 дней</b>. После — редактирование только при тарифе.
+      </div>
+    `;
+
+    $("btnLogin").onclick = () => {
+      const s = ($("fSlug").value || "").trim().replace(/\s+/g,"_");
+      if (!s) return alert("Нужен slug");
+      setSlug(s);
+
+      let t = ($("fToken").value || "").trim();
+      if (!t) t = "abqd_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+      setToken(t);
+
+      // стартуем trial (если не был)
+      ensureTrialStart();
+      // если плана нет — ставим trial
+      if (!localStorage.getItem(K.plan)) setPlan("trial");
+
+      go("/tariffs");
+    };
+
+    $("btnLogout").onclick = () => {
+      clearToken();
+      localStorage.removeItem(K.plan);
+      localStorage.removeItem(K.trialStart);
+      go("/");
+    };
+  }
+
+  function vTariffs(){
+    const t0 = Number(localStorage.getItem(K.trialStart) || "0");
+    const left = t0 ? Math.max(0, 7 - days(now() - t0)) : 0;
+
+    view.innerHTML = `
+      <h2>Tariffs</h2>
+      <div class="muted">Trial даёт доступ к конструктору и публикации /u, но редактирование ограничено 7 днями.</div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <span class="pill"><span class="dot ${trialActive()? "warn": "danger"}"></span>
+          Trial: ${trialActive() ? ("активен, осталось ~" + left.toFixed(1) + " дн.") : "не активен"}
+        </span>
+        <span class="pill"><span class="dot"></span> План: ${escapeHtml(getPlan())}</span>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn primary" id="openConstructor">Открыть конструктор</button>
+        <button class="btn" id="openU">Открыть мой /u</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2 style="margin-top:0;">Платные тарифы (для CRM + редактирования)</h2>
+      <div class="row">
+        <button class="btn" id="p1">Тариф 1</button>
+        <button class="btn" id="p2">Тариф 2</button>
+        <button class="btn" id="p3">Тариф 3</button>
+      </div>
+
+      <div class="toast">
+        Сейчас кнопки просто ставят план в localStorage. Позже подключим оплату и валидацию через API.
+      </div>
+    `;
+
+    $("openConstructor").onclick = () => go("/constructor");
+    $("openU").onclick = () => {
+      const s = getSlug();
+      if (!s) return go("/auth");
+      go("/u/" + encodeURIComponent(s));
+    };
+    $("p1").onclick = () => { setPlan("p1"); go("/crm"); };
+    $("p2").onclick = () => { setPlan("p2"); go("/crm"); };
+    $("p3").onclick = () => { setPlan("p3"); go("/crm"); };
+  }
+
+  function vConstructor(){
+    const slug = getSlug();
+    const key = slug ? `abqd_profile_${slug}` : "";
+    const stored = (slug && localStorage.getItem(key)) ? JSON.parse(localStorage.getItem(key)) : null;
+
+    view.innerHTML = `
+      <h2>Constructor</h2>
+      <div class="muted">
+        Публикация создаёт публичную страницу <b>/u/${escapeHtml(slug || "…")}</b>.
+        Редактирование: <b>${trialActive() ? "в trial" : (hasPaid() ? "в тарифе" : "заблокировано")}</b>.
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="field">
+        <label>Имя</label>
+        <input class="input" id="pName" value="${escapeHtml(stored?.name || "")}" placeholder="Александр / ABQD">
+      </div>
+
+      <div class="field">
+        <label>Описание</label>
+        <textarea class="textarea" id="pBio" placeholder="Коротко: кто вы и что делаете">${escapeHtml(stored?.bio || "")}</textarea>
+      </div>
+
+      <div class="field">
+        <label>Телефон</label>
+        <input class="input" id="pPhone" value="${escapeHtml(stored?.phone || "")}" placeholder="+7 ...">
+      </div>
+
+      <div class="hr"></div>
+
+      <h2 style="margin-top:0;">Кнопки</h2>
+      ${[0,1,2].map(i => `
+        <div class="row">
+          <input class="input" style="flex:1" id="b${i}t" placeholder="Текст" value="${escapeHtml(stored?.buttons?.[i]?.title || "")}">
+          <input class="input" style="flex:1.2" id="b${i}u" placeholder="Ссылка" value="${escapeHtml(stored?.buttons?.[i]?.url || "")}">
+        </div>
+      `).join("")}
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn primary" id="btnPublish">Опубликовать → /u</button>
+        <button class="btn" id="btnPreviewU">Открыть /u</button>
+      </div>
+
+      <div class="toast" id="pubMsg" style="display:none;"></div>
+    `;
+
+    $("btnPreviewU").onclick = () => {
+      if (!slug) return go("/auth");
+      go("/u/" + encodeURIComponent(slug));
+    };
+
+    $("btnPublish").onclick = async () => {
+      if (!slug) return go("/auth");
+
+      // UI-ограничение редактирования
+      if (!canEditProfile()){
+        setPlan("trial"); // просто чтобы явно
+        alert("Trial закончился. Для редактирования нужен тариф.");
+        return go("/tariffs");
+      }
+
+      const profile = {
+        slug,
+        name: ($("pName").value || "").trim(),
+        bio: ($("pBio").value || "").trim(),
+        phone: ($("pPhone").value || "").trim(),
+        buttons: [0,1,2].map(i => ({
+          title: ($("b"+i+"t").value || "").trim(),
+          url: ($("b"+i+"u").value || "").trim(),
+        })).filter(x => x.title || x.url),
+        updated_at: new Date().toISOString(),
+      };
+
+      // local backup
+      localStorage.setItem(key, JSON.stringify(profile));
+      if (!localStorage.getItem(`abqd_published_at_${slug}`)){
+        localStorage.setItem(`abqd_published_at_${slug}`, String(now()));
+      }
+
+      // try API (optional)
+      let apiOk = false;
+      try{
+        await apiPutProfile(slug, profile);
+        apiOk = true;
+      }catch(e){
+        // ignore for now (stage might not proxy API yet)
+      }
+
+      const msg = $("pubMsg");
+      msg.style.display = "block";
+      msg.textContent = apiOk
+        ? "✅ Опубликовано в API и сохранено локально."
+        : "✅ Сохранено локально. (API недоступно — позже подключим прокси/авторизацию.)";
+
+      go("/u/" + encodeURIComponent(slug));
+    };
+  }
+
+  function vCRM(){
+    view.innerHTML = `
+      <h2>CRM</h2>
+      <div class="muted">Сюда пускаем только тариф 1/2/3. Пока заглушка, но стиль уже “продуктовый”.</div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div class="card" style="flex:1; padding:14px;">
+          <b>Лиды</b>
+          <div class="muted" style="margin-top:6px;">Список клиентов / статусы</div>
+        </div>
+        <div class="card" style="flex:1; padding:14px;">
+          <b>События</b>
+          <div class="muted" style="margin-top:6px;">Звонки / встречи / напоминания</div>
+        </div>
+      </div>
+
+      <div class="toast">
+        После оплаты: CRM + конструктор. Trial: только конструктор.
+      </div>
+    `;
+  }
+
+  async function vU(slug){
+    view.innerHTML = `
+      <h2>Public profile</h2>
+      <div class="muted">Загрузка профиля: <b>${escapeHtml(slug)}</b></div>
+      <div class="toast">Если API недоступно — покажем локальный бэкап (на этом устройстве).</div>
+    `;
+
+    // try API first
+    let profile = null;
+    try{
+      profile = await apiGetProfile(slug);
+    }catch(e){
+      const key = `abqd_profile_${slug}`;
+      const s = localStorage.getItem(key);
+      if (s) profile = JSON.parse(s);
+    }
+
+    if (!profile){
+      view.innerHTML = `
+        <h2>/u/${escapeHtml(slug)}</h2>
+        <div class="toast">
+          Профиль не найден. Либо он ещё не опубликован, либо API пока не подключено.
+        </div>
+        <div class="row">
+          <button class="btn primary" id="goCtor">Открыть конструктор</button>
+          <button class="btn" id="goTar">Тарифы</button>
+        </div>
+      `;
+      $("goCtor").onclick = () => go("/constructor");
+      $("goTar").onclick = () => go("/tariffs");
+      return;
+    }
+
+    const canEdit = canEditProfile() && (getSlug() === slug); // простая проверка “владелец”
+    view.innerHTML = `
+      <div class="u-card">
+        <div class="row" style="justify-content:space-between; align-items:flex-start">
+          <div>
+            <p class="u-title">${escapeHtml(profile.name || "Без имени")}</p>
+            <p class="u-sub">${escapeHtml(profile.bio || "")}</p>
+            ${profile.phone ? `<div class="badge" style="margin-top:10px">☎ ${escapeHtml(profile.phone)}</div>` : ""}
+          </div>
+          <div style="text-align:right">
+            <div class="badge"><span class="dot"></span> /u/${escapeHtml(slug)}</div>
+            <div class="muted" style="font-size:12px; margin-top:8px">
+              ${canEdit ? "Редактирование доступно" : "Редактирование закрыто"}
+            </div>
+          </div>
+        </div>
+
+        <div class="btnblock">
+          ${(profile.buttons || []).map(b => `
+            <a class="u-btn" href="${escapeAttr(b.url || "#")}" target="_blank" rel="noopener">
+              <div>
+                <strong>${escapeHtml(b.title || "Кнопка")}</strong><br>
+                <span>${escapeHtml(b.url || "")}</span>
+              </div>
+              <span>→</span>
+            </a>
+          `).join("")}
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          ${canEdit ? `<button class="btn primary" id="editProfile">Редактировать</button>` : `<button class="btn" id="payToEdit">Оплатить, чтобы редактировать</button>`}
+          <button class="btn" id="backHome">На главную</button>
+        </div>
+      </div>
+    `;
+
+    if (canEdit){
+      $("editProfile").onclick = () => go("/constructor");
+    } else {
+      $("payToEdit").onclick = () => go("/tariffs");
+    }
+    $("backHome").onclick = () => go("/");
+  }
+
+  function vNotFound(){
+    view.innerHTML = `
+      <h2>404</h2>
+      <div class="toast">Маршрут не найден. Но это нормально на этапе сборки.</div>
+      <button class="btn primary" id="back">На главную</button>
+    `;
+    $("back").onclick = () => go("/");
+  }
+
+  // ---------- GUARDS ----------
+  function applyGuards(route){
+    const t = !!getToken();
+
+    // no token
+    if (!t && ["tariffs","constructor","crm"].includes(route.name)){
+      go("/auth");
+      return true;
+    }
+
+    // constructor gated
+    if (route.name === "constructor" && !canUseConstructor()){
+      go("/tariffs");
+      return true;
+    }
+
+    // crm gated
+    if (route.name === "crm" && !canUseCRM()){
+      go("/tariffs");
+      return true;
+    }
+
+    return false;
+  }
+
+  // ---------- RENDER ----------
+  async function render(){
+    updateStatus();
+
+    const r = parseRoute();
+    if (applyGuards(r)) return;
+
+    // nav bindings
+    $("goHome").onclick = () => go("/");
+    $("navAuth").onclick = () => go("/auth");
+    $("navTariffs").onclick = () => go("/tariffs");
+    $("navConstructor").onclick = () => go("/constructor");
+    $("navCrm").onclick = () => go("/crm");
+    $("navLogout").onclick = () => { clearToken(); go("/auth"); };
+
+    if (r.name === "home") return vHome();
+    if (r.name === "auth") return vAuth();
+    if (r.name === "tariffs") return vTariffs();
+    if (r.name === "constructor") return vConstructor();
+    if (r.name === "crm") return vCRM();
+    if (r.name === "u") return vU(r.slug);
+    return vNotFound();
+  }
+
+  window.addEventListener("popstate", render);
+  render();
+
+  // ---------- tiny escaping ----------
+  function escapeHtml(s){
+    s = String(s ?? "");
+    return s.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function escapeAttr(s){
+    s = String(s ?? "");
+    return s.replace(/"/g, "&quot;");
+  }
+})();
+</script>
 </body>
 </html>
