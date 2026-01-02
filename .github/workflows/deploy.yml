@@ -3,6 +3,7 @@ name: Deploy frontend (self-hosted)
 on:
   push:
     branches: ["main", "develop"]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -15,37 +16,40 @@ jobs:
       - name: Decide target (prod/stage)
         shell: bash
         run: |
-          set -euo pipefail
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "TARGET_DIR=/var/www/abqd/prod" >> "$GITHUB_ENV"
-            echo "Deploying to PROD"
+          set -e
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            TARGET_DIR="/var/www/abqd/prod"
           else
-            echo "TARGET_DIR=/var/www/abqd/stage" >> "$GITHUB_ENV"
-            echo "Deploying to STAGE"
+            TARGET_DIR="/var/www/abqd/stage"
           fi
+          echo "TARGET_DIR=$TARGET_DIR" >> "$GITHUB_ENV"
+          echo "Deploy target: $TARGET_DIR"
 
-      - name: Ensure frontend folder exists
+      - name: Ensure target dir exists
         shell: bash
         run: |
-          set -euo pipefail
-          test -d "./frontend" || (echo "ERROR: ./frontend not found" && exit 1)
+          set -e
+          mkdir -p "${TARGET_DIR}/frontend"
 
-      - name: Install rsync (if missing)
+      - name: Ensure frontend folder exists in repo
         shell: bash
         run: |
-          set -euo pipefail
-          command -v rsync >/dev/null 2>&1 || (sudo apt-get update -y && sudo apt-get install -y rsync)
+          set -e
+          test -d "./frontend" || (echo "ERROR: ./frontend not found in repo root" && exit 1)
+          test -f "./frontend/index.html" || echo "WARN: frontend/index.html not found (but deploying folder anyway)"
 
-      - name: Deploy files locally
+      - name: Deploy (rsync)
         shell: bash
         run: |
-          set -euo pipefail
-          sudo mkdir -p "${TARGET_DIR}/frontend"
-          sudo rsync -az --delete ./frontend/ "${TARGET_DIR}/frontend/"
+          set -e
+          rsync -az --delete ./frontend/ "${TARGET_DIR}/frontend/"
+          echo "Deployed files:"
+          ls -la "${TARGET_DIR}/frontend" | head -n 50
 
       - name: Reload nginx
         shell: bash
         run: |
-          set -euo pipefail
+          set -e
           sudo nginx -t
           sudo systemctl reload nginx
+          echo "✅ nginx reloaded"
