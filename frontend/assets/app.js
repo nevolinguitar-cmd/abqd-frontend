@@ -3,7 +3,7 @@
   const ABQD = (window.ABQD = window.ABQD || {});
 
   // ---- Config
-  ABQD.API_BASE = "/api/v1";
+  ABQD.API_BASE = "https://api.abqd.ru";
   ABQD.TOKEN_KEY = "abqd_token";
   ABQD.TRIAL_UNTIL_KEY = "abqd_trial_until";      // ms epoch
   ABQD.PLAN_KEY = "abqd_plan";                    // e.g. "paid"
@@ -121,7 +121,7 @@
   };
 
   // ---- Public profile render (simple; you can replace markup later)
-  ABQD.renderPublicProfile = async (rootEl) => {
+  ABQD.API_BASE = "https://api.abqd.ru/v1";
     const slug = ABQD.getSlugFromPath();
     if (!slug) {
       rootEl.innerHTML = `<div class="card"><h2>Нет slug</h2><p>Открой ссылку вида <b>/u/&lt;slug&gt;</b></p></div>`;

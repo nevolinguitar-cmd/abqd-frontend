@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- общий стиль/скрипты (если у тебя уже есть assets/app.css и assets/app.js) -->
-  <link rel="stylesheet" href="/__prod/assets/app.css">
+  <!-- ✅ ВАЖНО: относительные пути, работают и в __prod, и в __stage -->
+  <link rel="stylesheet" href="../assets/app.css">
 </head>
 
 <body>
@@ -18,18 +18,21 @@
     <div id="profileRoot"></div>
   </div>
 
-  <script src="/__prod/assets/app.js"></script>
+  <!-- ✅ ВАЖНО: относительный путь -->
+  <script defer src="../assets/app.js"></script>
+
   <script>
-    // slug берём из URL: /u/<slug>
-    const parts = window.location.pathname.split("/").filter(Boolean);
-    const slug = parts[1] || ""; // ["u", "<slug>"]
-    if(!slug){
-      document.getElementById("profileRoot").innerHTML =
-        "<div class='card'>Нет slug в URL. Пример: /u/alex</div>";
-    } else {
-      // тут будет загрузка профиля
-      ABQD.renderPublicProfile(document.getElementById("profileRoot"), slug);
-    }
+    // ждём, пока app.js загрузит ABQD
+    (function init(){
+      if (!window.ABQD) return setTimeout(init, 30);
+
+      // На будущее: если у тебя есть guard — пусть отрабатывает (не ломаем, если нет)
+      try { ABQD.guard && ABQD.guard("u"); } catch(e){}
+
+      // ✅ Рендер публичного профиля (slug берётся из URL внутри app.js)
+      const root = document.getElementById("profileRoot");
+      ABQD.renderPublicProfile(root);
+    })();
   </script>
 </body>
 </html>
