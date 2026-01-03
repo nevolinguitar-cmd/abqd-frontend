@@ -1,19 +1,606 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="soft">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ABQD • Profile</title>
+  <title>Профиль</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- важно: для /u/ путь именно ../assets -->
-  <link rel="stylesheet" href="../assets/app.css">
-  <script defer src="../assets/app.js"></script>
+  <style>
+    :root{
+      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --r1:16px;
+      --r2:22px;
+
+      /* dark */
+      --bg:#0b0c10;
+      --panel:#0f1117;
+      --panel2:#11131b;
+      --text:#eef1f6;
+      --muted:rgba(238,241,246,.66);
+      --line:rgba(255,255,255,.13);
+      --shadow:0 18px 60px rgba(0,0,0,.30);
+
+      --accent:#ff4d9d;
+      --accent2:#6d5cff;
+      --primary1:#ff4d9d;
+      --primary2:#6d5cff;
+
+      --gridBg: rgba(255,255,255,.03);
+
+      --ok:#39d98a;
+      --ok2:#1bbf63;
+    }
+
+    html[data-theme="soft"]{
+      --bg:#f4f6fb;
+      --panel:rgba(255,255,255,.62);
+      --panel2:rgba(255,255,255,.78);
+      --text:#10131a;
+      --muted:rgba(16,19,26,.56);
+      --line:rgba(16,19,26,.14);
+      --shadow:0 18px 60px rgba(18,24,40,.12);
+
+      --accent:#2563eb;
+      --accent2:#7c3aed;
+      --primary1:#2563eb;
+      --primary2:#7c3aed;
+
+      --gridBg: rgba(255,255,255,.42);
+
+      --ok:#39d98a;
+      --ok2:#1bbf63;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      font-size:15.5px;
+      line-height:1.62;
+      background:
+        radial-gradient(1100px 700px at 15% 10%, color-mix(in srgb, var(--accent2) 18%, transparent), transparent 55%),
+        radial-gradient(1100px 700px at 85% 15%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 55%),
+        var(--bg);
+    }
+    body::before{
+      content:"";
+      position:fixed;inset:0;pointer-events:none;z-index:0;
+      opacity:.055;mix-blend-mode:overlay;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+      transform:translateZ(0)
+    }
+
+    .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:18px 14px 44px;}
+    @media (max-width: 560px){.wrap{padding-top:20px}}
+
+    .card{
+      position:relative;
+      border:1px solid var(--line);
+      background:
+        radial-gradient(120% 140% at 10% 0%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(180deg,var(--panel),rgba(255,255,255,.04));
+      border-radius:var(--r2);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(12px);
+      overflow:hidden
+    }
+    .card::before{
+      content:"";
+      position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+      background:linear-gradient(135deg, rgba(255,255,255,.22), transparent 42%, rgba(255,255,255,.10));
+      opacity:.18;mix-blend-mode:overlay
+    }
+    html[data-theme="soft"] .card::before{opacity:.10;mix-blend-mode:normal}
+
+    .cardHd{padding:14px 14px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .cardHd b{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+    .hero{padding:16px}
+    .banner{
+      position:relative;height:220px;border-radius:var(--r2);overflow:hidden;
+      border:1px solid var(--line);background:rgba(0,0,0,.10);z-index:1
+    }
+    .bannerPlh{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px;
+      color:var(--muted);background:linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+      pointer-events:none
+    }
+    html[data-theme="soft"] .bannerPlh{background:linear-gradient(180deg, rgba(255,255,255,.30), transparent)}
+    .banner img{width:100%;height:100%;object-fit:cover;display:block}
+
+    .bannerLogo{
+      position:absolute;right:12px;top:12px;width:56px;height:56px;border-radius:16px;
+      border:1px solid var(--line);background:rgba(0,0,0,.18);backdrop-filter:blur(10px);
+      display:flex;align-items:center;justify-content:center;overflow:hidden;text-decoration:none;
+      box-shadow:0 10px 30px rgba(0,0,0,.18)
+    }
+    html[data-theme="soft"] .bannerLogo{background:rgba(255,255,255,.55)}
+    .bannerLogo img{width:100%;height:100%;object-fit:cover;display:block}
+
+    .heroHead{
+      margin-top:-54px;
+      display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      padding:0 10px;position:relative;z-index:3
+    }
+    .left{display:flex;align-items:flex-end;gap:12px}
+    .avatar{
+      width:106px;height:106px;border-radius:999px;border:4px solid rgba(255,255,255,.9);
+      overflow:hidden;background:rgba(0,0,0,.18);
+      box-shadow:0 18px 60px rgba(0,0,0,.20);flex:0 0 auto;
+      display:flex;align-items:center;justify-content:center;position:relative;z-index:4
+    }
+    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .avatar .fallback{font-weight:800;font-size:38px;opacity:.92}
+
+    .nm{margin:0;font-size:28px;letter-spacing:-.02em;line-height:1.08;font-weight:800}
+    .rl{margin:6px 0 0;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:800}
+
+    .about{padding:10px 10px 14px}
+    .h2{margin:10px 0 10px;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--muted);font-weight:800}
+    .aboutText{margin:0;line-height:1.72;font-size:14.5px;white-space:pre-wrap;color:color-mix(in srgb, var(--text) 72%, var(--muted))}
+
+    .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .cta a{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:11px 14px;
+      font-weight:800;
+      font-size:13px;
+      text-decoration:none;
+      color:#fff;
+      background:rgba(0,0,0,.22);
+      position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0);
+      transition:transform .14s ease, filter .14s ease
+    }
+    .cta a:active{transform:translateY(1px)}
+    .cta a.primary{
+      border:0 !important;
+      background:transparent !important;
+      color:#fff !important;
+      -webkit-text-fill-color:#fff;
+      text-shadow:0 1px 0 rgba(0,0,0,.10);
+      box-shadow:0 10px 26px rgba(0,0,0,.14);
+    }
+    .cta a.primary::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background:linear-gradient(90deg,var(--primary1),var(--primary2));
+      border-radius:inherit;
+      z-index:-1;
+    }
+    html[data-theme="soft"] .cta a.primary{
+      color:var(--text) !important;
+      -webkit-text-fill-color:var(--text);
+      text-shadow:none;
+      border:1px solid rgba(16,19,26,.16) !important;
+      box-shadow:
+        0 16px 36px rgba(18,24,40,.14),
+        0 1px 0 rgba(255,255,255,.70) inset,
+        0 -1px 0 rgba(0,0,0,.06) inset;
+    }
+    html[data-theme="soft"] .cta a.primary::before{
+      background:linear-gradient(180deg,
+        rgba(226,229,235,.98) 0%,
+        rgba(196,203,214,.96) 48%,
+        rgba(168,177,191,.95) 100%);
+    }
+
+    .section{padding:16px}
+    .secTitle{margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800}
+
+    .chipsRow{display:flex;flex-wrap:wrap;gap:10px}
+    .chipA{
+      display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(0,0,0,.05);text-decoration:none;color:var(--muted)!important;font-weight:800;font-size:12px;
+    }
+    html[data-theme="soft"] .chipA{background:rgba(255,255,255,.45)}
+    .chipA:hover{color:var(--text)!important}
+
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{border:1px solid var(--line);background:rgba(0,0,0,.05);border-radius:var(--r1);padding:12px;display:flex;gap:12px;align-items:flex-start}
+    html[data-theme="soft"] .item{background:rgba(255,255,255,.45)}
+    .check{
+      width:28px;height:28px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.08);
+      color:var(--ok);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex:0 0 auto;
+      box-shadow:0 10px 26px rgba(0,0,0,.16), 0 0 0 1px rgba(255,255,255,.06) inset;
+    }
+    html[data-theme="soft"] .check{background:rgba(255,255,255,.45);box-shadow:0 10px 26px rgba(18,24,40,.10), 0 0 0 1px rgba(0,0,0,.06) inset;}
+    .itT{margin:0;font-weight:800;font-size:14px}
+    .itD{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.55;white-space:pre-wrap}
+
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    @media (max-width: 900px){.grid3{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 560px){.grid3{grid-template-columns:1fr}}
+
+    .work{border:1px solid var(--line);border-radius:var(--r1);overflow:hidden;background:rgba(0,0,0,.05);cursor:pointer;transition:.18s ease;min-height:220px;display:flex;flex-direction:column}
+    html[data-theme="soft"] .work{background:rgba(255,255,255,.45)}
+    .work:hover{transform:translateY(-2px)}
+    .workImg{height:160px;background:rgba(0,0,0,.12)}
+    .workImg img{width:100%;height:100%;object-fit:cover;display:block}
+    .workBody{padding:12px}
+    .workT{margin:0;font-weight:800;font-size:14px;line-height:1.2;white-space:pre-wrap;word-break:break-word}
+    .workM{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.5;white-space:pre-wrap}
+
+    .footer{padding:14px 16px 18px;text-align:center;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.04em}
+    .hide{display:none!important}
+
+    .err{
+      margin:14px 0 0;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.08);
+      color:var(--muted);
+      font-weight:800;
+    }
+    html[data-theme="soft"] .err{background:rgba(255,255,255,.55)}
+  </style>
 </head>
-<body data-page="u">
-  <div id="app"></div>
+
+<body>
+  <div class="wrap">
+    <div class="card" id="profileCard">
+      <div class="cardHd">
+        <b>Профиль</b>
+        <span style="font-size:12px;color:var(--muted);font-weight:800" id="slugBadge"></span>
+      </div>
+
+      <div class="hero">
+        <div class="banner" id="bannerBox">
+          <div class="bannerPlh" id="bannerPlh">Баннер</div>
+        </div>
+
+        <div class="heroHead">
+          <div class="left">
+            <div class="avatar" id="avatarBox"><span class="fallback">A</span></div>
+            <div>
+              <h2 class="nm" id="nameEl"></h2>
+              <div class="rl" id="roleEl"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="about">
+          <div class="h2">Обо мне</div>
+          <p class="aboutText" id="aboutEl"></p>
+          <div class="cta" id="ctaRow"></div>
+        </div>
+      </div>
+
+      <div class="section" id="contactsSection" style="padding:0 10px 16px">
+        <div class="secTitle">Контакты</div>
+        <div class="chipsRow" id="contactsPreview"></div>
+      </div>
+
+      <div class="section" id="pointsSection">
+        <div class="secTitle" id="pointsTitleEl">Ссылки</div>
+        <div class="list" id="pointsPreview"></div>
+      </div>
+
+      <div class="section" id="gallerySection">
+        <div class="secTitle" id="galleryTitleEl">Фото</div>
+        <div class="grid3" id="galleryPreview"></div>
+      </div>
+
+      <div class="footer" id="profileFooter"><span class="copy"></span></div>
+    </div>
+
+    <div class="err hide" id="errBox"></div>
+  </div>
+
+<script>
+(() => {
+  // Если API у тебя на другом домене — укажи полный адрес, например:
+  // const API_PROFILE_BASE = 'https://app.abqd.ru/api/v1/profile/';
+  const API_PROFILE_BASE = '/api/v1/profile/';
+
+  const $ = (id) => document.getElementById(id);
+  const clean = (s='') => String(s ?? '').trim();
+
+  const normUrl = (u = '') => {
+    u = clean(u);
+    if (!u) return '';
+    const low = u.toLowerCase();
+    if (low.startsWith('http://') || low.startsWith('https://')) return u;
+    if (low.startsWith('mailto:') || low.startsWith('tel:') || low.startsWith('tg://')) return u;
+    return 'https://' + u;
+  };
+
+  const contactUrl = (u = '') => {
+    u = clean(u);
+    if (!u) return '';
+    const low = u.toLowerCase();
+    if (low.startsWith('http://') || low.startsWith('https://') || low.startsWith('mailto:') || low.startsWith('tel:') || low.startsWith('tg://')) return u;
+    if (low.includes('@') && !low.includes(' ')) return 'mailto:' + u;
+
+    const phoneLike = (() => {
+      const s = u.trim();
+      if (!s) return false;
+      const first = s[0];
+      if (!(first === '+' || (first >= '0' && first <= '9'))) return false;
+      for (let i = 0; i < s.length; i++) {
+        const ch = s[i];
+        const ok = (ch >= '0' && ch <= '9') || ch === ' ' || ch === '(' || ch === ')' || ch === '-' || ch === '.' || ch === '+';
+        if (!ok) return false;
+      }
+      return s.length >= 6;
+    })();
+
+    if (phoneLike) {
+      let digits = u.replaceAll(' ','').replaceAll('-','').replaceAll('(','').replaceAll(')','').replaceAll('.','');
+      return 'tel:' + digits;
+    }
+    return 'https://' + u;
+  };
+
+  const wrapFixedChars = (text = '', n = 17) => {
+    text = String(text ?? '');
+    if (!text || n <= 0) return text;
+    const lines = text.split(/\r?\n/);
+    const out = [];
+    for (const line of lines) {
+      if (line.length <= n) { out.push(line); continue; }
+      for (let i = 0; i < line.length; i += n) out.push(line.slice(i, i + n));
+    }
+    return out.join('\n');
+  };
+
+  function getSlugFromPath() {
+    const parts = location.pathname.split('/').filter(Boolean);
+    const i = parts.indexOf('u');
+    return (i >= 0 && parts[i+1]) ? parts[i+1] : '';
+  }
+
+  function showErr(msg){
+    const b = $('errBox');
+    if (!b) return;
+    b.textContent = msg;
+    b.classList.remove('hide');
+  }
+
+  function render(state, slug){
+    const theme = state.theme || 'soft';
+    document.documentElement.setAttribute('data-theme', theme);
+
+    const nameRaw = clean(state.fullName);
+    const roleRaw = clean(state.role);
+
+    $('slugBadge').textContent = slug ? ('/u/' + slug) : '';
+    $('nameEl').textContent = nameRaw || '—';
+    $('roleEl').textContent = roleRaw || '';
+    $('aboutEl').textContent = state.about || '';
+
+    // banner + logo
+    const banner = $('bannerBox');
+    const plh = $('bannerPlh');
+    const hasBanner = !!state.bannerDataUrl;
+    plh.style.display = hasBanner ? 'none' : 'flex';
+
+    banner.innerHTML = '';
+    banner.appendChild(plh);
+
+    if (hasBanner) {
+      const img = document.createElement('img');
+      img.src = state.bannerDataUrl;
+      img.alt = 'banner';
+      banner.insertBefore(img, banner.firstChild);
+
+      if (state.logoDataUrl) {
+        const link = state.logoLink ? normUrl(state.logoLink) : '';
+        const a = document.createElement('a');
+        a.className = 'bannerLogo';
+        a.href = link || '#';
+        a.target = '_blank';
+        a.rel = 'noopener';
+        if (!link) a.style.pointerEvents = 'none';
+
+        const li = document.createElement('img');
+        li.src = state.logoDataUrl;
+        li.alt = 'logo';
+        a.appendChild(li);
+        banner.appendChild(a);
+      }
+    }
+
+    // avatar
+    const av = $('avatarBox');
+    av.innerHTML = '';
+    if (state.avatarDataUrl) {
+      const img = document.createElement('img');
+      img.src = state.avatarDataUrl;
+      img.alt = 'avatar';
+      av.appendChild(img);
+    } else {
+      const letter = (nameRaw || 'A').slice(0,1).toUpperCase();
+      const span = document.createElement('span');
+      span.className = 'fallback';
+      span.textContent = letter;
+      av.appendChild(span);
+    }
+
+    // CTA (телефон + кнопки)
+    const cta = $('ctaRow');
+    cta.innerHTML = '';
+
+    const phoneRaw = clean(state.phone);
+    const hasPhone = !!phoneRaw;
+    const maxCustomButtons = hasPhone ? 5 : 6;
+
+    if (hasPhone) {
+      const aCall = document.createElement('a');
+      aCall.textContent = 'Позвонить';
+      aCall.className = (state.callStyle === 'primary') ? 'primary' : '';
+      aCall.href = contactUrl(phoneRaw) || '#';
+      aCall.target = '_blank';
+      aCall.rel = 'noopener';
+      if (!aCall.href || aCall.href === '#') aCall.style.opacity = '.55';
+      cta.appendChild(aCall);
+    }
+
+    (state.buttons || []).slice(0, maxCustomButtons).forEach(btn => {
+      if (!btn || !btn.label) return;
+      const a = document.createElement('a');
+      a.textContent = btn.label;
+      a.className = btn.style === 'primary' ? 'primary' : '';
+      a.href = normUrl(btn.url) || '#';
+      a.target = '_blank';
+      a.rel = 'noopener';
+      if (!btn.url) a.style.opacity = '.55';
+      cta.appendChild(a);
+    });
+
+    // Contacts
+    const contactsPreview = $('contactsPreview');
+    contactsPreview.innerHTML = '';
+    (state.chips || []).slice(0, 20).forEach(c => {
+      const label = clean(c?.label);
+      const rawUrl = clean(c?.url);
+      if (!label && !rawUrl) return;
+
+      const a = document.createElement('a');
+      a.className = 'chipA';
+      a.textContent = label || rawUrl;
+
+      const href = contactUrl(rawUrl);
+      a.href = href || '#';
+      a.target = '_blank';
+      a.rel = 'noopener';
+      if (!href) { a.style.opacity = '.55'; a.style.pointerEvents = 'none'; }
+
+      contactsPreview.appendChild(a);
+    });
+    $('contactsSection').classList.toggle('hide', !(state.chips || []).some(x => clean(x?.label) || clean(x?.url)));
+
+    // Points
+    $('pointsTitleEl').textContent = state.pointsTitle || 'Ссылки';
+    const pl2 = $('pointsPreview');
+    pl2.innerHTML = '';
+    (state.points || []).slice(0, 12).forEach(p => {
+      if (!p || !p.title) return;
+
+      const el = document.createElement('div');
+      el.className = 'item';
+
+      const chk = document.createElement('div');
+      chk.className = 'check';
+      chk.textContent = '✓';
+
+      const box = document.createElement('div');
+      box.style.minWidth = '0';
+
+      const t = document.createElement('p');
+      t.className = 'itT';
+      t.textContent = p.title;
+      box.appendChild(t);
+
+      if (p.text) {
+        const d = document.createElement('div');
+        d.className = 'itD';
+        d.textContent = p.text;
+        box.appendChild(d);
+      }
+
+      if (p.url) {
+        const link = document.createElement('a');
+        link.style.display = 'inline-block';
+        link.style.marginTop = '6px';
+        link.style.fontSize = '12px';
+        link.style.fontWeight = '800';
+        link.style.color = 'var(--muted)';
+        link.href = normUrl(p.url);
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'Открыть ссылку';
+        box.appendChild(link);
+      }
+
+      el.appendChild(chk);
+      el.appendChild(box);
+      pl2.appendChild(el);
+    });
+    $('pointsSection').classList.toggle('hide', !(state.points && state.points.length));
+
+    // Gallery
+    $('galleryTitleEl').textContent = state.galleryTitle || 'Фото';
+    const gg = $('galleryPreview');
+    gg.innerHTML = '';
+    (state.gallery || []).slice(0, 12).forEach(g => {
+      const card = document.createElement('div');
+      card.className = 'work';
+
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'workImg';
+      if (g?.img) {
+        const img = document.createElement('img');
+        img.src = g.img;
+        img.alt = '';
+        imgWrap.appendChild(img);
+      }
+
+      const body = document.createElement('div');
+      body.className = 'workBody';
+
+      const title = document.createElement('p');
+      title.className = 'workT';
+      title.textContent = wrapFixedChars((g?.title || ''), 17);
+      body.appendChild(title);
+
+      if (g?.text) {
+        const desc = document.createElement('div');
+        desc.className = 'workM';
+        desc.textContent = g.text;
+        body.appendChild(desc);
+      }
+
+      card.appendChild(imgWrap);
+      card.appendChild(body);
+
+      card.addEventListener('click', () => {
+        if (g?.url) window.open(normUrl(g.url), '_blank', 'noopener');
+      });
+
+      gg.appendChild(card);
+    });
+    $('gallerySection').classList.toggle('hide', !(state.gallery && state.gallery.length));
+
+    // Footer
+    const year = new Date().getFullYear();
+    $('profileFooter').innerHTML = '<span class="copy">© ' + year + ' ' + (nameRaw || '') + '</span>';
+  }
+
+  async function init(){
+    const slug = getSlugFromPath();
+    if (!slug) {
+      showErr('Не найден slug в URL. Ожидается /u/<slug>.');
+      return;
+    }
+
+    try{
+      const res = await fetch(API_PROFILE_BASE + encodeURIComponent(slug), { method:'GET' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const data = await res.json();
+
+      // поддержка разных форматов (если API вернёт не "чистый state")
+      const state = data?.state || data?.profile || data;
+
+      if (!state || typeof state !== 'object') throw new Error('Пустой профиль');
+      render(state, slug);
+
+    }catch(e){
+      showErr('Профиль не загрузился: ' + (e?.message || 'ошибка') + '. Проверь API и slug.');
+    }
+  }
+
+  init();
+})();
+</script>
 </body>
 </html>
