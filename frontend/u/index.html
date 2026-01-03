@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Профиль</title>
+  <title>ABQD • Профиль</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
       --r1:16px;
       --r2:22px;
 
-      /* dark */
+      /* DARK default */
       --bg:#0b0c10;
       --panel:#0f1117;
       --panel2:#11131b;
@@ -24,15 +24,12 @@
       --line:rgba(255,255,255,.13);
       --shadow:0 18px 60px rgba(0,0,0,.30);
 
-      --accent:#ff4d9d;
-      --accent2:#6d5cff;
       --primary1:#ff4d9d;
       --primary2:#6d5cff;
 
       --gridBg: rgba(255,255,255,.03);
 
       --ok:#39d98a;
-      --ok2:#1bbf63;
     }
 
     html[data-theme="soft"]{
@@ -44,15 +41,11 @@
       --line:rgba(16,19,26,.14);
       --shadow:0 18px 60px rgba(18,24,40,.12);
 
-      --accent:#2563eb;
-      --accent2:#7c3aed;
       --primary1:#2563eb;
       --primary2:#7c3aed;
 
       --gridBg: rgba(255,255,255,.42);
-
       --ok:#39d98a;
-      --ok2:#1bbf63;
     }
 
     *{box-sizing:border-box}
@@ -63,10 +56,11 @@
       font-size:15.5px;
       line-height:1.62;
       background:
-        radial-gradient(1100px 700px at 15% 10%, color-mix(in srgb, var(--accent2) 18%, transparent), transparent 55%),
-        radial-gradient(1100px 700px at 85% 15%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 55%),
+        radial-gradient(1100px 700px at 15% 10%, rgba(109,92,255,.16), transparent 55%),
+        radial-gradient(1100px 700px at 85% 15%, rgba(255,77,157,.14), transparent 55%),
         var(--bg);
     }
+
     body::before{
       content:"";
       position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -75,8 +69,8 @@
       transform:translateZ(0)
     }
 
-    .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:18px 14px 44px;}
-    @media (max-width: 560px){.wrap{padding-top:20px}}
+    .wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:18px 14px 44px;}
+    @media (max-width: 560px){ .wrap{padding-top:18px} }
 
     .card{
       position:relative;
@@ -90,17 +84,24 @@
       overflow:hidden
     }
     .card::before{
-      content:"";
-      position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+      content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
       background:linear-gradient(135deg, rgba(255,255,255,.22), transparent 42%, rgba(255,255,255,.10));
       opacity:.18;mix-blend-mode:overlay
     }
     html[data-theme="soft"] .card::before{opacity:.10;mix-blend-mode:normal}
 
-    .cardHd{padding:14px 14px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .cardHd b{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+    .cardHd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:10px
+    }
+    .cardHd b{
+      font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)
+    }
+    .mini{font-size:12px;color:var(--muted);font-weight:800}
 
     .hero{padding:16px}
+
     .banner{
       position:relative;height:220px;border-radius:var(--r2);overflow:hidden;
       border:1px solid var(--line);background:rgba(0,0,0,.10);z-index:1
@@ -108,10 +109,13 @@
     .bannerPlh{
       position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
       font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px;
-      color:var(--muted);background:linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+      color:var(--muted);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), transparent);
       pointer-events:none
     }
-    html[data-theme="soft"] .bannerPlh{background:linear-gradient(180deg, rgba(255,255,255,.30), transparent)}
+    html[data-theme="soft"] .bannerPlh{
+      background:linear-gradient(180deg, rgba(255,255,255,.30), transparent)
+    }
     .banner img{width:100%;height:100%;object-fit:cover;display:block}
 
     .bannerLogo{
@@ -132,8 +136,9 @@
     .avatar{
       width:106px;height:106px;border-radius:999px;border:4px solid rgba(255,255,255,.9);
       overflow:hidden;background:rgba(0,0,0,.18);
-      box-shadow:0 18px 60px rgba(0,0,0,.20);flex:0 0 auto;
-      display:flex;align-items:center;justify-content:center;position:relative;z-index:4
+      box-shadow:0 18px 60px rgba(0,0,0,.20);
+      flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+      position:relative;z-index:4
     }
     .avatar img{width:100%;height:100%;object-fit:cover;display:block}
     .avatar .fallback{font-weight:800;font-size:38px;opacity:.92}
@@ -143,7 +148,8 @@
 
     .about{padding:10px 10px 14px}
     .h2{margin:10px 0 10px;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--muted);font-weight:800}
-    .aboutText{margin:0;line-height:1.72;font-size:14.5px;white-space:pre-wrap;color:color-mix(in srgb, var(--text) 72%, var(--muted))}
+    .aboutText{margin:0;line-height:1.72;font-size:14.5px;white-space:pre-wrap;color:rgba(238,241,246,.78)}
+    html[data-theme="soft"] .aboutText{color:rgba(16,19,26,.72)}
 
     .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
     .cta a{
@@ -160,36 +166,25 @@
     }
     .cta a:active{transform:translateY(1px)}
     .cta a.primary{
-      border:0 !important;
-      background:transparent !important;
-      color:#fff !important;
-      -webkit-text-fill-color:#fff;
-      text-shadow:0 1px 0 rgba(0,0,0,.10);
-      box-shadow:0 10px 26px rgba(0,0,0,.14);
+      border:0 !important;background:transparent !important;color:#fff !important;border-radius:999px;
+      overflow:hidden;position:relative;isolation:isolate;transform:translateZ(0);
+      box-shadow:0 10px 26px rgba(0,0,0,.14)
     }
     .cta a.primary::before{
-      content:"";
-      position:absolute;
-      inset:-1px;
+      content:"";position:absolute;inset:-1px;
       background:linear-gradient(90deg,var(--primary1),var(--primary2));
-      border-radius:inherit;
-      z-index:-1;
+      border-radius:inherit;z-index:-1;transform:translateZ(0)
     }
     html[data-theme="soft"] .cta a.primary{
-      color:var(--text) !important;
-      -webkit-text-fill-color:var(--text);
-      text-shadow:none;
+      color:var(--text) !important;text-shadow:none;
       border:1px solid rgba(16,19,26,.16) !important;
-      box-shadow:
-        0 16px 36px rgba(18,24,40,.14),
-        0 1px 0 rgba(255,255,255,.70) inset,
-        0 -1px 0 rgba(0,0,0,.06) inset;
+      box-shadow:0 16px 36px rgba(18,24,40,.14),
+                 0 1px 0 rgba(255,255,255,.70) inset,
+                 0 -1px 0 rgba(0,0,0,.06) inset;
+      letter-spacing:.01em
     }
     html[data-theme="soft"] .cta a.primary::before{
-      background:linear-gradient(180deg,
-        rgba(226,229,235,.98) 0%,
-        rgba(196,203,214,.96) 48%,
-        rgba(168,177,191,.95) 100%);
+      background:linear-gradient(180deg, rgba(226,229,235,.98) 0%, rgba(196,203,214,.96) 48%, rgba(168,177,191,.95) 100%)
     }
 
     .section{padding:16px}
@@ -197,29 +192,61 @@
 
     .chipsRow{display:flex;flex-wrap:wrap;gap:10px}
     .chipA{
-      display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);
-      background:rgba(0,0,0,.05);text-decoration:none;color:var(--muted)!important;font-weight:800;font-size:12px;
+      display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.05);
+      text-decoration:none;
+      color:var(--muted)!important;
+      font-weight:800;
+      font-size:12px;
+      position:relative;overflow:hidden;isolation:isolate;
+      transition:transform .14s ease, filter .14s ease
     }
     html[data-theme="soft"] .chipA{background:rgba(255,255,255,.45)}
     .chipA:hover{color:var(--text)!important}
+    .chipA:active{transform:translateY(1px)}
+    .chipI{opacity:.9;color:var(--muted)}
 
     .list{display:flex;flex-direction:column;gap:10px}
-    .item{border:1px solid var(--line);background:rgba(0,0,0,.05);border-radius:var(--r1);padding:12px;display:flex;gap:12px;align-items:flex-start}
-    html[data-theme="soft"] .item{background:rgba(255,255,255,.45)}
-    .check{
-      width:28px;height:28px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.08);
-      color:var(--ok);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex:0 0 auto;
-      box-shadow:0 10px 26px rgba(0,0,0,.16), 0 0 0 1px rgba(255,255,255,.06) inset;
+    .item{
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.05);
+      border-radius:var(--r1);
+      padding:12px;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      position:relative;overflow:hidden
     }
-    html[data-theme="soft"] .check{background:rgba(255,255,255,.45);box-shadow:0 10px 26px rgba(18,24,40,.10), 0 0 0 1px rgba(0,0,0,.06) inset;}
+    html[data-theme="soft"] .item{background:rgba(255,255,255,.45)}
+
+    .check{
+      width:28px;height:28px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(0,0,0,.08);color:var(--ok);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;font-size:14px;line-height:1;flex:0 0 auto;
+      box-shadow:0 10px 26px rgba(0,0,0,.16),0 0 0 1px rgba(255,255,255,.06) inset
+    }
+    html[data-theme="soft"] .check{background:rgba(255,255,255,.45);box-shadow:0 10px 26px rgba(18,24,40,.10),0 0 0 1px rgba(0,0,0,.06) inset;}
+
     .itT{margin:0;font-weight:800;font-size:14px}
     .itD{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.55;white-space:pre-wrap}
+    .miniLink{display:inline-block;margin-top:8px;font-size:12px;color:var(--muted);font-weight:800}
 
     .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
     @media (max-width: 900px){.grid3{grid-template-columns:repeat(2,1fr)}}
     @media (max-width: 560px){.grid3{grid-template-columns:1fr}}
 
-    .work{border:1px solid var(--line);border-radius:var(--r1);overflow:hidden;background:rgba(0,0,0,.05);cursor:pointer;transition:.18s ease;min-height:220px;display:flex;flex-direction:column}
+    .work{
+      border:1px solid var(--line);
+      border-radius:var(--r1);
+      overflow:hidden;
+      background:rgba(0,0,0,.05);
+      cursor:pointer;
+      transition:.18s ease;
+      min-height:220px;
+      display:flex;flex-direction:column
+    }
     html[data-theme="soft"] .work{background:rgba(255,255,255,.45)}
     .work:hover{transform:translateY(-2px)}
     .workImg{height:160px;background:rgba(0,0,0,.12)}
@@ -228,31 +255,25 @@
     .workT{margin:0;font-weight:800;font-size:14px;line-height:1.2;white-space:pre-wrap;word-break:break-word}
     .workM{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.5;white-space:pre-wrap}
 
-    .footer{padding:14px 16px 18px;text-align:center;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.04em}
-    .hide{display:none!important}
-
-    .err{
-      margin:14px 0 0;
-      padding:12px 14px;
-      border-radius:16px;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.08);
+    .state{
+      padding:18px;
       color:var(--muted);
-      font-weight:800;
+      font-weight:800
     }
-    html[data-theme="soft"] .err{background:rgba(255,255,255,.55)}
+    .hide{display:none!important}
   </style>
 </head>
-
 <body>
   <div class="wrap">
-    <div class="card" id="profileCard">
+    <div class="card">
       <div class="cardHd">
         <b>Профиль</b>
-        <span style="font-size:12px;color:var(--muted);font-weight:800" id="slugBadge"></span>
+        <span class="mini" id="miniRight">Загрузка…</span>
       </div>
 
-      <div class="hero">
+      <div id="stateBox" class="state">Загрузка профиля…</div>
+
+      <div class="hero hide" id="hero">
         <div class="banner" id="bannerBox">
           <div class="bannerPlh" id="bannerPlh">Баннер</div>
         </div>
@@ -274,332 +295,400 @@
         </div>
       </div>
 
-      <div class="section" id="contactsSection" style="padding:0 10px 16px">
-        <div class="secTitle">Контакты</div>
+      <div class="section hide" id="contactsSection" style="padding:0 10px 16px">
+        <div class="secTitle" id="contactsTitleEl">Контакты</div>
         <div class="chipsRow" id="contactsPreview"></div>
       </div>
 
-      <div class="section" id="pointsSection">
+      <div class="section hide" id="pointsSection">
         <div class="secTitle" id="pointsTitleEl">Ссылки</div>
         <div class="list" id="pointsPreview"></div>
       </div>
 
-      <div class="section" id="gallerySection">
-        <div class="secTitle" id="galleryTitleEl">Фото</div>
+      <div class="section hide" id="gallerySection">
+        <div class="secTitle" id="galleryTitleEl">Работы</div>
         <div class="grid3" id="galleryPreview"></div>
       </div>
-
-      <div class="footer" id="profileFooter"><span class="copy"></span></div>
     </div>
-
-    <div class="err hide" id="errBox"></div>
   </div>
 
 <script>
-(() => {
-  // Если API у тебя на другом домене — укажи полный адрес, например:
-  // const API_PROFILE_BASE = 'https://app.abqd.ru/api/v1/profile/';
-  const API_PROFILE_BASE = '/api/v1/profile/';
-
-  const $ = (id) => document.getElementById(id);
-  const clean = (s='') => String(s ?? '').trim();
-
-  const normUrl = (u = '') => {
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function clean(s){ return String(s == null ? '' : s).replace(/^\s+|\s+$/g,''); }
+  function normUrl(u){
     u = clean(u);
     if (!u) return '';
-    const low = u.toLowerCase();
-    if (low.startsWith('http://') || low.startsWith('https://')) return u;
-    if (low.startsWith('mailto:') || low.startsWith('tel:') || low.startsWith('tg://')) return u;
+    var low = u.toLowerCase();
+    if (low.indexOf('http://') === 0 || low.indexOf('https://') === 0) return u;
+    if (low.indexOf('mailto:') === 0 || low.indexOf('tel:') === 0 || low.indexOf('tg://') === 0) return u;
     return 'https://' + u;
-  };
-
-  const contactUrl = (u = '') => {
+  }
+  function contactUrl(u){
     u = clean(u);
     if (!u) return '';
-    const low = u.toLowerCase();
-    if (low.startsWith('http://') || low.startsWith('https://') || low.startsWith('mailto:') || low.startsWith('tel:') || low.startsWith('tg://')) return u;
-    if (low.includes('@') && !low.includes(' ')) return 'mailto:' + u;
+    var low = u.toLowerCase();
+    if (low.indexOf('http://') === 0 || low.indexOf('https://') === 0 ||
+        low.indexOf('mailto:') === 0 || low.indexOf('tel:') === 0 || low.indexOf('tg://') === 0) return u;
 
-    const phoneLike = (() => {
-      const s = u.trim();
-      if (!s) return false;
-      const first = s[0];
-      if (!(first === '+' || (first >= '0' && first <= '9'))) return false;
-      for (let i = 0; i < s.length; i++) {
-        const ch = s[i];
-        const ok = (ch >= '0' && ch <= '9') || ch === ' ' || ch === '(' || ch === ')' || ch === '-' || ch === '.' || ch === '+';
-        if (!ok) return false;
-      }
-      return s.length >= 6;
-    })();
+    if (u.indexOf('@') !== -1 && u.indexOf(' ') === -1) return 'mailto:' + u;
 
-    if (phoneLike) {
-      let digits = u.replaceAll(' ','').replaceAll('-','').replaceAll('(','').replaceAll(')','').replaceAll('.','');
-      return 'tel:' + digits;
+    // phone
+    if (/^[0-9\s()\-\.+]+$/.test(u)) {
+      var digits = u.replace(/[\s\-().]/g, '');
+      if (digits.length >= 6) return 'tel:' + digits;
     }
     return 'https://' + u;
-  };
-
-  const wrapFixedChars = (text = '', n = 17) => {
-    text = String(text ?? '');
-    if (!text || n <= 0) return text;
-    const lines = text.split(/\r?\n/);
-    const out = [];
-    for (const line of lines) {
+  }
+  function phoneToTel(s){
+    s = clean(s);
+    if (!s) return '';
+    var out = '';
+    for (var i = 0; i < s.length; i++) {
+      var ch = s.charAt(i);
+      if (ch >= '0' && ch <= '9') out += ch;
+      else if (ch === '+' && out.length === 0) out += ch;
+    }
+    var digits = (out.charAt(0) === '+') ? out.slice(1) : out;
+    if (digits.length < 6) return '';
+    return 'tel:' + out;
+  }
+  function wrapFixedChars(text, n){
+    text = String(text == null ? '' : text);
+    n = (typeof n === 'number' && n > 0) ? n : 17;
+    if (!text) return text;
+    var lines = text.split(/\r?\n/);
+    var out = [];
+    for (var li = 0; li < lines.length; li++) {
+      var line = lines[li];
       if (line.length <= n) { out.push(line); continue; }
-      for (let i = 0; i < line.length; i += n) out.push(line.slice(i, i + n));
+      for (var j = 0; j < line.length; j += n) out.push(line.slice(j, j + n));
     }
     return out.join('\n');
-  };
-
-  function getSlugFromPath() {
-    const parts = location.pathname.split('/').filter(Boolean);
-    const i = parts.indexOf('u');
-    return (i >= 0 && parts[i+1]) ? parts[i+1] : '';
   }
 
-  function showErr(msg){
-    const b = $('errBox');
-    if (!b) return;
-    b.textContent = msg;
-    b.classList.remove('hide');
+  function getSlug(){
+    // /u/<slug>  или /u/<slug>/
+    var p = location.pathname || '';
+    // поддержка если nginx отдаёт /u/index.html
+    var m = p.match(/^\/u\/([^\/?#]+)/i);
+    return m ? decodeURIComponent(m[1]) : '';
   }
 
-  function render(state, slug){
-    const theme = state.theme || 'soft';
+  function pickProfileShape(data){
+    // на случай если сервер оборачивает
+    if (!data) return null;
+    if (data.profile) return data.profile;
+    return data;
+  }
+
+  function setTheme(theme){
+    if (theme !== 'dark' && theme !== 'soft') theme = 'soft';
     document.documentElement.setAttribute('data-theme', theme);
+  }
 
-    const nameRaw = clean(state.fullName);
-    const roleRaw = clean(state.role);
+  function setState(text, isError){
+    var box = $('stateBox');
+    if (!box) return;
+    box.textContent = text;
+    box.style.opacity = isError ? '1' : '0.92';
+  }
 
-    $('slugBadge').textContent = slug ? ('/u/' + slug) : '';
-    $('nameEl').textContent = nameRaw || '—';
-    $('roleEl').textContent = roleRaw || '';
-    $('aboutEl').textContent = state.about || '';
+  function showContent(){
+    $('stateBox').classList.add('hide');
+    $('hero').classList.remove('hide');
+  }
 
-    // banner + logo
-    const banner = $('bannerBox');
-    const plh = $('bannerPlh');
-    const hasBanner = !!state.bannerDataUrl;
-    plh.style.display = hasBanner ? 'none' : 'flex';
+  function renderProfile(p, slug){
+    // theme
+    setTheme(p.theme || 'soft');
 
-    banner.innerHTML = '';
-    banner.appendChild(plh);
+    $('miniRight').textContent = 'app.abqd.ru/u/' + slug;
+
+    // Name / Role / About
+    var name = clean(p.fullName) || 'Без имени';
+    var role = clean(p.role) || '';
+    $('nameEl').textContent = name;
+    $('roleEl').textContent = role;
+    $('aboutEl').textContent = p.about || '';
+
+    // Banner + Logo
+    var bannerBox = $('bannerBox');
+    var bannerPlh = $('bannerPlh');
+    var hasBanner = !!clean(p.bannerDataUrl || p.bannerUrl || p.banner || '');
+    var bannerSrc = clean(p.bannerDataUrl || p.bannerUrl || p.banner || '');
+    bannerPlh.style.display = hasBanner ? 'none' : 'flex';
+
+    bannerBox.innerHTML = '';
+    bannerBox.appendChild(bannerPlh);
 
     if (hasBanner) {
-      const img = document.createElement('img');
-      img.src = state.bannerDataUrl;
-      img.alt = 'banner';
-      banner.insertBefore(img, banner.firstChild);
+      var imgB = document.createElement('img');
+      imgB.src = bannerSrc; // data: или URL
+      imgB.alt = 'banner';
+      bannerBox.insertBefore(imgB, bannerBox.firstChild);
 
-      if (state.logoDataUrl) {
-        const link = state.logoLink ? normUrl(state.logoLink) : '';
-        const a = document.createElement('a');
+      var logoSrc = clean(p.logoDataUrl || p.logoUrl || p.logo || '');
+      if (logoSrc) {
+        var link = clean(p.logoLink) ? normUrl(p.logoLink) : '';
+        var a = document.createElement('a');
         a.className = 'bannerLogo';
         a.href = link || '#';
         a.target = '_blank';
         a.rel = 'noopener';
         if (!link) a.style.pointerEvents = 'none';
 
-        const li = document.createElement('img');
-        li.src = state.logoDataUrl;
+        var li = document.createElement('img');
+        li.src = logoSrc;
         li.alt = 'logo';
         a.appendChild(li);
-        banner.appendChild(a);
+        bannerBox.appendChild(a);
       }
     }
 
-    // avatar
-    const av = $('avatarBox');
+    // Avatar
+    var av = $('avatarBox');
     av.innerHTML = '';
-    if (state.avatarDataUrl) {
-      const img = document.createElement('img');
-      img.src = state.avatarDataUrl;
-      img.alt = 'avatar';
-      av.appendChild(img);
+    var avatarSrc = clean(p.avatarDataUrl || p.avatarUrl || p.avatar || '');
+    if (avatarSrc) {
+      var imgA = document.createElement('img');
+      imgA.src = avatarSrc;
+      imgA.alt = 'avatar';
+      av.appendChild(imgA);
     } else {
-      const letter = (nameRaw || 'A').slice(0,1).toUpperCase();
-      const span = document.createElement('span');
+      var span = document.createElement('span');
       span.className = 'fallback';
-      span.textContent = letter;
+      span.textContent = (name.slice(0,1) || 'A').toUpperCase();
       av.appendChild(span);
     }
 
-    // CTA (телефон + кнопки)
-    const cta = $('ctaRow');
+    // CTA
+    var cta = $('ctaRow');
     cta.innerHTML = '';
 
-    const phoneRaw = clean(state.phone);
-    const hasPhone = !!phoneRaw;
-    const maxCustomButtons = hasPhone ? 5 : 6;
+    var phoneRaw = clean(p.phone || '');
+    var hasPhone = !!phoneRaw;
+    var callStyle = (p.callStyle === 'primary') ? 'primary' : '';
 
     if (hasPhone) {
-      const aCall = document.createElement('a');
-      aCall.textContent = 'Позвонить';
-      aCall.className = (state.callStyle === 'primary') ? 'primary' : '';
-      aCall.href = contactUrl(phoneRaw) || '#';
-      aCall.target = '_blank';
-      aCall.rel = 'noopener';
-      if (!aCall.href || aCall.href === '#') aCall.style.opacity = '.55';
-      cta.appendChild(aCall);
+      var tel = phoneToTel(phoneRaw);
+      var callBtn = document.createElement('a');
+      callBtn.textContent = 'Позвонить';
+      if (callStyle) callBtn.className = 'primary';
+      callBtn.href = tel || '#';
+      callBtn.target = '_self';
+      callBtn.rel = 'nofollow';
+      if (!tel) { callBtn.style.opacity = '.55'; callBtn.style.pointerEvents = 'none'; }
+      cta.appendChild(callBtn);
     }
 
-    (state.buttons || []).slice(0, maxCustomButtons).forEach(btn => {
-      if (!btn || !btn.label) return;
-      const a = document.createElement('a');
-      a.textContent = btn.label;
-      a.className = btn.style === 'primary' ? 'primary' : '';
-      a.href = normUrl(btn.url) || '#';
-      a.target = '_blank';
-      a.rel = 'noopener';
-      if (!btn.url) a.style.opacity = '.55';
-      cta.appendChild(a);
-    });
+    var btns = p.buttons || [];
+    var maxButtons = hasPhone ? 5 : 6;
+    for (var i=0;i<btns.length && i<maxButtons;i++){
+      var b = btns[i] || {};
+      var label = clean(b.label);
+      if (!label) continue;
+      var a2 = document.createElement('a');
+      a2.textContent = label;
+      if (b.style === 'primary') a2.className = 'primary';
+      var href = normUrl(b.url) || '#';
+      a2.href = href;
+      a2.target = '_blank';
+      a2.rel = 'noopener';
+      if (!clean(b.url)) { a2.style.opacity = '.55'; a2.style.pointerEvents = 'none'; }
+      cta.appendChild(a2);
+    }
 
     // Contacts
-    const contactsPreview = $('contactsPreview');
+    var contactsSection = $('contactsSection');
+    var contactsPreview = $('contactsPreview');
     contactsPreview.innerHTML = '';
-    (state.chips || []).slice(0, 20).forEach(c => {
-      const label = clean(c?.label);
-      const rawUrl = clean(c?.url);
-      if (!label && !rawUrl) return;
+    var chips = p.chips || [];
+    var hasContacts = false;
+    for (var c=0;c<chips.length && c<20;c++){
+      var it = chips[c] || {};
+      var lbl = clean(it.label);
+      var rawUrl = clean(it.url);
+      if (!lbl && !rawUrl) continue;
+      hasContacts = true;
 
-      const a = document.createElement('a');
-      a.className = 'chipA';
-      a.textContent = label || rawUrl;
+      var a3 = document.createElement('a');
+      a3.className = 'chipA';
 
-      const href = contactUrl(rawUrl);
-      a.href = href || '#';
-      a.target = '_blank';
-      a.rel = 'noopener';
-      if (!href) { a.style.opacity = '.55'; a.style.pointerEvents = 'none'; }
+      var icon = clean(it.icon);
+      if (icon) {
+        var s = document.createElement('span');
+        s.className = 'chipI';
+        s.textContent = icon;
+        a3.appendChild(s);
+      }
 
-      contactsPreview.appendChild(a);
-    });
-    $('contactsSection').classList.toggle('hide', !(state.chips || []).some(x => clean(x?.label) || clean(x?.url)));
+      var t = document.createElement('span');
+      t.textContent = lbl || rawUrl;
+      a3.appendChild(t);
+
+      var href2 = contactUrl(rawUrl);
+      a3.href = href2 || '#';
+      a3.target = '_blank';
+      a3.rel = 'noopener';
+      if (!href2) { a3.style.opacity = '.55'; a3.style.pointerEvents = 'none'; }
+
+      contactsPreview.appendChild(a3);
+    }
+    contactsSection.classList.toggle('hide', !hasContacts);
 
     // Points
-    $('pointsTitleEl').textContent = state.pointsTitle || 'Ссылки';
-    const pl2 = $('pointsPreview');
-    pl2.innerHTML = '';
-    (state.points || []).slice(0, 12).forEach(p => {
-      if (!p || !p.title) return;
+    $('pointsTitleEl').textContent = p.pointsTitle || 'Ссылки';
+    var pointsSection = $('pointsSection');
+    var pointsPreview = $('pointsPreview');
+    pointsPreview.innerHTML = '';
+    var pts = p.points || [];
+    var hasPoints = false;
+    for (var pi=0;pi<pts.length && pi<12;pi++){
+      var pp = pts[pi] || {};
+      var title = clean(pp.title);
+      if (!title) continue;
+      hasPoints = true;
 
-      const el = document.createElement('div');
-      el.className = 'item';
+      var row = document.createElement('div');
+      row.className = 'item';
 
-      const chk = document.createElement('div');
+      var chk = document.createElement('div');
       chk.className = 'check';
       chk.textContent = '✓';
 
-      const box = document.createElement('div');
+      var box = document.createElement('div');
       box.style.minWidth = '0';
 
-      const t = document.createElement('p');
-      t.className = 'itT';
-      t.textContent = p.title;
-      box.appendChild(t);
+      var t2 = document.createElement('p');
+      t2.className = 'itT';
+      t2.textContent = title;
+      box.appendChild(t2);
 
-      if (p.text) {
-        const d = document.createElement('div');
+      if (clean(pp.text)) {
+        var d = document.createElement('div');
         d.className = 'itD';
-        d.textContent = p.text;
+        d.textContent = pp.text;
         box.appendChild(d);
       }
-
-      if (p.url) {
-        const link = document.createElement('a');
-        link.style.display = 'inline-block';
-        link.style.marginTop = '6px';
-        link.style.fontSize = '12px';
-        link.style.fontWeight = '800';
-        link.style.color = 'var(--muted)';
-        link.href = normUrl(p.url);
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.textContent = 'Открыть ссылку';
-        box.appendChild(link);
+      if (clean(pp.url)) {
+        var l = document.createElement('a');
+        l.className = 'miniLink';
+        l.href = normUrl(pp.url);
+        l.target = '_blank';
+        l.rel = 'noopener';
+        l.textContent = 'Открыть ссылку';
+        box.appendChild(l);
       }
 
-      el.appendChild(chk);
-      el.appendChild(box);
-      pl2.appendChild(el);
-    });
-    $('pointsSection').classList.toggle('hide', !(state.points && state.points.length));
+      row.appendChild(chk);
+      row.appendChild(box);
+      pointsPreview.appendChild(row);
+    }
+    pointsSection.classList.toggle('hide', !hasPoints);
 
     // Gallery
-    $('galleryTitleEl').textContent = state.galleryTitle || 'Фото';
-    const gg = $('galleryPreview');
-    gg.innerHTML = '';
-    (state.gallery || []).slice(0, 12).forEach(g => {
-      const card = document.createElement('div');
-      card.className = 'work';
+    $('galleryTitleEl').textContent = p.galleryTitle || 'Работы';
+    var gallerySection = $('gallerySection');
+    var galleryPreview = $('galleryPreview');
+    galleryPreview.innerHTML = '';
+    var gal = p.gallery || [];
+    var hasGallery = false;
 
-      const imgWrap = document.createElement('div');
-      imgWrap.className = 'workImg';
-      if (g?.img) {
-        const img = document.createElement('img');
-        img.src = g.img;
-        img.alt = '';
-        imgWrap.appendChild(img);
-      }
+    for (var gi=0;gi<gal.length && gi<12;gi++){
+      (function(g){
+        if (!g) return;
+        var title = clean(g.title);
+        var text = clean(g.text);
+        var img = clean(g.img);
+        var url = clean(g.url);
+        if (!title && !text && !img && !url) return;
+        hasGallery = true;
 
-      const body = document.createElement('div');
-      body.className = 'workBody';
+        var card = document.createElement('div');
+        card.className = 'work';
 
-      const title = document.createElement('p');
-      title.className = 'workT';
-      title.textContent = wrapFixedChars((g?.title || ''), 17);
-      body.appendChild(title);
+        var imgWrap = document.createElement('div');
+        imgWrap.className = 'workImg';
+        if (img) {
+          var im = document.createElement('img');
+          im.src = img;
+          im.alt = '';
+          imgWrap.appendChild(im);
+        }
+        var body = document.createElement('div');
+        body.className = 'workBody';
 
-      if (g?.text) {
-        const desc = document.createElement('div');
-        desc.className = 'workM';
-        desc.textContent = g.text;
-        body.appendChild(desc);
-      }
+        var tt = document.createElement('p');
+        tt.className = 'workT';
+        tt.textContent = wrapFixedChars(title || '', 17);
+        body.appendChild(tt);
 
-      card.appendChild(imgWrap);
-      card.appendChild(body);
+        if (text) {
+          var dd = document.createElement('div');
+          dd.className = 'workM';
+          dd.textContent = text;
+          body.appendChild(dd);
+        }
 
-      card.addEventListener('click', () => {
-        if (g?.url) window.open(normUrl(g.url), '_blank', 'noopener');
-      });
+        card.appendChild(imgWrap);
+        card.appendChild(body);
 
-      gg.appendChild(card);
-    });
-    $('gallerySection').classList.toggle('hide', !(state.gallery && state.gallery.length));
+        if (url) {
+          card.addEventListener('click', function(){
+            window.open(normUrl(url), '_blank', 'noopener');
+          });
+        } else {
+          card.style.cursor = 'default';
+        }
 
-    // Footer
-    const year = new Date().getFullYear();
-    $('profileFooter').innerHTML = '<span class="copy">© ' + year + ' ' + (nameRaw || '') + '</span>';
+        galleryPreview.appendChild(card);
+      })(gal[gi]);
+    }
+
+    gallerySection.classList.toggle('hide', !hasGallery);
+
+    showContent();
   }
 
-  async function init(){
-    const slug = getSlugFromPath();
+  function init(){
+    var slug = getSlug();
     if (!slug) {
-      showErr('Не найден slug в URL. Ожидается /u/<slug>.');
+      $('miniRight').textContent = 'Нет slug';
+      setState('Нет адреса профиля. Открой: /u/<slug>', true);
       return;
     }
 
-    try{
-      const res = await fetch(API_PROFILE_BASE + encodeURIComponent(slug), { method:'GET' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+    $('miniRight').textContent = 'app.abqd.ru/u/' + slug;
 
-      const data = await res.json();
-
-      // поддержка разных форматов (если API вернёт не "чистый state")
-      const state = data?.state || data?.profile || data;
-
-      if (!state || typeof state !== 'object') throw new Error('Пустой профиль');
-      render(state, slug);
-
-    }catch(e){
-      showErr('Профиль не загрузился: ' + (e?.message || 'ошибка') + '. Проверь API и slug.');
-    }
+    var url = '/api/v1/profile/' + encodeURIComponent(slug);
+    fetch(url, { headers: { 'accept': 'application/json' } })
+      .then(function(r){
+        if (r.status === 404) throw new Error('notfound');
+        if (!r.ok) throw new Error('bad');
+        return r.json();
+      })
+      .then(function(data){
+        var p = pickProfileShape(data);
+        if (!p) throw new Error('bad');
+        renderProfile(p, slug);
+      })
+      .catch(function(err){
+        if (String(err && err.message) === 'notfound') {
+          setState('Профиль не найден. Проверь slug и что профиль был опубликован (кнопка "Сохранить").', true);
+          $('miniRight').textContent = '404';
+          return;
+        }
+        setState('Ошибка загрузки профиля. Проверь API /api/v1/profile/{slug} и nginx.', true);
+        $('miniRight').textContent = 'Ошибка';
+      });
   }
 
-  init();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once:true });
+  } else {
+    init();
+  }
 })();
 </script>
 </body>
