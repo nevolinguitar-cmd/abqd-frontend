@@ -1,19 +1,837 @@
 <!doctype html>
-<html lang="ru">
+<!--
+  ABQD • Public Profile (/u/<slug>) • UI = Preview из "Конструктор NFC 1.1"
+  Fetch: GET /api/v1/profile/{slug}
+-->
+<html lang="ru" data-theme="soft">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ABQD • Profile</title>
+  <title>Профиль</title>
 
+  <!-- Montserrat (UI font) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- важно: для /u/ путь именно ../assets -->
-  <link rel="stylesheet" href="../assets/app.css">
-  <script defer src="../assets/app.js"></script>
+  <style>
+    :root{
+      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --r1:16px;
+      --r2:22px;
+
+      /* DARK (Тёмная) */
+      --bg:#0b0c10;
+      --panel:#0f1117;
+      --panel2:#11131b;
+      --text:#eef1f6;
+      --muted:rgba(238,241,246,.66);
+      --line:rgba(255,255,255,.13);
+      --shadow:0 18px 60px rgba(0,0,0,.30);
+
+      --accent:#ff4d9d;
+      --accent2:#6d5cff;
+      --primary1:#ff4d9d;
+      --primary2:#6d5cff;
+
+      --gridBg: rgba(255,255,255,.03);
+
+      /* OK / checkmark */
+      --ok:#39d98a;
+      --ok2:#1bbf63;
+    }
+
+    html[data-theme="soft"]{
+      /* WHITE (Белая) — айфон-стекло */
+      --bg:#f4f6fb;
+      --panel:rgba(255,255,255,.62);
+      --panel2:rgba(255,255,255,.78);
+      --text:#10131a;
+      --muted:rgba(16,19,26,.56);
+      --line:rgba(16,19,26,.14);
+      --shadow:0 18px 60px rgba(18,24,40,.12);
+
+      --accent:#2563eb;
+      --accent2:#7c3aed;
+
+      --primary1:#2563eb;
+      --primary2:#7c3aed;
+
+      --gridBg: rgba(255,255,255,.42);
+
+      /* OK / checkmark — зелёный как в тёмной теме */
+      --ok:#39d98a;
+      --ok2:#1bbf63;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      font-size:15.5px;
+      line-height:1.62;
+      background:
+        radial-gradient(1100px 700px at 15% 10%, rgba(109,92,255,.16), transparent 55%),
+        radial-gradient(1100px 700px at 85% 15%, rgba(255,77,157,.14), transparent 55%),
+        var(--bg);
+    }
+
+    /* лёгкая «плёнка/зерно» */
+    body::before{
+      content:"";
+      position:fixed;inset:0;
+      pointer-events:none;
+      z-index:0;
+      opacity:.055;
+      mix-blend-mode:overlay;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+      transform:translateZ(0);
+    }
+
+    .wrap{position:relative;z-index:1}
+    .wrap{max-width:860px;margin:0 auto;padding:18px 14px 44px;}
+
+    .card{
+      position:relative;
+      border:1px solid var(--line);
+      background:
+        radial-gradient(120% 140% at 10% 0%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(180deg,var(--panel),rgba(255,255,255,.04));
+      border-radius:var(--r2);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(12px);
+      overflow:hidden
+    }
+    .card::before{
+      content:"";
+      position:absolute;inset:0;
+      border-radius:inherit;
+      pointer-events:none;
+      background:linear-gradient(135deg, rgba(255,255,255,.22), transparent 42%, rgba(255,255,255,.10));
+      opacity:.18;
+      mix-blend-mode:overlay
+    }
+    html[data-theme="soft"] .card::before{opacity:.10;mix-blend-mode:normal}
+
+    .cardHd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:10px
+    }
+    .cardHd b{
+      font-size:12px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:var(--muted)
+    }
+
+    .hero{padding:16px}
+
+    .banner{
+      position:relative;
+      height:220px;
+      border-radius:var(--r2);
+      overflow:hidden;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.10);
+      z-index:1
+    }
+    .bannerPlh{
+      position:absolute;inset:0;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:800;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:12px;
+      color:var(--muted);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+      pointer-events:none
+    }
+    html[data-theme="soft"] .bannerPlh{background:linear-gradient(180deg, rgba(255,255,255,.30), transparent)}
+    .banner img{width:100%;height:100%;object-fit:cover;display:block}
+
+    .bannerLogo{
+      position:absolute;right:12px;top:12px;
+      width:56px;height:56px;border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      backdrop-filter:blur(10px);
+      display:flex;align-items:center;justify-content:center;
+      overflow:hidden;text-decoration:none;
+      box-shadow:0 10px 30px rgba(0,0,0,.18)
+    }
+    html[data-theme="soft"] .bannerLogo{background:rgba(255,255,255,.55)}
+    .bannerLogo img{width:100%;height:100%;object-fit:cover;display:block}
+
+    .heroHead{
+      margin-top:-54px;
+      display:flex;align-items:flex-end;justify-content:space-between;
+      gap:12px;flex-wrap:wrap;
+      padding:0 10px;
+      position:relative;z-index:3
+    }
+
+    .left{display:flex;align-items:flex-end;gap:12px}
+    .avatar{
+      width:106px;height:106px;
+      border-radius:999px;
+      border:4px solid rgba(255,255,255,.9);
+      overflow:hidden;
+      background:rgba(0,0,0,.18);
+      box-shadow:0 18px 60px rgba(0,0,0,.20);
+      flex:0 0 auto;
+      display:flex;align-items:center;justify-content:center;
+      position:relative;z-index:4
+    }
+    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .avatar .fallback{font-weight:800;font-size:38px;opacity:.92}
+
+    .nm{margin:0;font-size:28px;letter-spacing:-.02em;line-height:1.08;font-weight:800}
+    .rl{margin:6px 0 0;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:800}
+
+    .about{padding:10px 10px 14px}
+    .h2{margin:10px 0 10px;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--muted);font-weight:800}
+    .aboutText{margin:0;line-height:1.72;font-size:14.5px;white-space:pre-wrap;color:rgba(238,241,246,.78)}
+    html[data-theme="soft"] .aboutText{color:rgba(16,19,26,.72)}
+
+    .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .cta a{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:11px 14px;
+      font-weight:800;
+      font-size:13px;
+      text-decoration:none;
+      color:#fff;
+      background:rgba(0,0,0,.22);
+      position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0);
+      transition:transform .14s ease, filter .14s ease
+    }
+    .cta a:active{transform:translateY(1px)}
+
+    .cta a.primary{
+      border:0 !important;
+      background:transparent !important;
+      color:#fff !important;
+      border-radius:999px;
+      overflow:hidden;
+      position:relative;isolation:isolate;transform:translateZ(0);
+      box-shadow:0 10px 26px rgba(0,0,0,.14)
+    }
+    .cta a.primary::before{
+      content:"";
+      position:absolute;inset:-1px;
+      background:linear-gradient(90deg,var(--primary1),var(--primary2));
+      border-radius:inherit;z-index:-1;
+      transform:translateZ(0)
+    }
+
+    /* Белая тема: CTA как iPhone (алюминий / satin) */
+    html[data-theme="soft"] .cta a.primary{
+      color:var(--text) !important;
+      text-shadow:none;
+      border:1px solid rgba(16,19,26,.16) !important;
+      box-shadow:0 16px 36px rgba(18,24,40,.14),0 1px 0 rgba(255,255,255,.70) inset,0 -1px 0 rgba(0,0,0,.06) inset;
+      letter-spacing:.01em
+    }
+    html[data-theme="soft"] .cta a.primary::before{
+      background:linear-gradient(180deg, rgba(226,229,235,.98) 0%, rgba(196,203,214,.96) 48%, rgba(168,177,191,.95) 100%)
+    }
+
+    .section{padding:16px}
+    .secTitle{margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;position:relative}
+
+    .chipsRow{display:flex;flex-wrap:wrap;gap:10px}
+    .chipA{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.05);
+      text-decoration:none;
+      color:var(--muted)!important;
+      font-weight:800;font-size:12px
+    }
+    html[data-theme="soft"] .chipA{background:rgba(255,255,255,.45)}
+    .chipA:hover{color:var(--text)!important}
+    .chipI{opacity:.9;color:var(--muted)}
+
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.05);
+      border-radius:var(--r1);
+      padding:12px;
+      display:flex;gap:12px;align-items:flex-start;
+      position:relative;overflow:hidden
+    }
+    html[data-theme="soft"] .item{background:rgba(255,255,255,.45)}
+
+    .check{
+      width:28px;height:28px;border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.08);
+      color:var(--ok);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;font-size:14px;line-height:1;
+      flex:0 0 auto;
+      box-shadow:0 10px 26px rgba(0,0,0,.16),0 0 0 1px rgba(255,255,255,.06) inset
+    }
+    html[data-theme="soft"] .check{background:rgba(255,255,255,.45);box-shadow:0 10px 26px rgba(18,24,40,.10),0 0 0 1px rgba(0,0,0,.06) inset}
+
+    .itT{margin:0;font-weight:800;font-size:14px}
+    .itD{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.55;white-space:pre-wrap}
+
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    @media (max-width: 900px){.grid3{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 560px){.grid3{grid-template-columns:1fr}}
+
+    .work{
+      border:1px solid var(--line);
+      border-radius:var(--r1);
+      overflow:hidden;
+      background:rgba(0,0,0,.05);
+      cursor:pointer;
+      transition:.18s ease;
+      min-height:220px;
+      display:flex;flex-direction:column
+    }
+    html[data-theme="soft"] .work{background:rgba(255,255,255,.45)}
+    .work:hover{transform:translateY(-2px)}
+    .workImg{height:160px;background:rgba(0,0,0,.12)}
+    .workImg img{width:100%;height:100%;object-fit:cover;display:block}
+    .workBody{padding:12px}
+    .workT{margin:0;font-weight:800;font-size:14px;line-height:1.2;white-space:pre-wrap;word-break:break-word}
+    .workM{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.5;white-space:pre-wrap}
+
+    .footer{
+      padding:14px 16px 18px;
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.04em
+    }
+    .footer .copy{opacity:.92}
+
+    .hide{display:none!important}
+
+    /* Simple loader */
+    .centerNote{
+      padding:22px 16px;
+      text-align:center;
+      color:var(--muted);
+      font-weight:800;
+      letter-spacing:.01em
+    }
+  </style>
 </head>
-<body data-page="u">
-  <div id="app"></div>
+<body>
+  <div class="wrap">
+    <div class="card" id="profileCard">
+      <div class="cardHd">
+        <b>Профиль</b>
+        <span class="mini" id="miniRight"></span>
+      </div>
+
+      <div class="hero">
+        <div class="banner" id="bannerBox">
+          <div class="bannerPlh" id="bannerPlh">Баннер (1600×800)</div>
+        </div>
+
+        <div class="heroHead">
+          <div class="left">
+            <div class="avatar" id="avatarBox"><span class="fallback">A</span></div>
+            <div>
+              <h2 class="nm" id="nameEl"></h2>
+              <div class="rl" id="roleEl"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="about">
+          <div class="h2">Обо мне</div>
+          <p class="aboutText" id="aboutEl"></p>
+          <div class="cta" id="ctaRow"></div>
+        </div>
+      </div>
+
+      <div class="section" id="contactsSection" style="padding:0 10px 16px">
+        <div class="secTitle" id="contactsTitleEl">Контакты</div>
+        <div class="chipsRow" id="contactsPreview"></div>
+      </div>
+
+      <div class="section" id="pointsSection">
+        <div class="secTitle" id="pointsTitleEl">Ссылки</div>
+        <div class="list" id="pointsPreview"></div>
+      </div>
+
+      <div class="section" id="gallerySection">
+        <div class="secTitle" id="galleryTitleEl">Работы</div>
+        <div class="grid3" id="galleryPreview"></div>
+      </div>
+
+      <div class="footer" id="profileFooter"><span class="copy">© <span id="year"></span> <span id="copyName"></span></span></div>
+
+      <div class="centerNote" id="statusNote">Загрузка…</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ====== НАСТРОЙКИ ======
+  const API_BASE = '/api/v1/profile/'; // <-- если у тебя другой роут, поменяй тут (например: '/api/v1/profiles/')
+  const LS_KEY = 'abqd_constructor_demo_v2';
+
+  const $ = (id) => document.getElementById(id);
+  const clean = (s='') => String(s ?? '').trim();
+
+  const normUrl = (u='') => {
+    u = clean(u);
+    if (!u) return '';
+    const low = u.toLowerCase();
+    if (low.startsWith('http://') || low.startsWith('https://')) return u;
+    if (low.startsWith('mailto:') || low.startsWith('tel:') || low.startsWith('tg://')) return u;
+    return 'https://' + u;
+  };
+
+  const contactUrl = (u='') => {
+    u = clean(u);
+    if (!u) return '';
+    const low = u.toLowerCase();
+    if (low.startsWith('http://') || low.startsWith('https://') || low.startsWith('mailto:') || low.startsWith('tel:') || low.startsWith('tg://')) return u;
+    if (low.includes('@') && !low.includes(' ')) return 'mailto:' + u;
+
+    // phone-like => tel:
+    const phoneLike = (() => {
+      const s = u.trim();
+      if (!s) return false;
+      const first = s[0];
+      if (!(first === '+' || (first >= '0' && first <= '9'))) return false;
+      for (let i = 0; i < s.length; i++) {
+        const ch = s[i];
+        const ok = (ch >= '0' && ch <= '9') || ch === ' ' || ch === '(' || ch === ')' || ch === '-' || ch === '.' || ch === '+';
+        if (!ok) return false;
+      }
+      return s.length >= 6;
+    })();
+
+    if (phoneLike) {
+      let digits = u.replaceAll(' ', '').replaceAll('-', '').replaceAll('(', '').replaceAll(')', '').replaceAll('.', '');
+      return 'tel:' + digits;
+    }
+    return 'https://' + u;
+  };
+
+  const wrapFixedChars = (text = '', n = 17) => {
+    text = String(text ?? '');
+    if (!text || n <= 0) return text;
+    const lines = text.split(/\r?\n/);
+    const out = [];
+    for (const line of lines) {
+      if (line.length <= n) { out.push(line); continue; }
+      for (let i = 0; i < line.length; i += n) out.push(line.slice(i, i + n));
+    }
+    return out.join('\n');
+  };
+
+  function getSlug() {
+    const u = new URL(location.href);
+    const qs = clean(u.searchParams.get('slug') || '');
+    if (qs) return qs;
+
+    const path = location.pathname.replace(/\/+$/,''); // trim trailing /
+    const parts = path.split('/');
+    const idx = parts.indexOf('u');
+    if (idx >= 0 && parts[idx+1]) return clean(parts[idx+1]);
+    // fallback: /u/slug or /u/slug/ -> last segment
+    return clean(parts[parts.length - 1]);
+  }
+
+  function pickProfile(json) {
+    if (!json) return null;
+    return json.profile || json.data || json.result || json;
+  }
+
+  function mapToState(p) {
+    // поддерживаем варианты полей (на будущее)
+    const theme = p.theme || p.ui_theme || 'soft';
+
+    const state = {
+      theme,
+      slug: p.slug || p.id || '',
+      fullName: p.fullName || p.full_name || p.name || '',
+      role: p.role || p.title || '',
+      about: p.about || p.bio || '',
+      // media
+      avatar: p.avatar_url || p.avatarUrl || p.avatarDataUrl || p.avatar || '',
+      banner: p.banner_url || p.bannerUrl || p.bannerDataUrl || p.banner || '',
+      logo: p.logo_url || p.logoUrl || p.logoDataUrl || p.logo || '',
+      logoLink: p.logoLink || p.logo_link || '',
+      // actions
+      phone: p.phone || p.tel || '',
+      callStyle: p.callStyle || p.call_style || 'ghost',
+      buttons: Array.isArray(p.buttons) ? p.buttons : (Array.isArray(p.cta) ? p.cta : []),
+      // blocks
+      pointsTitle: p.pointsTitle || p.points_title || 'Ссылки',
+      points: Array.isArray(p.points) ? p.points : [],
+      galleryTitle: p.galleryTitle || p.gallery_title || 'Работы',
+      gallery: Array.isArray(p.gallery) ? p.gallery : [],
+      chips: Array.isArray(p.chips) ? p.chips : (Array.isArray(p.contacts) ? p.contacts : []),
+    };
+
+    return state;
+  }
+
+  function setTheme(t) {
+    t = (t === 'dark' || t === 'soft') ? t : 'soft';
+    document.documentElement.setAttribute('data-theme', t);
+  }
+
+  function setText(id, txt) {
+    const el = $(id);
+    if (!el) return;
+    el.textContent = txt;
+  }
+
+  function setStatus(msg) {
+    const note = $('statusNote');
+    if (!note) return;
+    note.textContent = msg;
+  }
+
+  function setHide(id, hide) {
+    const el = $(id);
+    if (!el) return;
+    el.classList.toggle('hide', !!hide);
+  }
+
+  function render(st) {
+    setTheme(st.theme || 'soft');
+
+    const name = clean(st.fullName) || '—';
+    const role = clean(st.role) || '';
+    const about = (st.about ?? '').toString();
+
+    setText('nameEl', name);
+    setText('roleEl', role);
+    setText('aboutEl', about);
+
+    // footer
+    const year = new Date().getFullYear();
+    setText('year', String(year));
+    setText('copyName', name === '—' ? '' : name);
+
+    // banner + logo
+    const bannerBox = $('bannerBox');
+    const bannerPlh = $('bannerPlh');
+    if (bannerBox) {
+      // reset
+      bannerBox.innerHTML = '';
+      if (bannerPlh) bannerBox.appendChild(bannerPlh);
+
+      const hasBanner = !!clean(st.banner);
+      if (bannerPlh) bannerPlh.style.display = hasBanner ? 'none' : 'flex';
+
+      if (hasBanner) {
+        const img = document.createElement('img');
+        img.src = st.banner;
+        img.alt = 'banner';
+        bannerBox.insertBefore(img, bannerBox.firstChild);
+
+        const hasLogo = !!clean(st.logo);
+        if (hasLogo) {
+          const link = clean(st.logoLink) ? normUrl(st.logoLink) : '';
+          const a = document.createElement('a');
+          a.className = 'bannerLogo';
+          a.href = link || '#';
+          a.target = '_blank';
+          a.rel = 'noopener';
+          if (!link) a.style.pointerEvents = 'none';
+
+          const li = document.createElement('img');
+          li.src = st.logo;
+          li.alt = 'logo';
+          a.appendChild(li);
+          bannerBox.appendChild(a);
+        }
+      }
+    }
+
+    // avatar
+    const avatarBox = $('avatarBox');
+    if (avatarBox) {
+      avatarBox.innerHTML = '';
+      const hasAvatar = !!clean(st.avatar);
+      if (hasAvatar) {
+        const img = document.createElement('img');
+        img.src = st.avatar;
+        img.alt = 'avatar';
+        avatarBox.appendChild(img);
+      } else {
+        const letter = (clean(name) || 'A').slice(0,1).toUpperCase();
+        const sp = document.createElement('span');
+        sp.className = 'fallback';
+        sp.textContent = letter;
+        avatarBox.appendChild(sp);
+      }
+    }
+
+    // CTA buttons (+ optional call)
+    const ctaRow = $('ctaRow');
+    if (ctaRow) {
+      ctaRow.innerHTML = '';
+
+      const btns = [];
+      const phone = clean(st.phone);
+      if (phone) {
+        btns.push({
+          label: 'Позвонить',
+          url: contactUrl(phone),   // tel:
+          style: (st.callStyle === 'primary') ? 'primary' : 'ghost'
+        });
+      }
+
+      (st.buttons || []).forEach(b => {
+        if (!b) return;
+        const label = clean(b.label || b.title || '');
+        const url = clean(b.url || b.href || '');
+        const style = (b.style === 'primary' || b.variant === 'primary') ? 'primary' : 'ghost';
+        if (!label) return;
+        btns.push({ label, url, style });
+      });
+
+      // лимиты как в твоей логике
+      const limit = phone ? 6 : 6; // при желании можешь сделать phone ? 6 : 6 (у тебя было: phone => до 5 + call = 6)
+      btns.slice(0, limit).forEach(btn => {
+        const a = document.createElement('a');
+        a.textContent = btn.label;
+        if (btn.style === 'primary') a.className = 'primary';
+        a.href = btn.url ? normUrl(btn.url) : '#';
+        a.target = '_blank';
+        a.rel = 'noopener';
+        if (!btn.url) a.style.opacity = '.55';
+        ctaRow.appendChild(a);
+      });
+    }
+
+    // Contacts
+    const contactsPreview = $('contactsPreview');
+    if (contactsPreview) {
+      contactsPreview.innerHTML = '';
+      (st.chips || []).slice(0, 20).forEach(c => {
+        const label = clean(c.label || c.title || '');
+        const rawUrl = clean(c.url || c.value || '');
+        const icon = clean(c.icon || '');
+        if (!label && !rawUrl) return;
+
+        const a = document.createElement('a');
+        a.className = 'chipA';
+
+        if (icon) {
+          const i = document.createElement('span');
+          i.className = 'chipI';
+          i.textContent = icon;
+          a.appendChild(i);
+        }
+
+        const t = document.createElement('span');
+        t.textContent = label || rawUrl;
+        a.appendChild(t);
+
+        const href = contactUrl(rawUrl);
+        a.href = href || '#';
+        a.target = '_blank';
+        a.rel = 'noopener';
+        if (!href) { a.style.opacity = '.55'; a.style.pointerEvents = 'none'; }
+
+        contactsPreview.appendChild(a);
+      });
+    }
+    const hasContacts = (st.chips || []).some(x => clean(x?.label) || clean(x?.url));
+    setHide('contactsSection', !hasContacts);
+
+    // Points
+    setText('pointsTitleEl', clean(st.pointsTitle) || 'Ссылки');
+    const pointsPreview = $('pointsPreview');
+    if (pointsPreview) {
+      pointsPreview.innerHTML = '';
+      (st.points || []).slice(0, 12).forEach(p => {
+        if (!p) return;
+        const title = clean(p.title || p.label || '');
+        if (!title) return;
+
+        const text = clean(p.text || p.description || '');
+        const url = clean(p.url || '');
+
+        const item = document.createElement('div');
+        item.className = 'item';
+
+        const chk = document.createElement('div');
+        chk.className = 'check';
+        chk.textContent = '✓';
+
+        const box = document.createElement('div');
+        box.style.minWidth = '0';
+
+        const tt = document.createElement('p');
+        tt.className = 'itT';
+        tt.textContent = title;
+        box.appendChild(tt);
+
+        if (text) {
+          const dd = document.createElement('div');
+          dd.className = 'itD';
+          dd.textContent = text;
+          box.appendChild(dd);
+        }
+
+        if (url) {
+          const link = document.createElement('a');
+          link.style.display = 'inline-block';
+          link.style.marginTop = '8px';
+          link.style.fontWeight = '800';
+          link.style.fontSize = '12px';
+          link.style.color = 'inherit';
+          link.style.opacity = '0.75';
+          link.href = normUrl(url);
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.textContent = 'Открыть ссылку';
+          box.appendChild(link);
+        }
+
+        item.appendChild(chk);
+        item.appendChild(box);
+        pointsPreview.appendChild(item);
+      });
+    }
+    setHide('pointsSection', !((st.points || []).length));
+
+    // Gallery
+    setText('galleryTitleEl', clean(st.galleryTitle) || 'Работы');
+    const galleryPreview = $('galleryPreview');
+    if (galleryPreview) {
+      galleryPreview.innerHTML = '';
+      (st.gallery || []).slice(0, 12).forEach(g => {
+        if (!g) return;
+
+        const title = clean(g.title || '');
+        const text = clean(g.text || '');
+        const img = clean(g.img || g.image || '');
+        const url = clean(g.url || '');
+
+        const card = document.createElement('div');
+        card.className = 'work';
+
+        const imgWrap = document.createElement('div');
+        imgWrap.className = 'workImg';
+        if (img) {
+          const im = document.createElement('img');
+          im.src = img;
+          im.alt = '';
+          imgWrap.appendChild(im);
+        }
+        const body = document.createElement('div');
+        body.className = 'workBody';
+
+        const t = document.createElement('p');
+        t.className = 'workT';
+        t.textContent = wrapFixedChars(title, 17);
+        body.appendChild(t);
+
+        if (text) {
+          const d = document.createElement('div');
+          d.className = 'workM';
+          d.textContent = text;
+          body.appendChild(d);
+        }
+
+        card.appendChild(imgWrap);
+        card.appendChild(body);
+
+        if (url) {
+          card.addEventListener('click', () => window.open(normUrl(url), '_blank', 'noopener'));
+        } else {
+          card.style.cursor = 'default';
+        }
+
+        galleryPreview.appendChild(card);
+      });
+    }
+    setHide('gallerySection', !((st.gallery || []).length));
+
+    // done
+    setStatus('');
+    $('statusNote')?.classList.add('hide');
+  }
+
+  function tryLoadFromLocalStorage(slug) {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return null;
+      const st = JSON.parse(raw);
+      if (clean(st.slug) && clean(st.slug) !== clean(slug)) return null;
+      // используем то же отображение, что и API
+      return mapToState(st);
+    } catch {
+      return null;
+    }
+  }
+
+  async function loadFromApi(slug) {
+    const url = API_BASE + encodeURIComponent(slug);
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    const p = pickProfile(json);
+    if (!p) throw new Error('Empty profile');
+    return mapToState(p);
+  }
+
+  async function init() {
+    const slug = getSlug();
+    if (!slug) {
+      setStatus('Нет slug в URL. Открой: /u/<slug>');
+      return;
+    }
+
+    setStatus('Загрузка…');
+
+    try {
+      const st = await loadFromApi(slug);
+      render(st);
+      return;
+    } catch (e) {
+      // fallback to localStorage (demo)
+      const st = tryLoadFromLocalStorage(slug);
+      if (st) {
+        render(st);
+        return;
+      }
+
+      // not found
+      setTheme('soft');
+      setStatus('Профиль не найден или API недоступно.');
+      $('statusNote')?.classList.remove('hide');
+      // минимально очистим, чтобы не было мусора
+      setText('nameEl','');
+      setText('roleEl','');
+      setText('aboutEl','');
+      setHide('contactsSection', true);
+      setHide('pointsSection', true);
+      setHide('gallerySection', true);
+      setText('copyName','');
+      setText('year', String(new Date().getFullYear()));
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();
+</script>
 </body>
 </html>
