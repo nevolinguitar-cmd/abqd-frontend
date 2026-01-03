@@ -3,772 +3,588 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ABQD</title>
-
-  
-   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./assets/app.css">
-<script src="./assets/app.js" defer></script>
- 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+  <title>ABQD Preview • Hero + Block 2</title>
   <style>
-    :root{
-      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      --bg0:#07080b; --bg1:#0b0d12;
-      --txt:#e9eef7; --muted:#a8b3c7;
-      --glass: rgba(255,255,255,.06);
-      --glass2: rgba(255,255,255,.10);
-      --stroke: rgba(255,255,255,.10);
-      --accent:#7cffb5;
-      --warn:#ffcf5c;
-      --danger:#ff6b6b;
-      --radius: 18px;
-      --shadow: 0 18px 55px rgba(0,0,0,.55);
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:var(--font);
-      color:var(--txt);
-      background:
-        radial-gradient(1000px 600px at 20% 10%, rgba(124,255,181,.10), transparent 60%),
-        radial-gradient(900px 600px at 90% 30%, rgba(130,180,255,.10), transparent 60%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
-      overflow-x:hidden;
-    }
-    a{color:inherit; text-decoration:none}
-    .wrap{max-width:1060px; margin:0 auto; padding:18px 16px 60px}
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px;
-      padding:12px 14px;
-      border:1px solid var(--stroke);
-      background:var(--glass);
-      border-radius:var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(14px);
-      position:sticky; top:12px; z-index:10;
-    }
-    .brand{display:flex; align-items:center; gap:10px}
-    .logo{
-      width:38px; height:38px; border-radius:12px;
-      border:1px solid var(--stroke);
-      background:
-        radial-gradient(18px 18px at 30% 30%, rgba(124,255,181,.9), transparent 60%),
-        radial-gradient(18px 18px at 70% 70%, rgba(130,180,255,.7), transparent 60%),
-        rgba(255,255,255,.04);
-      box-shadow: 0 10px 30px rgba(0,0,0,.45);
-    }
-    .brand h1{margin:0; font-size:14px; letter-spacing:.14em; text-transform:uppercase}
-    .brand .sub{margin:0; font-size:12px; color:var(--muted)}
-    .nav{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end}
-    .btn{
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.04);
-      color:var(--txt);
-      padding:10px 12px;
-      border-radius:14px;
-      cursor:pointer;
-      font-weight:600;
-      transition:.15s ease;
-      display:inline-flex; align-items:center; gap:8px;
-      user-select:none;
-    }
-    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.18)}
-    .btn.primary{
-      background: linear-gradient(180deg, rgba(124,255,181,.18), rgba(124,255,181,.06));
-      border-color: rgba(124,255,181,.35);
-    }
-    .btn.danger{
-      background: rgba(255,107,107,.10);
-      border-color: rgba(255,107,107,.25);
-    }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.03);
-      color: var(--muted);
-      font-size:12px;
-      white-space:nowrap;
-    }
-    .dot{width:8px; height:8px; border-radius:99px; background: var(--accent); box-shadow:0 0 18px rgba(124,255,181,.45)}
-    .dot.warn{background: var(--warn); box-shadow:0 0 18px rgba(255,207,92,.35)}
-    .dot.danger{background: var(--danger); box-shadow:0 0 18px rgba(255,107,107,.35)}
-    .grid{
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap:14px;
-      margin-top:14px;
-    }
-    @media (max-width: 920px){
-      .grid{grid-template-columns: 1fr}
-      .topbar{position:relative; top:auto}
-    }
-    .card{
-      border:1px solid var(--stroke);
-      background: var(--glass);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(14px);
-      padding:16px;
-    }
-    .card h2{margin:0 0 10px; font-size:18px}
-    .muted{color:var(--muted)}
-    .hr{height:1px; background: rgba(255,255,255,.08); margin:14px 0}
-    .field{display:flex; flex-direction:column; gap:6px; margin:10px 0}
-    .field label{font-size:12px; color:var(--muted)}
-    .input, .textarea{
-      width:100%;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.22);
-      color: var(--txt);
-      border-radius: 14px;
-      padding: 11px 12px;
-      outline:none;
-      font-family: var(--font);
-    }
-    .textarea{min-height:92px; resize:vertical}
-    .row{display:flex; gap:10px; flex-wrap:wrap}
-    .kpi{display:flex; flex-direction:column; gap:6px}
-    .kpi b{font-size:14px}
-    .kpi span{font-size:12px; color:var(--muted)}
-    .big{
-      font-size:34px; line-height:1.08; margin:8px 0 6px;
-      letter-spacing:-.02em;
-    }
-    .hero{
-      padding:18px;
-      border-radius: var(--radius);
-      border:1px solid rgba(255,255,255,.10);
-      background:
-        radial-gradient(600px 200px at 10% 20%, rgba(124,255,181,.16), transparent 60%),
-        radial-gradient(600px 220px at 85% 40%, rgba(130,180,255,.14), transparent 60%),
-        rgba(255,255,255,.03);
-    }
-    .toast{
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
-      color: var(--muted);
-      font-size:13px;
-    }
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      border-radius: 999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      font-size:12px;
-      color: var(--muted);
-    }
-    .u-card{
-      border-radius: 22px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      padding:18px;
-      box-shadow: 0 18px 55px rgba(0,0,0,.55);
-    }
-    .u-title{font-size:20px; margin:0}
-    .u-sub{margin:6px 0 0; color:var(--muted)}
-    .btnblock{display:flex; flex-direction:column; gap:10px; margin-top:14px}
-    .u-btn{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:12px 14px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.20);
-    }
-    .u-btn strong{font-size:14px}
-    .u-btn span{color:var(--muted); font-size:12px}
+    html,body{height:100%;margin:0;background:#000;}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
   </style>
 </head>
-<script>
-  ABQD.guard("home");
-</script>
-
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand" role="button" tabindex="0" id="goHome">
-        <div class="logo"></div>
-        <div>
-          <h1>ABQD</h1>
-          <p class="sub">frontend • auth / tariffs / constructor / crm / u</p>
-        </div>
-      </div>
 
-      <div class="nav">
-        <span class="pill" id="envPill"><span class="dot" id="envDot"></span><span id="envText">env</span></span>
-        <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">status</span></span>
-        <button class="btn" id="navAuth">Auth</button>
-        <button class="btn" id="navTariffs">Tariffs</button>
-        <button class="btn" id="navConstructor">Constructor</button>
-        <button class="btn" id="navCrm">CRM</button>
-        <button class="btn danger" id="navLogout" style="display:none;">Logout</button>
-      </div>
+<!-- =====================================
+     ABQD • HERO (BLOCK 1) • NO-JS • NO-RAIN
+     Задача: пол/швы + лого + рука (без дождя)
+====================================== -->
+<section id="abqd-hero-b2" class="abqd-b2" aria-label="ABQD hero">
+  <div class="abqd-b2__bg" aria-hidden="true">
+    <div class="abqd-b2__bgBase"></div>
+    <div class="abqd-b2__bgGrade"></div>
+
+    <div class="abqd-b2__floor" aria-hidden="true">
+      <div class="abqd-b2__floorSeams"></div>
+      <div class="abqd-b2__floorBloom"></div>
+      <div class="abqd-b2__floorVignette"></div>
     </div>
 
-    <div class="grid">
-      <div class="card" id="view"></div>
-      <div class="card">
-        <h2>Правила продукта (UI-логика)</h2>
-        <div class="toast">
-          <div><b>1)</b> Нет токена → нельзя в tariffs / constructor / crm</div>
-          <div><b>2)</b> Trial 7 дней → доступ только к constructor (+ публикация /u)</div>
-          <div><b>3)</b> CRM → только при тарифе 1/2/3</div>
-          <div class="hr"></div>
-          <div class="muted">
-            Это не “безопасность”, это UX-щит. Настоящую защиту потом закрепим в API.
-          </div>
-        </div>
+    <div class="abqd-b2__mark" aria-hidden="true"></div>
 
-        <div class="hr"></div>
-        <div class="row">
-          <div class="kpi">
-            <b id="kpiSlug">slug: —</b>
-            <span class="muted">публичная ссылка: /u/&lt;slug&gt;</span>
-          </div>
-        </div>
-        <div class="hr"></div>
-        <div class="muted" style="font-size:12px">
-          Совет на будущее: не усложняй сейчас “мега-архитектурой”. Твоя цель — рабочий поток пользователя + стабильный деплой.
-        </div>
+    <!-- CTA (glass) — под буквой "a" в логотипе -->
+    <div class="abqd-b2__ctaAnchor" aria-hidden="false">
+      <a class="abqd-b2__cta" href="https://app.abqd.ru/auth/" aria-label="Зарегистрироваться">Зарегистрироваться</a>
+    </div>
+
+    <div class="abqd-b2__vignette" aria-hidden="true"></div>
+    <div class="abqd-b2__scanlines" aria-hidden="true"></div>
+  </div>
+
+  <div class="abqd-b2__fg" aria-hidden="true">
+    <div class="abqd-b2__handWrap">
+      <div class="abqd-b2__handMotion">
+        <div class="abqd-b2__hand"></div>
       </div>
     </div>
   </div>
+</section>
 
-<script>
-(() => {
-  // ---------- ENV / BASE ----------
-  const path = window.location.pathname || "/";
-  const BASE = path.startsWith("/__stage/") ? "/__stage" : (path.startsWith("/__prod/") ? "/__prod" : "");
-  const envName = BASE === "/__stage" ? "STAGE" : (BASE === "/__prod" ? "PROD" : "ROOT");
-  const $ = (id) => document.getElementById(id);
+<!-- =====================================
+     ABQD • BLOCK 2 (VERTICAL TILE) • NO-JS
+     Задача: продолжение сверху (carry) + вертикальная плитка со швами,
+     чтобы ШАГ/ФАЗА швов совпадали по X с HERO.
+====================================== -->
+<section id="abqd-bars-b3" class="abqd-bars" aria-label="ABQD tile block">
+  <div class="abqd-bars__bg" aria-hidden="true"></div>
 
-  $("envText").textContent = envName + (BASE ? ` (${BASE})` : "");
-  $("envDot").className = "dot" + (envName === "STAGE" ? " warn" : "");
+  <!-- панель пола, которая "заходит" сверху (продолжение фактуры HERO) -->
+  <div class="abqd-bars__floorCarry" aria-hidden="true">
+    <div class="abqd-bars__floorTex"></div>
+    <div class="abqd-bars__floorSeams"></div>
+    <div class="abqd-bars__floorBloom"></div>
+  </div>
 
-  // ---------- STORAGE KEYS ----------
-  const K = {
-    token: "abqd_token",
-    slug: "abqd_user_slug",
-    plan: "abqd_plan",                 // "trial" | "p1" | "p2" | "p3"
-    trialStart: "abqd_trial_started_at" // epoch ms
-  };
+  <!-- вертикальная плитка/швы (основная плоскость 2-го блока) -->
+  <div class="abqd-bars__tile" aria-hidden="true"></div>
 
-  // ---------- HELPERS ----------
-  const now = () => Date.now();
-  const days = (ms) => ms / (24*60*60*1000);
+  <div class="abqd-bars__scan" aria-hidden="true"></div>
+  <div class="abqd-bars__topFade" aria-hidden="true"></div>
+  <div class="abqd-bars__vignette" aria-hidden="true"></div>
+</section>
 
-  const getToken = () => localStorage.getItem(K.token) || "";
-  const setToken = (t) => localStorage.setItem(K.token, t);
-  const clearToken = () => localStorage.removeItem(K.token);
+<style>
+  /* =========================
+     ABQD PANEL (меняй только тут)
+     ВАЖНО: чтобы швы совпали, ставь одинаковый --grid-x в обоих блоках.
+  ========================= */
+  #abqd-hero-b2.abqd-b2{
+    --bg-img: url("https://static.tildacdn.com/tild3361-3261-4562-a464-333532376265/ChatGPT_Image_21__20.png");
+    --mark-img: url("https://static.tildacdn.com/tild6464-3131-4736-b938-656238643465/_abqd.png");
+    --hand-img: url("https://static.tildacdn.com/tild3435-6439-4265-a131-643432363738/___101010101010101.png");
 
-  const getSlug = () => localStorage.getItem(K.slug) || "";
-  const setSlug = (s) => localStorage.setItem(K.slug, s);
+    /* цвет свечения швов */
+    --seam-rgb: 92,170,255;
+    --accent-rgb: 46,124,255;
 
-  const getPlan = () => localStorage.getItem(K.plan) || "trial";
-  const setPlan = (p) => localStorage.setItem(K.plan, p);
+    /* шаг сетки пола */
+    --floor-tile: 92px;
 
-  const ensureTrialStart = () => {
-    let v = localStorage.getItem(K.trialStart);
-    if (!v) { v = String(now()); localStorage.setItem(K.trialStart, v); }
-    return Number(v);
-  };
+    /* фазовый сдвиг сетки (подгоняем совпадение с блоком ниже) */
+    --grid-x: 0px;
+    --grid-y: 0px;
 
-  const trialActive = () => {
-    const t0 = Number(localStorage.getItem(K.trialStart) || "0");
-    if (!t0) return false;
-    return days(now() - t0) < 7;
-  };
+    /* пол */
+    --floor-seam-bright: 1.65;
+    --floor-bloom: 1.55;
+    --floor-sides-dim: 0.62;
 
-  const hasPaid = () => ["p1","p2","p3"].includes(getPlan());
-  const canUseConstructor = () => !!getToken() && (trialActive() || hasPaid());
-  const canUseCRM = () => !!getToken() && hasPaid();
-  const canEditProfile = () => !!getToken() && (trialActive() || hasPaid());
+    /* лого */
+    --mark-top: 50%;
+    --mark-scale: 1;
+    --mark-w: min(5200px, 250vw);
+    --mark-h: min(1800px, 135vh);
+    --mark-pad: clamp(18px, 2.2vw, 42px);
+    --mark-opacity: 0.90;
+    --mark-blur: 0px;
+    --mark-shadowA: 0.10;
+    --mark-fade-strength: 1.00;
+    --mark-fade-x: 76%;
+    --mark-fade-y: 74%;
+    --mark-fade-r: 560px;
 
-  const normalize = (p) => {
-    // remove BASE prefix
-    if (BASE && p.startsWith(BASE)) p = p.slice(BASE.length);
-    if (!p.startsWith("/")) p = "/" + p;
-    return p;
-  };
+    /* CTA (кнопка под "a" — настраиваем позицию) */
+    --cta-x: 39%;
+    --cta-y: 73%;
+    --cta-scale: 1;
 
-  const go = (p) => {
-    p = normalize(p);
-    const full = BASE ? (BASE + p) : p;
-    window.history.pushState({}, "", full);
-    render();
-  };
+    /* рука */
+    --hand-w: min(1800px, 120vw);
+    --hand-scale: 1.17;
+    --hand-right: clamp(-120px, -10vw, -36px);
+    --hand-bottom: 0px;
+    --hand-nudgeX: clamp(80px, 20vw, 220px);
+    --hand-nudgeY: 0px;
+    --hand-floatA: 7px;
+  }
 
-  const parseRoute = () => {
-    const p = normalize(window.location.pathname);
-    // /u/<slug>
-    const m = p.match(/^\/u\/([^\/?#]+)/);
-    if (m) return {name:"u", slug: decodeURIComponent(m[1])};
+  #abqd-bars-b3.abqd-bars{
+    /* должен совпадать с HERO */
+    --seam-rgb: 92,170,255;
+    --floor-img: url("https://static.tildacdn.com/tild3361-3261-4562-a464-333532376265/ChatGPT_Image_21__20.png");
 
-    if (p === "/" || p === "") return {name:"home"};
-    const seg = p.split("/").filter(Boolean)[0] || "home";
-    if (["auth","tariffs","constructor","crm"].includes(seg)) return {name:seg};
-    return {name:"notfound"};
-  };
+    /* ВАЖНО: тот же сдвиг по X, что в HERO */
+    --grid-x: 0px;
 
-  // ---------- UI STATUS ----------
-  const updateStatus = () => {
-    const t = !!getToken();
-    $("navLogout").style.display = t ? "inline-flex" : "none";
-    $("kpiSlug").textContent = "slug: " + (getSlug() || "—");
+    /* сколько пола "заходит" сверху во 2-й блок */
+    --carry-h: 34%;
+    --carry-opacity: .92;
 
-    let dot = "dot";
-    let text = "Гость";
-    if (t) {
-      if (hasPaid()) { dot = "dot"; text = "Тариф активен ("+getPlan()+")"; }
-      else if (trialActive()) { dot = "dot warn"; text = "Trial активен (до 7 дней)"; }
-      else { dot = "dot danger"; text = "Trial закончился → нужен тариф"; }
+    /* шаг вертикальных швов — делаем равным floor-tile в HERO */
+    --tile-w: 92px;
+    --tile-h: 58px;
+
+    /* яркость/ореол */
+    --tile-seam: 0.30;
+    --tile-bloom: 0.55;
+  }
+
+  /* =========================
+     HERO LAYOUT
+  ========================= */
+  #abqd-hero-b2.abqd-b2{
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    min-height: 720px;
+    overflow: hidden;
+    background:#000;
+    isolation:isolate;
+  }
+  @supports (height: 100svh){
+    #abqd-hero-b2.abqd-b2{ height: 100svh; }
+  }
+  #abqd-hero-b2 .abqd-b2__bg{ position:absolute; inset:0; pointer-events:none; }
+  #abqd-hero-b2 .abqd-b2__fg{ position:absolute; inset:0; pointer-events:none; z-index:20; }
+
+  /* BG */
+  #abqd-hero-b2 .abqd-b2__bgBase{
+    position:absolute; inset:0; z-index:0;
+    background:#000;
+    background-image: var(--bg-img);
+    background-repeat:no-repeat;
+    background-position: 50% 50%;
+    background-size: cover;
+    filter: saturate(1.05) contrast(1.06) brightness(0.92);
+    transform: translateZ(0);
+    animation: abqdBgDrift 16s ease-in-out infinite;
+  }
+  @keyframes abqdBgDrift{
+    0%{ transform: scale(1.02) translate3d(0,0,0); }
+    50%{ transform: scale(1.05) translate3d(0,-1.2%,0); }
+    100%{ transform: scale(1.02) translate3d(0,0,0); }
+  }
+  #abqd-hero-b2 .abqd-b2__bgGrade{
+    position:absolute; inset:0; z-index:1;
+    background:
+      radial-gradient(1200px 900px at 50% 44%, rgba(255,255,255,.06), rgba(0,0,0,0) 62%),
+      radial-gradient(1200px 900px at 50% 72%, rgba(var(--accent-rgb), .12), rgba(0,0,0,0) 66%),
+      linear-gradient(180deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,.30) 48%, rgba(0,0,0,.70) 100%);
+    mix-blend-mode: multiply;
+    opacity: .92;
+  }
+
+  /* FLOOR */
+  #abqd-hero-b2 .abqd-b2__floor{
+    position:absolute; left:-10%; right:-10%;
+    top:56%; bottom:-22%;
+    z-index:2;
+  }
+  #abqd-hero-b2 .abqd-b2__floorSeams{
+    position:absolute; inset:-10% -10% 0;
+    transform-origin: 50% 100%;
+    transform: perspective(980px) rotateX(74deg) scale(1.18);
+
+    background-image:
+      linear-gradient(to right, rgba(var(--seam-rgb), .22) 1px, rgba(0,0,0,0) 1px),
+      linear-gradient(to bottom, rgba(var(--seam-rgb), .18) 1px, rgba(0,0,0,0) 1px);
+    background-size: var(--floor-tile) var(--floor-tile);
+    background-position: var(--grid-x) var(--grid-y);
+
+    opacity: calc(0.10 * var(--floor-seam-bright));
+    mix-blend-mode: screen;
+
+    -webkit-mask-image:
+      radial-gradient(1200px 720px at 50% 78%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 52%, rgba(0,0,0,var(--floor-sides-dim)) 76%, rgba(0,0,0,0.0) 100%);
+            mask-image:
+      radial-gradient(1200px 720px at 50% 78%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 52%, rgba(0,0,0,var(--floor-sides-dim)) 76%, rgba(0,0,0,0.0) 100%);
+
+    filter: blur(0.25px);
+  }
+  #abqd-hero-b2 .abqd-b2__floorBloom{
+    position:absolute; inset:-10% -10% 0;
+    transform-origin: 50% 100%;
+    transform: perspective(980px) rotateX(74deg) scale(1.18);
+
+    background:
+      radial-gradient(900px 560px at 50% 82%, rgba(var(--seam-rgb), .22), rgba(0,0,0,0) 70%),
+      radial-gradient(760px 460px at 50% 70%, rgba(255,255,255,.08), rgba(0,0,0,0) 74%);
+
+    opacity: calc(0.12 * var(--floor-bloom));
+    mix-blend-mode: screen;
+
+    -webkit-mask-image:
+      radial-gradient(1200px 720px at 50% 80%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 58%, rgba(0,0,0,0.25) 84%, rgba(0,0,0,0.0) 100%);
+            mask-image:
+      radial-gradient(1200px 720px at 50% 80%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 58%, rgba(0,0,0,0.25) 84%, rgba(0,0,0,0.0) 100%);
+
+    filter: blur(1.2px);
+  }
+  #abqd-hero-b2 .abqd-b2__floorVignette{
+    position:absolute; inset:0;
+    background: radial-gradient(1200px 700px at 50% 72%, rgba(0,0,0,0) 32%, rgba(0,0,0,.45) 82%, rgba(0,0,0,.72) 100%);
+    opacity: .30;
+  }
+
+  /* LOGO */
+  #abqd-hero-b2 .abqd-b2__mark{
+    position:absolute; left:50%; top: var(--mark-top);
+    width: var(--mark-w); height: var(--mark-h);
+    transform: translate(-50%,-50%) scale(var(--mark-scale));
+    opacity: var(--mark-opacity);
+    z-index: 10;
+    pointer-events:none;
+    filter: drop-shadow(0 18px 70px rgba(0,0,0, calc(0.70 * var(--mark-shadowA) + 0.01)));
+  }
+  #abqd-hero-b2 .abqd-b2__mark::before{
+    content:"";
+    position:absolute; inset: var(--mark-pad);
+    background-image: var(--mark-img);
+    background-repeat:no-repeat;
+    background-position:center;
+    background-size: contain;
+    filter: blur(var(--mark-blur));
+
+    -webkit-mask-image:
+      radial-gradient(var(--mark-fade-r) var(--mark-fade-r) at var(--mark-fade-x) var(--mark-fade-y),
+        rgba(0,0,0, calc(0.0 + 0.10 / var(--mark-fade-strength))) 0%,
+        rgba(0,0,0, calc(0.30 / var(--mark-fade-strength))) 36%,
+        rgba(0,0,0,1) 72%);
+            mask-image:
+      radial-gradient(var(--mark-fade-r) var(--mark-fade-r) at var(--mark-fade-x) var(--mark-fade-y),
+        rgba(0,0,0, calc(0.0 + 0.10 / var(--mark-fade-strength))) 0%,
+        rgba(0,0,0, calc(0.30 / var(--mark-fade-strength))) 36%,
+        rgba(0,0,0,1) 72%);
+  }
+
+  /* HAND */
+  #abqd-hero-b2 .abqd-b2__handWrap{ position:relative; width:100%; height:100%; display:flex; align-items:flex-end; justify-content:flex-end; }
+  #abqd-hero-b2 .abqd-b2__handMotion{
+    position:absolute; right: var(--hand-right); bottom: var(--hand-bottom);
+    width: var(--hand-w); height: calc(var(--hand-w) * 0.58);
+    transform: translate3d(var(--hand-nudgeX), var(--hand-nudgeY), 0) scale(var(--hand-scale));
+    transform-origin: 100% 100%;
+    filter: drop-shadow(0 96px 192px rgba(0,0,0,.78));
+    animation: abqdHandLive 8.9s cubic-bezier(.37,0,.63,1) infinite;
+    will-change: transform;
+  }
+  #abqd-hero-b2 .abqd-b2__hand{ width:100%; height:100%; background-image: var(--hand-img); background-repeat:no-repeat; background-position:center; background-size:contain; }
+  @keyframes abqdHandLive{
+    0%{ transform: translate3d(var(--hand-nudgeX), var(--hand-nudgeY), 0) scale(var(--hand-scale)) translate3d(0,0,0) rotate(0deg); }
+    22%{ transform: translate3d(var(--hand-nudgeX), var(--hand-nudgeY), 0) scale(var(--hand-scale)) translate3d(2px, calc(-1 * var(--hand-floatA) * .55), 0) rotate(.18deg); }
+    52%{ transform: translate3d(var(--hand-nudgeX), var(--hand-nudgeY), 0) scale(var(--hand-scale)) translate3d(-2px, var(--hand-floatA), 0) rotate(-.14deg); }
+    78%{ transform: translate3d(var(--hand-nudgeX), var(--hand-nudgeY), 0) scale(var(--hand-scale)) translate3d(1px, calc(-1 * var(--hand-floatA) * .34), 0) rotate(.08deg); }
+    100%{ transform: translate3d(var(--hand-nudgeX), var(--hand-nudgeY), 0) scale(var(--hand-scale)) translate3d(0,0,0) rotate(0deg); }
+  }
+
+  /* =========================
+     CTA (glass button)
+  ========================= */
+  #abqd-hero-b2 .abqd-b2__ctaAnchor{
+    position:absolute;
+    left:50%;
+    top: var(--mark-top);
+    width: var(--mark-w);
+    height: var(--mark-h);
+    transform: translate(-50%,-50%) scale(var(--mark-scale));
+    z-index: 14; /* над логотипом */
+    pointer-events: none;
+  }
+
+  #abqd-hero-b2 .abqd-b2__cta{
+    position:absolute;
+    left: var(--cta-x);
+    top: var(--cta-y);
+    transform: translate(-50%,-50%) scale(var(--cta-scale));
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+
+    padding: 14px 18px;
+    border-radius: 999px;
+
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-weight: 650;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+
+    color: rgba(255,255,255,.92);
+
+    background:
+      radial-gradient(140px 60px at 30% 20%, rgba(255,255,255,.18), rgba(255,255,255,0) 60%),
+      linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+
+    border: 1px solid rgba(255,255,255,.18);
+
+    box-shadow:
+      0 10px 30px rgba(0,0,0,.45),
+      0 0 0 1px rgba(var(--seam-rgb), .18),
+      0 0 42px rgba(var(--seam-rgb), .10);
+
+    backdrop-filter: blur(10px) saturate(1.25);
+    -webkit-backdrop-filter: blur(10px) saturate(1.25);
+
+    pointer-events: auto;
+    user-select: none;
+
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+  }
+
+  #abqd-hero-b2 .abqd-b2__cta::after{
+    content:"";
+    position:absolute;
+    inset: 1px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 55%);
+    opacity: .32;
+    pointer-events:none;
+  }
+
+  #abqd-hero-b2 .abqd-b2__cta:hover{
+    transform: translate(-50%,-52%) scale(var(--cta-scale));
+    border-color: rgba(255,255,255,.28);
+    box-shadow:
+      0 14px 40px rgba(0,0,0,.55),
+      0 0 0 1px rgba(var(--seam-rgb), .26),
+      0 0 56px rgba(var(--seam-rgb), .16);
+  }
+
+  #abqd-hero-b2 .abqd-b2__cta:active{
+    transform: translate(-50%,-50%) scale(calc(var(--cta-scale) * .985));
+  }
+
+  #abqd-hero-b2 .abqd-b2__cta:focus-visible{
+    outline: none;
+    box-shadow:
+      0 14px 40px rgba(0,0,0,.55),
+      0 0 0 2px rgba(255,255,255,.28),
+      0 0 0 4px rgba(var(--seam-rgb), .22);
+  }
+
+  /* MOBILE позиция кнопки чуть ниже и правее, чтобы не конфликтовала с рукой */
+  @media (max-width:480px){
+    #abqd-hero-b2.abqd-b2{
+      --cta-x: 43%;
+      --cta-y: 75%;
+      --cta-scale: .98;
     }
-    $("statusDot").className = dot;
-    $("statusText").textContent = text;
-  };
-
-  // ---------- API (optional) ----------
-  async function apiGetProfile(slug){
-    // assumes nginx proxy (app.abqd.ru/api/v1/...) exists
-    const r = await fetch(`/api/v1/profile/${encodeURIComponent(slug)}`, {
-      headers: { "Accept": "application/json" }
-    });
-    if (!r.ok) throw new Error("GET profile failed: " + r.status);
-    return await r.json();
+    #abqd-hero-b2 .abqd-b2__cta{ padding: 13px 16px; font-size: 13px; }
   }
 
-  async function apiPutProfile(slug, profile){
-    const token = getToken();
-    const r = await fetch(`/api/v1/profile/${encodeURIComponent(slug)}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        ...(token ? {"Authorization": "Bearer " + token} : {})
-      },
-      body: JSON.stringify(profile)
-    });
-    if (!r.ok) throw new Error("PUT profile failed: " + r.status);
-    return await r.json();
+  /* OVERLAYS */
+  #abqd-hero-b2 .abqd-b2__vignette{
+    position:absolute; inset:0; z-index:12;
+    background: radial-gradient(1300px 740px at 50% 52%, rgba(0,0,0,0) 34%, rgba(0,0,0,.58) 78%, rgba(0,0,0,.86) 100%);
+    opacity:.58;
+  }
+  #abqd-hero-b2 .abqd-b2__scanlines{
+    position:absolute; inset:0; z-index:13;
+    opacity:.04;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.10) 0 1px, rgba(0,0,0,0) 1px 5px);
+    mix-blend-mode: overlay;
+    animation: abqdScan 7.2s linear infinite;
+  }
+  @keyframes abqdScan{ to{ transform: translate3d(0,6px,0); } }
+
+  /* =========================
+     BLOCK 2 LAYOUT
+  ========================= */
+  #abqd-bars-b3.abqd-bars{
+    position: relative;
+    width: 100%;
+    min-height: 560px;
+    height: 72vh;
+    max-height: 860px;
+    background: #000;
+    overflow: hidden;
+    isolation: isolate;
   }
 
-  // ---------- VIEWS ----------
-  const view = $("view");
-
-  function vHome(){
-    view.innerHTML = `
-      <div class="hero">
-        <div class="badge"><span class="dot"></span> Главная (рука) — всегда доступна</div>
-        <div class="big">Один понятный путь пользователя.</div>
-        <div class="muted">Сейчас важнее довести навигацию и публикацию /u, чем “добавлять функции ради функций”.</div>
-        <div class="hr"></div>
-        <div class="row">
-          <button class="btn primary" id="ctaAuth">Войти / Зарегистрироваться</button>
-          <button class="btn" id="ctaU">Открыть мой /u</button>
-        </div>
-        <div class="toast">
-          <b>Цель:</b> auth → tariffs → constructor → публикация /u → (после оплаты) crm.
-        </div>
-      </div>
-    `;
-    $("ctaAuth").onclick = () => go("/auth");
-    $("ctaU").onclick = () => {
-      const s = getSlug();
-      if (!s) return go("/auth");
-      go("/u/" + encodeURIComponent(s));
-    };
+  #abqd-bars-b3 .abqd-bars__bg{
+    position:absolute; inset:0; z-index:1;
+    background:
+      radial-gradient(900px 540px at 50% 15%, rgba(255,255,255,.06), rgba(0,0,0,0) 60%),
+      linear-gradient(180deg, rgba(0,0,0,.92) 0%, rgba(0,0,0,.62) 38%, rgba(0,0,0,.92) 100%);
   }
 
-  function vAuth(){
-    view.innerHTML = `
-      <h2>Auth</h2>
-      <div class="muted">Пока это “UI-авторизация”. Потом подключим реальные эндпоинты логина.</div>
+  /* carry сверху */
+  #abqd-bars-b3 .abqd-bars__floorCarry{
+    position:absolute;
+    left:-10%; right:-10%;
+    top:0;
+    height: var(--carry-h);
+    z-index:2;
+    pointer-events:none;
+    opacity: var(--carry-opacity);
 
-      <div class="field">
-        <label>Slug (будет в ссылке /u/&lt;slug&gt;)</label>
-        <input class="input" id="fSlug" placeholder="например: alex_nevolin" value="${escapeHtml(getSlug())}">
-      </div>
-
-      <div class="field">
-        <label>Токен (можно оставить пустым — мы сгенерируем)</label>
-        <input class="input" id="fToken" placeholder="abqd_xxx" value="${escapeHtml(getToken())}">
-      </div>
-
-      <div class="row">
-        <button class="btn primary" id="btnLogin">Войти</button>
-        <button class="btn" id="btnLogout">Сбросить</button>
-      </div>
-
-      <div class="toast">
-        При первом входе стартует <b>trial 7 дней</b>. После — редактирование только при тарифе.
-      </div>
-    `;
-
-    $("btnLogin").onclick = () => {
-      const s = ($("fSlug").value || "").trim().replace(/\s+/g,"_");
-      if (!s) return alert("Нужен slug");
-      setSlug(s);
-
-      let t = ($("fToken").value || "").trim();
-      if (!t) t = "abqd_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
-      setToken(t);
-
-      // стартуем trial (если не был)
-      ensureTrialStart();
-      // если плана нет — ставим trial
-      if (!localStorage.getItem(K.plan)) setPlan("trial");
-
-      go("/tariffs");
-    };
-
-    $("btnLogout").onclick = () => {
-      clearToken();
-      localStorage.removeItem(K.plan);
-      localStorage.removeItem(K.trialStart);
-      go("/");
-    };
+    -webkit-mask-image: linear-gradient(to bottom,
+      rgba(0,0,0,1) 0%,
+      rgba(0,0,0,1) 42%,
+      rgba(0,0,0,0) 100%
+    );
+            mask-image: linear-gradient(to bottom,
+      rgba(0,0,0,1) 0%,
+      rgba(0,0,0,1) 42%,
+      rgba(0,0,0,0) 100%
+    );
   }
 
-  function vTariffs(){
-    const t0 = Number(localStorage.getItem(K.trialStart) || "0");
-    const left = t0 ? Math.max(0, 7 - days(now() - t0)) : 0;
-
-    view.innerHTML = `
-      <h2>Tariffs</h2>
-      <div class="muted">Trial даёт доступ к конструктору и публикации /u, но редактирование ограничено 7 днями.</div>
-
-      <div class="hr"></div>
-
-      <div class="row">
-        <span class="pill"><span class="dot ${trialActive()? "warn": "danger"}"></span>
-          Trial: ${trialActive() ? ("активен, осталось ~" + left.toFixed(1) + " дн.") : "не активен"}
-        </span>
-        <span class="pill"><span class="dot"></span> План: ${escapeHtml(getPlan())}</span>
-      </div>
-
-      <div class="hr"></div>
-
-      <div class="row">
-        <button class="btn primary" id="openConstructor">Открыть конструктор</button>
-        <button class="btn" id="openU">Открыть мой /u</button>
-      </div>
-
-      <div class="hr"></div>
-
-      <h2 style="margin-top:0;">Платные тарифы (для CRM + редактирования)</h2>
-      <div class="row">
-        <button class="btn" id="p1">Тариф 1</button>
-        <button class="btn" id="p2">Тариф 2</button>
-        <button class="btn" id="p3">Тариф 3</button>
-      </div>
-
-      <div class="toast">
-        Сейчас кнопки просто ставят план в localStorage. Позже подключим оплату и валидацию через API.
-      </div>
-    `;
-
-    $("openConstructor").onclick = () => go("/constructor");
-    $("openU").onclick = () => {
-      const s = getSlug();
-      if (!s) return go("/auth");
-      go("/u/" + encodeURIComponent(s));
-    };
-    $("p1").onclick = () => { setPlan("p1"); go("/crm"); };
-    $("p2").onclick = () => { setPlan("p2"); go("/crm"); };
-    $("p3").onclick = () => { setPlan("p3"); go("/crm"); };
+  #abqd-bars-b3 .abqd-bars__floorTex{
+    position:absolute; inset:-25% -10% 0;
+    background-image: var(--floor-img);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: 50% 50%;
+    filter: saturate(1.05) contrast(1.06) brightness(0.92);
+    transform: translateZ(0);
   }
 
-  function vConstructor(){
-    const slug = getSlug();
-    const key = slug ? `abqd_profile_${slug}` : "";
-    const stored = (slug && localStorage.getItem(key)) ? JSON.parse(localStorage.getItem(key)) : null;
+  #abqd-bars-b3 .abqd-bars__floorSeams{
+    position:absolute; inset:-35% -10% 0;
+    transform-origin: 50% 100%;
+    transform: perspective(980px) rotateX(74deg) scale(1.18);
 
-    view.innerHTML = `
-      <h2>Constructor</h2>
-      <div class="muted">
-        Публикация создаёт публичную страницу <b>/u/${escapeHtml(slug || "…")}</b>.
-        Редактирование: <b>${trialActive() ? "в trial" : (hasPaid() ? "в тарифе" : "заблокировано")}</b>.
-      </div>
+    background-image:
+      linear-gradient(to right, rgba(var(--seam-rgb), .22) 1px, rgba(0,0,0,0) 1px),
+      linear-gradient(to bottom, rgba(var(--seam-rgb), .18) 1px, rgba(0,0,0,0) 1px);
+    background-size: var(--tile-w) var(--tile-w);
+    background-position: var(--grid-x) 0;
 
-      <div class="hr"></div>
-
-      <div class="field">
-        <label>Имя</label>
-        <input class="input" id="pName" value="${escapeHtml(stored?.name || "")}" placeholder="Александр / ABQD">
-      </div>
-
-      <div class="field">
-        <label>Описание</label>
-        <textarea class="textarea" id="pBio" placeholder="Коротко: кто вы и что делаете">${escapeHtml(stored?.bio || "")}</textarea>
-      </div>
-
-      <div class="field">
-        <label>Телефон</label>
-        <input class="input" id="pPhone" value="${escapeHtml(stored?.phone || "")}" placeholder="+7 ...">
-      </div>
-
-      <div class="hr"></div>
-
-      <h2 style="margin-top:0;">Кнопки</h2>
-      ${[0,1,2].map(i => `
-        <div class="row">
-          <input class="input" style="flex:1" id="b${i}t" placeholder="Текст" value="${escapeHtml(stored?.buttons?.[i]?.title || "")}">
-          <input class="input" style="flex:1.2" id="b${i}u" placeholder="Ссылка" value="${escapeHtml(stored?.buttons?.[i]?.url || "")}">
-        </div>
-      `).join("")}
-
-      <div class="hr"></div>
-
-      <div class="row">
-        <button class="btn primary" id="btnPublish">Опубликовать → /u</button>
-        <button class="btn" id="btnPreviewU">Открыть /u</button>
-      </div>
-
-      <div class="toast" id="pubMsg" style="display:none;"></div>
-    `;
-
-    $("btnPreviewU").onclick = () => {
-      if (!slug) return go("/auth");
-      go("/u/" + encodeURIComponent(slug));
-    };
-
-    $("btnPublish").onclick = async () => {
-      if (!slug) return go("/auth");
-
-      // UI-ограничение редактирования
-      if (!canEditProfile()){
-        setPlan("trial"); // просто чтобы явно
-        alert("Trial закончился. Для редактирования нужен тариф.");
-        return go("/tariffs");
-      }
-
-      const profile = {
-        slug,
-        name: ($("pName").value || "").trim(),
-        bio: ($("pBio").value || "").trim(),
-        phone: ($("pPhone").value || "").trim(),
-        buttons: [0,1,2].map(i => ({
-          title: ($("b"+i+"t").value || "").trim(),
-          url: ($("b"+i+"u").value || "").trim(),
-        })).filter(x => x.title || x.url),
-        updated_at: new Date().toISOString(),
-      };
-
-      // local backup
-      localStorage.setItem(key, JSON.stringify(profile));
-      if (!localStorage.getItem(`abqd_published_at_${slug}`)){
-        localStorage.setItem(`abqd_published_at_${slug}`, String(now()));
-      }
-
-      // try API (optional)
-      let apiOk = false;
-      try{
-        await apiPutProfile(slug, profile);
-        apiOk = true;
-      }catch(e){
-        // ignore for now (stage might not proxy API yet)
-      }
-
-      const msg = $("pubMsg");
-      msg.style.display = "block";
-      msg.textContent = apiOk
-        ? "✅ Опубликовано в API и сохранено локально."
-        : "✅ Сохранено локально. (API недоступно — позже подключим прокси/авторизацию.)";
-
-      go("/u/" + encodeURIComponent(slug));
-    };
+    opacity: .12;
+    mix-blend-mode: screen;
+    filter: blur(0.25px);
   }
 
-  function vCRM(){
-    view.innerHTML = `
-      <h2>CRM</h2>
-      <div class="muted">Сюда пускаем только тариф 1/2/3. Пока заглушка, но стиль уже “продуктовый”.</div>
-
-      <div class="hr"></div>
-
-      <div class="row">
-        <div class="card" style="flex:1; padding:14px;">
-          <b>Лиды</b>
-          <div class="muted" style="margin-top:6px;">Список клиентов / статусы</div>
-        </div>
-        <div class="card" style="flex:1; padding:14px;">
-          <b>События</b>
-          <div class="muted" style="margin-top:6px;">Звонки / встречи / напоминания</div>
-        </div>
-      </div>
-
-      <div class="toast">
-        После оплаты: CRM + конструктор. Trial: только конструктор.
-      </div>
-    `;
+  #abqd-bars-b3 .abqd-bars__floorBloom{
+    position:absolute; inset:-10% -10% 0;
+    background:
+      radial-gradient(820px 360px at 50% 40%, rgba(var(--seam-rgb), .18), rgba(0,0,0,0) 70%),
+      radial-gradient(740px 280px at 60% 18%, rgba(255,255,255,.06), rgba(0,0,0,0) 78%);
+    mix-blend-mode: screen;
+    opacity: .18;
+    filter: blur(1.2px);
   }
 
-  async function vU(slug){
-    view.innerHTML = `
-      <h2>Public profile</h2>
-      <div class="muted">Загрузка профиля: <b>${escapeHtml(slug)}</b></div>
-      <div class="toast">Если API недоступно — покажем локальный бэкап (на этом устройстве).</div>
-    `;
+  /* основная вертикальная плитка (стартует после carry) */
+  #abqd-bars-b3 .abqd-bars__tile{
+    position:absolute;
+    left:0; right:0;
+    top: calc(var(--carry-h) - 1px);
+    bottom:0;
+    z-index:4;
+    pointer-events:none;
 
-    // try API first
-    let profile = null;
-    try{
-      profile = await apiGetProfile(slug);
-    }catch(e){
-      const key = `abqd_profile_${slug}`;
-      const s = localStorage.getItem(key);
-      if (s) profile = JSON.parse(s);
+    background-image:
+      /* вертикальные швы (главные) */
+      repeating-linear-gradient(90deg, rgba(var(--seam-rgb), var(--tile-seam)) 0 1px, rgba(0,0,0,0) 1px var(--tile-w)),
+      /* горизонтальные швы (мягкие) */
+      repeating-linear-gradient(0deg,  rgba(var(--seam-rgb), calc(var(--tile-seam) * .38)) 0 1px, rgba(0,0,0,0) 1px var(--tile-h)),
+      /* мягкие подсветки */
+      radial-gradient(820px 640px at 50% 18%, rgba(var(--seam-rgb), .10), rgba(0,0,0,0) 72%),
+      radial-gradient(540px 480px at 22% 64%, rgba(255,255,255,.035), rgba(0,0,0,0) 74%),
+      radial-gradient(540px 480px at 78% 60%, rgba(255,255,255,.035), rgba(0,0,0,0) 74%);
+
+    background-position:
+      var(--grid-x) 0,
+      var(--grid-x) 0,
+      50% 0,
+      0 0,
+      100% 0;
+
+    mix-blend-mode: screen;
+    opacity: .92;
+    filter: blur(0.16px) saturate(1.02) contrast(1.08);
+  }
+
+  /* ореол швов */
+  #abqd-bars-b3 .abqd-bars__tile::after{
+    content:"";
+    position:absolute; inset:-2% -2%;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(var(--seam-rgb), calc(var(--tile-bloom) * .26)) 0 1px, rgba(0,0,0,0) 1px var(--tile-w)),
+      repeating-linear-gradient(0deg,  rgba(var(--seam-rgb), calc(var(--tile-bloom) * .10)) 0 1px, rgba(0,0,0,0) 1px var(--tile-h));
+    background-position: var(--grid-x) 0, var(--grid-x) 0;
+    mix-blend-mode: screen;
+    opacity: .58;
+    filter: blur(1.25px);
+  }
+
+  /* лёгкий «дыхательный» скан */
+  #abqd-bars-b3 .abqd-bars__scan{
+    position:absolute; inset:-25% 0; z-index:5;
+    background: radial-gradient(520px 260px at 50% 18%, rgba(var(--seam-rgb), .14), rgba(0,0,0,0) 70%);
+    mix-blend-mode: screen;
+    opacity: .34;
+    filter: blur(.2px);
+    animation: abqdBarsScan 6.2s ease-in-out infinite;
+  }
+  @keyframes abqdBarsScan{ 0%{transform: translate3d(0,-10%,0);} 55%{transform: translate3d(0,18%,0);} 100%{transform: translate3d(0,-10%,0);} }
+
+  /* приглушаем самый верх, чтобы стык был мягче */
+  #abqd-bars-b3 .abqd-bars__topFade{
+    position:absolute; left:0; right:0; top:0;
+    height: calc(var(--carry-h) + 8%);
+    z-index:6;
+    background: linear-gradient(180deg, rgba(0,0,0,.88) 0%, rgba(0,0,0,0) 70%);
+    pointer-events:none;
+  }
+
+  #abqd-bars-b3 .abqd-bars__vignette{
+    position:absolute; inset:0; z-index:10;
+    background: radial-gradient(1200px 720px at 50% 48%, rgba(0,0,0,0) 38%, rgba(0,0,0,.66) 86%, rgba(0,0,0,.88) 100%);
+    opacity: .62;
+  }
+
+  /* MOBILE */
+  @media (max-width:480px){
+    #abqd-hero-b2.abqd-b2{ min-height: 600px; }
+    #abqd-hero-b2.abqd-b2{
+      --hand-w: min(1550px, 150vw);
+      --hand-scale: 1.52;
+      --hand-right: clamp(-160px, -14vw, -56px);
+      --hand-bottom: 0px;
+      --hand-nudgeX: clamp(120px, 40vw, 240px);
+      --hand-nudgeY: 0px;
+
+      --mark-top: 44%;
+      --mark-scale: 0.92;
+      --mark-w: min(2400px, 140vw);
+      --mark-h: min(1100px, 56vh);
+      --mark-opacity: 0.78;
+      --mark-blur: 0.85px;
+      --mark-shadowA: 0.03;
+      --mark-fade-strength: 1.90;
+      --mark-pad: clamp(14px, 4.6vw, 44px);
     }
-
-    if (!profile){
-      view.innerHTML = `
-        <h2>/u/${escapeHtml(slug)}</h2>
-        <div class="toast">
-          Профиль не найден. Либо он ещё не опубликован, либо API пока не подключено.
-        </div>
-        <div class="row">
-          <button class="btn primary" id="goCtor">Открыть конструктор</button>
-          <button class="btn" id="goTar">Тарифы</button>
-        </div>
-      `;
-      $("goCtor").onclick = () => go("/constructor");
-      $("goTar").onclick = () => go("/tariffs");
-      return;
-    }
-
-    const canEdit = canEditProfile() && (getSlug() === slug); // простая проверка “владелец”
-    view.innerHTML = `
-      <div class="u-card">
-        <div class="row" style="justify-content:space-between; align-items:flex-start">
-          <div>
-            <p class="u-title">${escapeHtml(profile.name || "Без имени")}</p>
-            <p class="u-sub">${escapeHtml(profile.bio || "")}</p>
-            ${profile.phone ? `<div class="badge" style="margin-top:10px">☎ ${escapeHtml(profile.phone)}</div>` : ""}
-          </div>
-          <div style="text-align:right">
-            <div class="badge"><span class="dot"></span> /u/${escapeHtml(slug)}</div>
-            <div class="muted" style="font-size:12px; margin-top:8px">
-              ${canEdit ? "Редактирование доступно" : "Редактирование закрыто"}
-            </div>
-          </div>
-        </div>
-
-        <div class="btnblock">
-          ${(profile.buttons || []).map(b => `
-            <a class="u-btn" href="${escapeAttr(b.url || "#")}" target="_blank" rel="noopener">
-              <div>
-                <strong>${escapeHtml(b.title || "Кнопка")}</strong><br>
-                <span>${escapeHtml(b.url || "")}</span>
-              </div>
-              <span>→</span>
-            </a>
-          `).join("")}
-        </div>
-
-        <div class="hr"></div>
-
-        <div class="row">
-          ${canEdit ? `<button class="btn primary" id="editProfile">Редактировать</button>` : `<button class="btn" id="payToEdit">Оплатить, чтобы редактировать</button>`}
-          <button class="btn" id="backHome">На главную</button>
-        </div>
-      </div>
-    `;
-
-    if (canEdit){
-      $("editProfile").onclick = () => go("/constructor");
-    } else {
-      $("payToEdit").onclick = () => go("/tariffs");
-    }
-    $("backHome").onclick = () => go("/");
+    #abqd-hero-b2 .abqd-b2__floor{ top: 58%; bottom: -30%; }
   }
 
-  function vNotFound(){
-    view.innerHTML = `
-      <h2>404</h2>
-      <div class="toast">Маршрут не найден. Но это нормально на этапе сборки.</div>
-      <button class="btn primary" id="back">На главную</button>
-    `;
-    $("back").onclick = () => go("/");
+  @media (prefers-reduced-motion: reduce){
+    #abqd-hero-b2 .abqd-b2__bgBase,
+    #abqd-hero-b2 .abqd-b2__scanlines,
+    #abqd-hero-b2 .abqd-b2__handMotion,
+    #abqd-bars-b3 .abqd-bars__scan{ animation: none !important; }
   }
+</style>
 
-  // ---------- GUARDS ----------
-  function applyGuards(route){
-    const t = !!getToken();
-
-    // no token
-    if (!t && ["tariffs","constructor","crm"].includes(route.name)){
-      go("/auth");
-      return true;
-    }
-
-    // constructor gated
-    if (route.name === "constructor" && !canUseConstructor()){
-      go("/tariffs");
-      return true;
-    }
-
-    // crm gated
-    if (route.name === "crm" && !canUseCRM()){
-      go("/tariffs");
-      return true;
-    }
-
-    return false;
-  }
-
-  // ---------- RENDER ----------
-  async function render(){
-    updateStatus();
-
-    const r = parseRoute();
-    if (applyGuards(r)) return;
-
-    // nav bindings
-    $("goHome").onclick = () => go("/");
-    $("navAuth").onclick = () => go("/auth");
-    $("navTariffs").onclick = () => go("/tariffs");
-    $("navConstructor").onclick = () => go("/constructor");
-    $("navCrm").onclick = () => go("/crm");
-    $("navLogout").onclick = () => { clearToken(); go("/auth"); };
-
-    if (r.name === "home") return vHome();
-    if (r.name === "auth") return vAuth();
-    if (r.name === "tariffs") return vTariffs();
-    if (r.name === "constructor") return vConstructor();
-    if (r.name === "crm") return vCRM();
-    if (r.name === "u") return vU(r.slug);
-    return vNotFound();
-  }
-
-  window.addEventListener("popstate", render);
-  render();
-
-  // ---------- tiny escaping ----------
-  function escapeHtml(s){
-    s = String(s ?? "");
-    return s.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-  function escapeAttr(s){
-    s = String(s ?? "");
-    return s.replace(/"/g, "&quot;");
-  }
-})();
-</script>
 </body>
 </html>
