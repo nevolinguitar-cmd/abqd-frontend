@@ -1,145 +1,83 @@
+WEBROOT="$ROOT"   # если команда выше вывела путь
+sudo mkdir -p "$WEBROOT/u"
+
+sudo tee "$WEBROOT/u/index.html" >/dev/null <<'HTML'
 <!doctype html>
 <html lang="ru" data-theme="soft">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ABQD • Профиль</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
   <style>
     :root{
-      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      --r1:16px;
-      --r2:22px;
+      --font:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      --r1:16px; --r2:22px;
 
-      /* DARK default */
-      --bg:#0b0c10;
-      --panel:#0f1117;
-      --panel2:#11131b;
-      --text:#eef1f6;
-      --muted:rgba(238,241,246,.66);
-      --line:rgba(255,255,255,.13);
-      --shadow:0 18px 60px rgba(0,0,0,.30);
+      --bg:#0b0c10; --panel:#0f1117; --panel2:#11131b;
+      --text:#eef1f6; --muted:rgba(238,241,246,.66);
+      --line:rgba(255,255,255,.13); --shadow:0 18px 60px rgba(0,0,0,.30);
 
-      --primary1:#ff4d9d;
-      --primary2:#6d5cff;
-
+      --primary1:#ff4d9d; --primary2:#6d5cff;
       --gridBg: rgba(255,255,255,.03);
-
       --ok:#39d98a;
     }
-
     html[data-theme="soft"]{
-      --bg:#f4f6fb;
-      --panel:rgba(255,255,255,.62);
-      --panel2:rgba(255,255,255,.78);
-      --text:#10131a;
-      --muted:rgba(16,19,26,.56);
-      --line:rgba(16,19,26,.14);
-      --shadow:0 18px 60px rgba(18,24,40,.12);
-
-      --primary1:#2563eb;
-      --primary2:#7c3aed;
-
+      --bg:#f4f6fb; --panel:rgba(255,255,255,.62); --panel2:rgba(255,255,255,.78);
+      --text:#10131a; --muted:rgba(16,19,26,.56);
+      --line:rgba(16,19,26,.14); --shadow:0 18px 60px rgba(18,24,40,.12);
+      --primary1:#2563eb; --primary2:#7c3aed;
       --gridBg: rgba(255,255,255,.42);
       --ok:#39d98a;
     }
 
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:var(--font);
-      color:var(--text);
-      font-size:15.5px;
-      line-height:1.62;
+    body{margin:0;font-family:var(--font);color:var(--text);font-size:15.5px;line-height:1.62;
       background:
         radial-gradient(1100px 700px at 15% 10%, rgba(109,92,255,.16), transparent 55%),
         radial-gradient(1100px 700px at 85% 15%, rgba(255,77,157,.14), transparent 55%),
         var(--bg);
     }
-
-    body::before{
-      content:"";
-      position:fixed;inset:0;pointer-events:none;z-index:0;
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
       opacity:.055;mix-blend-mode:overlay;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
-      transform:translateZ(0)
-    }
+      transform:translateZ(0)}
 
-    .wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:18px 14px 44px;}
-    @media (max-width: 560px){ .wrap{padding-top:18px} }
-
-    .card{
-      position:relative;
-      border:1px solid var(--line);
+    .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:18px 14px 44px;}
+    .card{position:relative;border:1px solid var(--line);
       background:
         radial-gradient(120% 140% at 10% 0%, rgba(255,255,255,.10), transparent 55%),
         linear-gradient(180deg,var(--panel),rgba(255,255,255,.04));
-      border-radius:var(--r2);
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(12px);
-      overflow:hidden
-    }
-    .card::before{
-      content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+      border-radius:var(--r2);box-shadow:var(--shadow);backdrop-filter:blur(12px);overflow:hidden}
+    .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
       background:linear-gradient(135deg, rgba(255,255,255,.22), transparent 42%, rgba(255,255,255,.10));
-      opacity:.18;mix-blend-mode:overlay
-    }
+      opacity:.18;mix-blend-mode:overlay}
     html[data-theme="soft"] .card::before{opacity:.10;mix-blend-mode:normal}
 
-    .cardHd{
-      padding:14px 14px 10px;
-      border-bottom:1px solid var(--line);
-      display:flex;align-items:center;justify-content:space-between;gap:10px
-    }
-    .cardHd b{
-      font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)
-    }
-    .mini{font-size:12px;color:var(--muted);font-weight:800}
+    .cardHd{padding:14px 14px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .cardHd b{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 
     .hero{padding:16px}
-
-    .banner{
-      position:relative;height:220px;border-radius:var(--r2);overflow:hidden;
-      border:1px solid var(--line);background:rgba(0,0,0,.10);z-index:1
-    }
-    .bannerPlh{
-      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-      font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px;
-      color:var(--muted);
-      background:linear-gradient(180deg, rgba(255,255,255,.06), transparent);
-      pointer-events:none
-    }
-    html[data-theme="soft"] .bannerPlh{
-      background:linear-gradient(180deg, rgba(255,255,255,.30), transparent)
-    }
+    .banner{position:relative;height:220px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--line);background:rgba(0,0,0,.10);z-index:1}
+    .bannerPlh{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px;color:var(--muted);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), transparent);pointer-events:none}
+    html[data-theme="soft"] .bannerPlh{background:linear-gradient(180deg, rgba(255,255,255,.30), transparent)}
     .banner img{width:100%;height:100%;object-fit:cover;display:block}
 
-    .bannerLogo{
-      position:absolute;right:12px;top:12px;width:56px;height:56px;border-radius:16px;
+    .bannerLogo{position:absolute;right:12px;top:12px;width:56px;height:56px;border-radius:16px;
       border:1px solid var(--line);background:rgba(0,0,0,.18);backdrop-filter:blur(10px);
       display:flex;align-items:center;justify-content:center;overflow:hidden;text-decoration:none;
-      box-shadow:0 10px 30px rgba(0,0,0,.18)
-    }
+      box-shadow:0 10px 30px rgba(0,0,0,.18)}
     html[data-theme="soft"] .bannerLogo{background:rgba(255,255,255,.55)}
     .bannerLogo img{width:100%;height:100%;object-fit:cover;display:block}
 
-    .heroHead{
-      margin-top:-54px;
-      display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;
-      padding:0 10px;position:relative;z-index:3
-    }
+    .heroHead{margin-top:-54px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 10px;position:relative;z-index:3}
     .left{display:flex;align-items:flex-end;gap:12px}
-    .avatar{
-      width:106px;height:106px;border-radius:999px;border:4px solid rgba(255,255,255,.9);
-      overflow:hidden;background:rgba(0,0,0,.18);
-      box-shadow:0 18px 60px rgba(0,0,0,.20);
-      flex:0 0 auto;display:flex;align-items:center;justify-content:center;
-      position:relative;z-index:4
-    }
+    .avatar{width:106px;height:106px;border-radius:999px;border:4px solid rgba(255,255,255,.9);overflow:hidden;background:rgba(0,0,0,.18);
+      box-shadow:0 18px 60px rgba(0,0,0,.20);flex:0 0 auto;display:flex;align-items:center;justify-content:center;position:relative;z-index:4}
     .avatar img{width:100%;height:100%;object-fit:cover;display:block}
     .avatar .fallback{font-weight:800;font-size:38px;opacity:.92}
 
@@ -152,101 +90,39 @@
     html[data-theme="soft"] .aboutText{color:rgba(16,19,26,.72)}
 
     .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    .cta a{
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:11px 14px;
-      font-weight:800;
-      font-size:13px;
-      text-decoration:none;
-      color:#fff;
-      background:rgba(0,0,0,.22);
-      position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0);
-      transition:transform .14s ease, filter .14s ease
-    }
+    .cta a{border:1px solid var(--line);border-radius:999px;padding:11px 14px;font-weight:800;font-size:13px;text-decoration:none;
+      color:#fff;background:rgba(0,0,0,.22);position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0);
+      transition:transform .14s ease, filter .14s ease}
     .cta a:active{transform:translateY(1px)}
-    .cta a.primary{
-      border:0 !important;background:transparent !important;color:#fff !important;border-radius:999px;
-      overflow:hidden;position:relative;isolation:isolate;transform:translateZ(0);
-      box-shadow:0 10px 26px rgba(0,0,0,.14)
-    }
-    .cta a.primary::before{
-      content:"";position:absolute;inset:-1px;
-      background:linear-gradient(90deg,var(--primary1),var(--primary2));
-      border-radius:inherit;z-index:-1;transform:translateZ(0)
-    }
-    html[data-theme="soft"] .cta a.primary{
-      color:var(--text) !important;text-shadow:none;
-      border:1px solid rgba(16,19,26,.16) !important;
-      box-shadow:0 16px 36px rgba(18,24,40,.14),
-                 0 1px 0 rgba(255,255,255,.70) inset,
-                 0 -1px 0 rgba(0,0,0,.06) inset;
-      letter-spacing:.01em
-    }
-    html[data-theme="soft"] .cta a.primary::before{
-      background:linear-gradient(180deg, rgba(226,229,235,.98) 0%, rgba(196,203,214,.96) 48%, rgba(168,177,191,.95) 100%)
-    }
+    .cta a.primary{border:0 !important;background:transparent !important;color:#fff !important;border-radius:999px;overflow:hidden;position:relative;isolation:isolate;transform:translateZ(0);box-shadow:0 10px 26px rgba(0,0,0,.14)}
+    .cta a.primary::before{content:"";position:absolute;inset:-1px;background:linear-gradient(90deg,var(--primary1),var(--primary2));border-radius:inherit;z-index:-1}
+    html[data-theme="soft"] .cta a.primary{color:var(--text) !important;text-shadow:none;border:1px solid rgba(16,19,26,.16) !important;
+      box-shadow:0 16px 36px rgba(18,24,40,.14),0 1px 0 rgba(255,255,255,.70) inset,0 -1px 0 rgba(0,0,0,.06) inset}
+    html[data-theme="soft"] .cta a.primary::before{background:linear-gradient(180deg, rgba(226,229,235,.98) 0%, rgba(196,203,214,.96) 48%, rgba(168,177,191,.95) 100%)}
 
     .section{padding:16px}
     .secTitle{margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800}
 
     .chipsRow{display:flex;flex-wrap:wrap;gap:10px}
-    .chipA{
-      display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.05);
-      text-decoration:none;
-      color:var(--muted)!important;
-      font-weight:800;
-      font-size:12px;
-      position:relative;overflow:hidden;isolation:isolate;
-      transition:transform .14s ease, filter .14s ease
-    }
+    .chipA{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(0,0,0,.05);text-decoration:none;color:var(--muted)!important;font-weight:800;font-size:12px}
     html[data-theme="soft"] .chipA{background:rgba(255,255,255,.45)}
     .chipA:hover{color:var(--text)!important}
-    .chipA:active{transform:translateY(1px)}
     .chipI{opacity:.9;color:var(--muted)}
 
     .list{display:flex;flex-direction:column;gap:10px}
-    .item{
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.05);
-      border-radius:var(--r1);
-      padding:12px;
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      position:relative;overflow:hidden
-    }
+    .item{border:1px solid var(--line);background:rgba(0,0,0,.05);border-radius:var(--r1);padding:12px;display:flex;gap:12px;align-items:flex-start}
     html[data-theme="soft"] .item{background:rgba(255,255,255,.45)}
-
-    .check{
-      width:28px;height:28px;border-radius:999px;border:1px solid var(--line);
-      background:rgba(0,0,0,.08);color:var(--ok);
-      display:flex;align-items:center;justify-content:center;
-      font-weight:900;font-size:14px;line-height:1;flex:0 0 auto;
-      box-shadow:0 10px 26px rgba(0,0,0,.16),0 0 0 1px rgba(255,255,255,.06) inset
-    }
-    html[data-theme="soft"] .check{background:rgba(255,255,255,.45);box-shadow:0 10px 26px rgba(18,24,40,.10),0 0 0 1px rgba(0,0,0,.06) inset;}
-
+    .check{width:28px;height:28px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.08);color:var(--ok);
+      display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex:0 0 auto}
     .itT{margin:0;font-weight:800;font-size:14px}
     .itD{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.55;white-space:pre-wrap}
-    .miniLink{display:inline-block;margin-top:8px;font-size:12px;color:var(--muted);font-weight:800}
+    .mini{font-size:12px;color:var(--muted);font-weight:800}
 
     .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
     @media (max-width: 900px){.grid3{grid-template-columns:repeat(2,1fr)}}
     @media (max-width: 560px){.grid3{grid-template-columns:1fr}}
-
-    .work{
-      border:1px solid var(--line);
-      border-radius:var(--r1);
-      overflow:hidden;
-      background:rgba(0,0,0,.05);
-      cursor:pointer;
-      transition:.18s ease;
-      min-height:220px;
-      display:flex;flex-direction:column
-    }
+    .work{border:1px solid var(--line);border-radius:var(--r1);overflow:hidden;background:rgba(0,0,0,.05);cursor:pointer;transition:.18s ease;min-height:220px;display:flex;flex-direction:column}
     html[data-theme="soft"] .work{background:rgba(255,255,255,.45)}
     .work:hover{transform:translateY(-2px)}
     .workImg{height:160px;background:rgba(0,0,0,.12)}
@@ -255,27 +131,23 @@
     .workT{margin:0;font-weight:800;font-size:14px;line-height:1.2;white-space:pre-wrap;word-break:break-word}
     .workM{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.5;white-space:pre-wrap}
 
-    .state{
-      padding:18px;
-      color:var(--muted);
-      font-weight:800
-    }
     .hide{display:none!important}
+    .err{padding:22px}
+    .err h1{margin:0 0 8px;font-size:22px;font-weight:900}
+    .err p{margin:0;color:var(--muted);font-weight:800}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
+    <div class="card" id="card">
       <div class="cardHd">
         <b>Профиль</b>
-        <span class="mini" id="miniRight">Загрузка…</span>
+        <span class="mini" id="slugBadge"></span>
       </div>
 
-      <div id="stateBox" class="state">Загрузка профиля…</div>
-
-      <div class="hero hide" id="hero">
+      <div class="hero" id="okView">
         <div class="banner" id="bannerBox">
-          <div class="bannerPlh" id="bannerPlh">Баннер</div>
+          <div class="bannerPlh" id="bannerPlh">Баннер (1600×800)</div>
         </div>
 
         <div class="heroHead">
@@ -293,21 +165,26 @@
           <p class="aboutText" id="aboutEl"></p>
           <div class="cta" id="ctaRow"></div>
         </div>
+
+        <div class="section" id="contactsSection" style="padding:0 10px 16px">
+          <div class="secTitle" id="contactsTitleEl">Контакты</div>
+          <div class="chipsRow" id="contactsPreview"></div>
+        </div>
+
+        <div class="section" id="pointsSection">
+          <div class="secTitle" id="pointsTitleEl">Ссылки</div>
+          <div class="list" id="pointsPreview"></div>
+        </div>
+
+        <div class="section" id="gallerySection">
+          <div class="secTitle" id="galleryTitleEl">Работы</div>
+          <div class="grid3" id="galleryPreview"></div>
+        </div>
       </div>
 
-      <div class="section hide" id="contactsSection" style="padding:0 10px 16px">
-        <div class="secTitle" id="contactsTitleEl">Контакты</div>
-        <div class="chipsRow" id="contactsPreview"></div>
-      </div>
-
-      <div class="section hide" id="pointsSection">
-        <div class="secTitle" id="pointsTitleEl">Ссылки</div>
-        <div class="list" id="pointsPreview"></div>
-      </div>
-
-      <div class="section hide" id="gallerySection">
-        <div class="secTitle" id="galleryTitleEl">Работы</div>
-        <div class="grid3" id="galleryPreview"></div>
+      <div class="err hide" id="errView">
+        <h1 id="errTitle">Профиль не найден</h1>
+        <p id="errText">Проверь адрес страницы.</p>
       </div>
     </div>
   </div>
@@ -315,381 +192,262 @@
 <script>
 (function(){
   function $(id){ return document.getElementById(id); }
-  function clean(s){ return String(s == null ? '' : s).replace(/^\s+|\s+$/g,''); }
+  function clean(s){ return String(s==null?'':s).replace(/^\s+|\s+$/g,''); }
   function normUrl(u){
-    u = clean(u);
-    if (!u) return '';
+    u = clean(u); if(!u) return '';
     var low = u.toLowerCase();
-    if (low.indexOf('http://') === 0 || low.indexOf('https://') === 0) return u;
-    if (low.indexOf('mailto:') === 0 || low.indexOf('tel:') === 0 || low.indexOf('tg://') === 0) return u;
+    if (low.indexOf('http://')===0 || low.indexOf('https://')===0) return u;
+    if (low.indexOf('mailto:')===0 || low.indexOf('tel:')===0 || low.indexOf('tg://')===0) return u;
     return 'https://' + u;
   }
   function contactUrl(u){
-    u = clean(u);
-    if (!u) return '';
+    u = clean(u); if(!u) return '';
     var low = u.toLowerCase();
-    if (low.indexOf('http://') === 0 || low.indexOf('https://') === 0 ||
-        low.indexOf('mailto:') === 0 || low.indexOf('tel:') === 0 || low.indexOf('tg://') === 0) return u;
-
-    if (u.indexOf('@') !== -1 && u.indexOf(' ') === -1) return 'mailto:' + u;
-
-    // phone
-    if (/^[0-9\s()\-\.+]+$/.test(u)) {
-      var digits = u.replace(/[\s\-().]/g, '');
-      if (digits.length >= 6) return 'tel:' + digits;
+    if (low.indexOf('http://')===0 || low.indexOf('https://')===0 || low.indexOf('mailto:')===0 || low.indexOf('tel:')===0 || low.indexOf('tg://')===0) return u;
+    if (u.indexOf('@')!==-1 && u.indexOf(' ')===-1) return 'mailto:' + u;
+    if (/^[0-9\s()\-\.+]+$/.test(u) && u.replace(/[^\d]/g,'').length>=6){
+      var digits = u.replace(/[\s\-().]/g,'');
+      return 'tel:' + digits;
     }
     return 'https://' + u;
   }
   function phoneToTel(s){
-    s = clean(s);
-    if (!s) return '';
-    var out = '';
-    for (var i = 0; i < s.length; i++) {
-      var ch = s.charAt(i);
-      if (ch >= '0' && ch <= '9') out += ch;
-      else if (ch === '+' && out.length === 0) out += ch;
+    s = clean(s); if(!s) return '';
+    var out=''; for (var i=0;i<s.length;i++){
+      var ch=s.charAt(i);
+      if (ch>='0'&&ch<='9') out+=ch;
+      else if (ch==='+' && out.length===0) out+=ch;
     }
-    var digits = (out.charAt(0) === '+') ? out.slice(1) : out;
-    if (digits.length < 6) return '';
+    var digits = (out.charAt(0)==='+') ? out.slice(1) : out;
+    if (digits.length<6) return '';
     return 'tel:' + out;
   }
-  function wrapFixedChars(text, n){
-    text = String(text == null ? '' : text);
-    n = (typeof n === 'number' && n > 0) ? n : 17;
-    if (!text) return text;
-    var lines = text.split(/\r?\n/);
-    var out = [];
-    for (var li = 0; li < lines.length; li++) {
-      var line = lines[li];
-      if (line.length <= n) { out.push(line); continue; }
-      for (var j = 0; j < line.length; j += n) out.push(line.slice(j, j + n));
-    }
-    return out.join('\n');
-  }
+  function isDataUrl(s){ s=clean(s); return s.indexOf('data:')===0; }
 
   function getSlug(){
-    // /u/<slug>  или /u/<slug>/
-    var p = location.pathname || '';
-    // поддержка если nginx отдаёт /u/index.html
-    var m = p.match(/^\/u\/([^\/?#]+)/i);
-    return m ? decodeURIComponent(m[1]) : '';
+    var p = location.pathname.replace(/^\/+|\/+$/g,''); // trim slashes
+    var parts = p.split('/');
+    if (parts[0] !== 'u') return '';
+    return clean(parts[1] || '');
   }
 
-  function pickProfileShape(data){
-    // на случай если сервер оборачивает
-    if (!data) return null;
-    if (data.profile) return data.profile;
-    return data;
+  function showErr(title, text){
+    $('okView').classList.add('hide');
+    $('errView').classList.remove('hide');
+    $('errTitle').textContent = title || 'Ошибка';
+    $('errText').textContent = text || '';
   }
 
-  function setTheme(theme){
-    if (theme !== 'dark' && theme !== 'soft') theme = 'soft';
+  function render(state){
+    var theme = (state && (state.theme==='dark' || state.theme==='soft')) ? state.theme : 'soft';
     document.documentElement.setAttribute('data-theme', theme);
-  }
 
-  function setState(text, isError){
-    var box = $('stateBox');
-    if (!box) return;
-    box.textContent = text;
-    box.style.opacity = isError ? '1' : '0.92';
-  }
+    $('slugBadge').textContent = state && state.slug ? ('/u/' + state.slug) : '';
 
-  function showContent(){
-    $('stateBox').classList.add('hide');
-    $('hero').classList.remove('hide');
-  }
+    var name = clean(state.fullName || state.name || '');
+    $('nameEl').textContent = name || 'Без имени';
 
-  function renderProfile(p, slug){
-    // theme
-    setTheme(p.theme || 'soft');
+    var role = clean(state.role || '');
+    $('roleEl').textContent = role || '';
 
-    $('miniRight').textContent = 'app.abqd.ru/u/' + slug;
+    $('aboutEl').textContent = state.about || '';
 
-    // Name / Role / About
-    var name = clean(p.fullName) || 'Без имени';
-    var role = clean(p.role) || '';
-    $('nameEl').textContent = name;
-    $('roleEl').textContent = role;
-    $('aboutEl').textContent = p.about || '';
+    // banner + logo
+    var banner = $('bannerBox');
+    var plh = $('bannerPlh');
+    banner.innerHTML = '';
+    banner.appendChild(plh);
 
-    // Banner + Logo
-    var bannerBox = $('bannerBox');
-    var bannerPlh = $('bannerPlh');
-    var hasBanner = !!clean(p.bannerDataUrl || p.bannerUrl || p.banner || '');
-    var bannerSrc = clean(p.bannerDataUrl || p.bannerUrl || p.banner || '');
-    bannerPlh.style.display = hasBanner ? 'none' : 'flex';
+    var bannerSrc = clean(state.bannerDataUrl || state.banner_url || state.banner || '');
+    if (bannerSrc){
+      plh.style.display='none';
+      var imgB=document.createElement('img');
+      imgB.src = bannerSrc;
+      banner.insertBefore(imgB, banner.firstChild);
 
-    bannerBox.innerHTML = '';
-    bannerBox.appendChild(bannerPlh);
-
-    if (hasBanner) {
-      var imgB = document.createElement('img');
-      imgB.src = bannerSrc; // data: или URL
-      imgB.alt = 'banner';
-      bannerBox.insertBefore(imgB, bannerBox.firstChild);
-
-      var logoSrc = clean(p.logoDataUrl || p.logoUrl || p.logo || '');
-      if (logoSrc) {
-        var link = clean(p.logoLink) ? normUrl(p.logoLink) : '';
-        var a = document.createElement('a');
-        a.className = 'bannerLogo';
-        a.href = link || '#';
-        a.target = '_blank';
-        a.rel = 'noopener';
-        if (!link) a.style.pointerEvents = 'none';
-
-        var li = document.createElement('img');
-        li.src = logoSrc;
-        li.alt = 'logo';
+      var logoSrc = clean(state.logoDataUrl || state.logo_url || state.logo || '');
+      if (logoSrc){
+        var link = normUrl(state.logoLink || state.logo_link || '');
+        var a=document.createElement('a');
+        a.className='bannerLogo';
+        a.href=link||'#';
+        a.target='_blank';
+        a.rel='noopener';
+        if(!link) a.style.pointerEvents='none';
+        var li=document.createElement('img');
+        li.src=logoSrc; li.alt='logo';
         a.appendChild(li);
-        bannerBox.appendChild(a);
+        banner.appendChild(a);
       }
+    } else {
+      plh.style.display='flex';
     }
 
-    // Avatar
-    var av = $('avatarBox');
-    av.innerHTML = '';
-    var avatarSrc = clean(p.avatarDataUrl || p.avatarUrl || p.avatar || '');
-    if (avatarSrc) {
-      var imgA = document.createElement('img');
-      imgA.src = avatarSrc;
-      imgA.alt = 'avatar';
+    // avatar
+    var av=$('avatarBox'); av.innerHTML='';
+    var avSrc = clean(state.avatarDataUrl || state.avatar_url || state.avatar || '');
+    if (avSrc){
+      var imgA=document.createElement('img');
+      imgA.src=avSrc; imgA.alt='avatar';
       av.appendChild(imgA);
     } else {
-      var span = document.createElement('span');
-      span.className = 'fallback';
-      span.textContent = (name.slice(0,1) || 'A').toUpperCase();
+      var span=document.createElement('span');
+      span.className='fallback';
+      span.textContent=(name||'A').slice(0,1).toUpperCase();
       av.appendChild(span);
     }
 
     // CTA
-    var cta = $('ctaRow');
-    cta.innerHTML = '';
-
-    var phoneRaw = clean(p.phone || '');
-    var hasPhone = !!phoneRaw;
-    var callStyle = (p.callStyle === 'primary') ? 'primary' : '';
-
-    if (hasPhone) {
-      var tel = phoneToTel(phoneRaw);
-      var callBtn = document.createElement('a');
-      callBtn.textContent = 'Позвонить';
-      if (callStyle) callBtn.className = 'primary';
-      callBtn.href = tel || '#';
-      callBtn.target = '_self';
-      callBtn.rel = 'nofollow';
-      if (!tel) { callBtn.style.opacity = '.55'; callBtn.style.pointerEvents = 'none'; }
+    var cta=$('ctaRow'); cta.innerHTML='';
+    var phoneRaw = clean(state.phone || '');
+    if (phoneRaw){
+      var tel=phoneToTel(phoneRaw);
+      var callBtn=document.createElement('a');
+      callBtn.textContent='Позвонить';
+      callBtn.className=(state.callStyle==='primary' || state.call_style==='primary') ? 'primary' : '';
+      callBtn.href=tel||'#';
+      callBtn.target='_self';
+      callBtn.rel='nofollow';
+      if(!tel){ callBtn.style.opacity='.55'; callBtn.style.pointerEvents='none'; }
       cta.appendChild(callBtn);
     }
 
-    var btns = p.buttons || [];
-    var maxButtons = hasPhone ? 5 : 6;
-    for (var i=0;i<btns.length && i<maxButtons;i++){
-      var b = btns[i] || {};
-      var label = clean(b.label);
-      if (!label) continue;
-      var a2 = document.createElement('a');
-      a2.textContent = label;
-      if (b.style === 'primary') a2.className = 'primary';
-      var href = normUrl(b.url) || '#';
-      a2.href = href;
-      a2.target = '_blank';
-      a2.rel = 'noopener';
-      if (!clean(b.url)) { a2.style.opacity = '.55'; a2.style.pointerEvents = 'none'; }
+    var btns = state.buttons || [];
+    for (var i=0;i<btns.length && i<6;i++){
+      var b=btns[i]; if(!b || !b.label) continue;
+      var a2=document.createElement('a');
+      a2.textContent=b.label;
+      a2.className=(b.style==='primary') ? 'primary' : '';
+      a2.href=normUrl(b.url)||'#';
+      a2.target='_blank';
+      a2.rel='noopener';
+      if(!b.url){ a2.style.opacity='.55'; a2.style.pointerEvents='none'; }
       cta.appendChild(a2);
     }
 
     // Contacts
-    var contactsSection = $('contactsSection');
-    var contactsPreview = $('contactsPreview');
-    contactsPreview.innerHTML = '';
-    var chips = p.chips || [];
-    var hasContacts = false;
+    var contacts=$('contactsPreview'); contacts.innerHTML='';
+    var chips = state.chips || [];
+    var hasContacts=false;
     for (var c=0;c<chips.length && c<20;c++){
-      var it = chips[c] || {};
-      var lbl = clean(it.label);
-      var rawUrl = clean(it.url);
-      if (!lbl && !rawUrl) continue;
-      hasContacts = true;
+      var it=chips[c]||{};
+      var label=clean(it.label||'');
+      var raw=clean(it.url||'');
+      if(!label && !raw) continue;
+      hasContacts=true;
 
-      var a3 = document.createElement('a');
-      a3.className = 'chipA';
-
-      var icon = clean(it.icon);
-      if (icon) {
-        var s = document.createElement('span');
-        s.className = 'chipI';
-        s.textContent = icon;
-        a3.appendChild(s);
+      var a3=document.createElement('a');
+      a3.className='chipA';
+      if (clean(it.icon||'')){
+        var ic=document.createElement('span');
+        ic.className='chipI';
+        ic.textContent=it.icon;
+        a3.appendChild(ic);
       }
-
-      var t = document.createElement('span');
-      t.textContent = lbl || rawUrl;
+      var t=document.createElement('span');
+      t.textContent=label || raw;
       a3.appendChild(t);
 
-      var href2 = contactUrl(rawUrl);
-      a3.href = href2 || '#';
-      a3.target = '_blank';
-      a3.rel = 'noopener';
-      if (!href2) { a3.style.opacity = '.55'; a3.style.pointerEvents = 'none'; }
-
-      contactsPreview.appendChild(a3);
+      var href=contactUrl(raw);
+      a3.href=href||'#';
+      a3.target='_blank';
+      a3.rel='noopener';
+      if(!href){ a3.style.opacity='.55'; a3.style.pointerEvents='none'; }
+      contacts.appendChild(a3);
     }
-    contactsSection.classList.toggle('hide', !hasContacts);
+    $('contactsSection').classList.toggle('hide', !hasContacts);
 
     // Points
-    $('pointsTitleEl').textContent = p.pointsTitle || 'Ссылки';
-    var pointsSection = $('pointsSection');
-    var pointsPreview = $('pointsPreview');
-    pointsPreview.innerHTML = '';
-    var pts = p.points || [];
-    var hasPoints = false;
-    for (var pi=0;pi<pts.length && pi<12;pi++){
-      var pp = pts[pi] || {};
-      var title = clean(pp.title);
-      if (!title) continue;
-      hasPoints = true;
-
-      var row = document.createElement('div');
-      row.className = 'item';
-
-      var chk = document.createElement('div');
-      chk.className = 'check';
-      chk.textContent = '✓';
-
-      var box = document.createElement('div');
-      box.style.minWidth = '0';
-
-      var t2 = document.createElement('p');
-      t2.className = 'itT';
-      t2.textContent = title;
+    $('pointsTitleEl').textContent = state.pointsTitle || state.points_title || 'Ссылки';
+    var points=$('pointsPreview'); points.innerHTML='';
+    var pts=state.points||[];
+    var hasPoints=false;
+    for (var p=0;p<pts.length && p<12;p++){
+      var x=pts[p]; if(!x || !x.title) continue;
+      hasPoints=true;
+      var row=document.createElement('div'); row.className='item';
+      var chk=document.createElement('div'); chk.className='check'; chk.textContent='✓';
+      var box=document.createElement('div'); box.style.minWidth='0';
+      var t2=document.createElement('p'); t2.className='itT'; t2.textContent=x.title;
       box.appendChild(t2);
-
-      if (clean(pp.text)) {
-        var d = document.createElement('div');
-        d.className = 'itD';
-        d.textContent = pp.text;
+      if (x.text){
+        var d=document.createElement('div'); d.className='itD'; d.textContent=x.text;
         box.appendChild(d);
       }
-      if (clean(pp.url)) {
-        var l = document.createElement('a');
-        l.className = 'miniLink';
-        l.href = normUrl(pp.url);
-        l.target = '_blank';
-        l.rel = 'noopener';
-        l.textContent = 'Открыть ссылку';
+      if (x.url){
+        var l=document.createElement('a'); l.className='mini';
+        l.href=normUrl(x.url); l.target='_blank'; l.rel='noopener'; l.textContent='Открыть ссылку';
         box.appendChild(l);
       }
-
-      row.appendChild(chk);
-      row.appendChild(box);
-      pointsPreview.appendChild(row);
+      row.appendChild(chk); row.appendChild(box);
+      points.appendChild(row);
     }
-    pointsSection.classList.toggle('hide', !hasPoints);
+    $('pointsSection').classList.toggle('hide', !hasPoints);
 
     // Gallery
-    $('galleryTitleEl').textContent = p.galleryTitle || 'Работы';
-    var gallerySection = $('gallerySection');
-    var galleryPreview = $('galleryPreview');
-    galleryPreview.innerHTML = '';
-    var gal = p.gallery || [];
-    var hasGallery = false;
-
-    for (var gi=0;gi<gal.length && gi<12;gi++){
-      (function(g){
-        if (!g) return;
-        var title = clean(g.title);
-        var text = clean(g.text);
-        var img = clean(g.img);
-        var url = clean(g.url);
-        if (!title && !text && !img && !url) return;
-        hasGallery = true;
-
-        var card = document.createElement('div');
-        card.className = 'work';
-
-        var imgWrap = document.createElement('div');
-        imgWrap.className = 'workImg';
-        if (img) {
-          var im = document.createElement('img');
-          im.src = img;
-          im.alt = '';
-          imgWrap.appendChild(im);
+    $('galleryTitleEl').textContent = state.galleryTitle || state.gallery_title || 'Работы';
+    var gal=$('galleryPreview'); gal.innerHTML='';
+    var g=state.gallery||[];
+    var hasGal=false;
+    for (var k=0;k<g.length && k<12;k++){
+      (function(item){
+        if(!item || (!item.title && !item.img)) return;
+        hasGal=true;
+        var card=document.createElement('div'); card.className='work';
+        var imgW=document.createElement('div'); imgW.className='workImg';
+        if(item.img){
+          var im=document.createElement('img'); im.src=item.img; im.alt='';
+          imgW.appendChild(im);
         }
-        var body = document.createElement('div');
-        body.className = 'workBody';
-
-        var tt = document.createElement('p');
-        tt.className = 'workT';
-        tt.textContent = wrapFixedChars(title || '', 17);
+        var body=document.createElement('div'); body.className='workBody';
+        var tt=document.createElement('p'); tt.className='workT'; tt.textContent=item.title||'';
         body.appendChild(tt);
-
-        if (text) {
-          var dd = document.createElement('div');
-          dd.className = 'workM';
-          dd.textContent = text;
-          body.appendChild(dd);
+        if(item.text){
+          var mm=document.createElement('div'); mm.className='workM'; mm.textContent=item.text;
+          body.appendChild(mm);
         }
-
-        card.appendChild(imgWrap);
-        card.appendChild(body);
-
-        if (url) {
-          card.addEventListener('click', function(){
-            window.open(normUrl(url), '_blank', 'noopener');
-          });
-        } else {
-          card.style.cursor = 'default';
+        card.appendChild(imgW); card.appendChild(body);
+        if(item.url){
+          card.addEventListener('click', function(){ window.open(normUrl(item.url), '_blank', 'noopener'); });
         }
-
-        galleryPreview.appendChild(card);
-      })(gal[gi]);
+        gal.appendChild(card);
+      })(g[k]);
     }
-
-    gallerySection.classList.toggle('hide', !hasGallery);
-
-    showContent();
+    $('gallerySection').classList.toggle('hide', !hasGal);
   }
 
-  function init(){
-    var slug = getSlug();
-    if (!slug) {
-      $('miniRight').textContent = 'Нет slug';
-      setState('Нет адреса профиля. Открой: /u/<slug>', true);
-      return;
-    }
-
-    $('miniRight').textContent = 'app.abqd.ru/u/' + slug;
-
-    var url = '/api/v1/profile/' + encodeURIComponent(slug);
-    fetch(url, { headers: { 'accept': 'application/json' } })
-      .then(function(r){
-        if (r.status === 404) throw new Error('notfound');
-        if (!r.ok) throw new Error('bad');
-        return r.json();
-      })
-      .then(function(data){
-        var p = pickProfileShape(data);
-        if (!p) throw new Error('bad');
-        renderProfile(p, slug);
-      })
-      .catch(function(err){
-        if (String(err && err.message) === 'notfound') {
-          setState('Профиль не найден. Проверь slug и что профиль был опубликован (кнопка "Сохранить").', true);
-          $('miniRight').textContent = '404';
-          return;
-        }
-        setState('Ошибка загрузки профиля. Проверь API /api/v1/profile/{slug} и nginx.', true);
-        $('miniRight').textContent = 'Ошибка';
-      });
+  var slug = getSlug();
+  if (!slug){
+    showErr('Нет slug', 'Открой страницу вида: /u/ivan-ivanov');
+    return;
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, { once:true });
-  } else {
-    init();
-  }
+  $('slugBadge').textContent = '/u/' + slug;
+
+  fetch('/api/v1/profile/' + encodeURIComponent(slug), { method:'GET' })
+    .then(function(r){
+      if (!r.ok) {
+        if (r.status===404) throw new Error('NOT_FOUND');
+        throw new Error('HTTP_' + r.status);
+      }
+      return r.json();
+    })
+    .then(function(data){
+      // сервер может вернуть {profile:{...}} или сразу {...}
+      var st = data && data.profile ? data.profile : data;
+      if (!st) throw new Error('EMPTY');
+      if (!st.slug) st.slug = slug;
+      render(st);
+    })
+    .catch(function(e){
+      if (String(e && e.message)==='NOT_FOUND'){
+        showErr('Профиль не найден', 'Скорее всего, его ещё не публиковали из конструктора.');
+      } else {
+        showErr('Ошибка загрузки', 'Не удалось получить профиль по API.');
+      }
+    });
 })();
 </script>
 </body>
 </html>
+HTML
