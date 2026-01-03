@@ -3,7 +3,7 @@
   const ABQD = (window.ABQD = window.ABQD || {});
 
   // ---- Config
-  ABQD.API_BASE = "/api/v1";
+  ABQD.API_BASE = "https://api.abqd.ru";
   ABQD.TOKEN_KEY = "abqd_token";
   ABQD.TRIAL_UNTIL_KEY = "abqd_trial_until";      // ms epoch
   ABQD.PLAN_KEY = "abqd_plan";                    // e.g. "paid"
@@ -121,7 +121,7 @@
   };
 
   // ---- Public profile render (simple; you can replace markup later)
-  ABQD.renderPublicProfile = async (rootEl) => {
+  ABQD.API_BASE = "https://api.abqd.ru/v1";
     const slug = ABQD.getSlugFromPath();
     if (!slug) {
       rootEl.innerHTML = `<div class="card"><h2>Нет slug</h2><p>Открой ссылку вида <b>/u/&lt;slug&gt;</b></p></div>`;
@@ -187,3 +187,43 @@
   // signal ready
   ABQD.ready = (fn) => fn && fn();
 })();
+window.ABQD = window.ABQD || {};
+
+ABQD.API_BASE = ABQD.API_BASE || "https://app.abqd.ru"; // потом уточним
+
+ABQD.renderPublicProfile = async function(rootEl, slug){
+  rootEl.innerHTML = "<div class='card'>Загрузка профиля…</div>";
+
+  try{
+    // ВАЖНО: этот путь мы уточним после твоих curl команд
+    const url = `${ABQD.API_BASE}/api/v1/profile/${encodeURIComponent(slug)}`;
+
+    const r = await fetch(url, { headers: { "Accept": "application/json" } });
+    if(!r.ok) throw new Error(`API ${r.status}`);
+
+    const data = await r.json();
+
+    // минимальный рендер (потом заменим на твой красивый UI)
+    rootEl.innerHTML = `
+      <div class="card">
+        <div style="font-weight:800;font-size:22px;margin-bottom:8px;">
+          ${escapeHtml(data.name || data.title || slug)}
+        </div>
+        <div style="opacity:.8">
+          ${escapeHtml(data.bio || data.subtitle || "")}
+        </div>
+      </div>
+    `;
+  } catch(e){
+    rootEl.innerHTML = `
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:6px;">Профиль не загрузился</div>
+        <div style="opacity:.8;font-size:13px;">${escapeHtml(String(e.message || e))}</div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+};

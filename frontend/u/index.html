@@ -1,8 +1,19 @@
-<div class="wrap">
-  <div id="profileRoot"></div>
-</div>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ABQD • Profile</title>
 
-<script>
-  ABQD.guard("u");
-  ABQD.renderPublicProfile(document.getElementById("profileRoot"));
-</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- важно: для /u/ путь именно ../assets -->
+  <link rel="stylesheet" href="../assets/app.css">
+  <script defer src="../assets/app.js"></script>
+</head>
+<body data-page="u">
+  <div id="app"></div>
+</body>
+</html>
