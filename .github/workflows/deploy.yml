@@ -1,0 +1,51 @@
+name: Deploy frontend (self-hosted) v3 (no-sudo)
+
+on:
+  push:
+    branches: ["main", "develop"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, abqd, frontend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Decide target (prod/stage)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            TARGET_DIR="/var/www/abqd/prod/frontend"
+          else
+            TARGET_DIR="/var/www/abqd/stage/frontend"
+          fi
+          echo "TARGET_DIR=$TARGET_DIR" >> "$GITHUB_ENV"
+          echo "Deploy target: $TARGET_DIR"
+
+      - name: Ensure target dir exists (no sudo)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$TARGET_DIR"
+
+      - name: Ensure frontend folder exists in repo
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d "./frontend" || { echo "ERROR: ./frontend not found in repo root"; exit 1; }
+
+      - name: Deploy (rsync without owner/group/perms)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rsync -rltDz --delete \
+            --no-owner --no-group --no-perms --omit-dir-times \
+            --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
+            ./frontend/ "$TARGET_DIR/"
+
+          echo "Deployed files:"
+          ls -la "$TARGET_DIR" | head -n 80

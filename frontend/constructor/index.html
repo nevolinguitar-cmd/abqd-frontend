@@ -1,0 +1,24 @@
+<button class="btn" id="publishBtn">Опубликовать</button>
+<a class="btn ghost" id="openPublic" href="#" style="display:none">Открыть публичный профиль</a>
+
+<script>
+  ABQD.guard("constructor");
+
+  const slug = localStorage.getItem("abqd_profile_slug") || "";
+  const openPublic = document.getElementById("openPublic");
+  if (slug && openPublic){
+    openPublic.style.display = "";
+    openPublic.href = ABQD.path(`/u/${encodeURIComponent(slug)}`);
+  }
+
+  document.getElementById("publishBtn")?.addEventListener("click", async () => {
+    const s = prompt("Slug профиля (например: alex_nevolin)", slug || "");
+    if (!s) return;
+    try{
+      const published = await ABQD.publishFromLocalState({ slug: s.trim() });
+      location.href = ABQD.path(`/u/${encodeURIComponent(published)}`);
+    }catch(e){
+      alert("Ошибка публикации: " + (e?.message || e));
+    }
+  });
+</script>
