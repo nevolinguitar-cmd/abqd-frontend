@@ -383,8 +383,46 @@ const css = `
 .abqd-ctaBtnInline .abqd-ctaSub{display:none;} 
 .abqd-ctaBtnInline .abqd-ctaIcon{width:34px;height:34px;border-radius:14px;} 
 
+/* Metallic aluminum finish (premium) */
+.abqd-metal{
+  position:relative;
+  background:
+    radial-gradient(140% 120% at 20% 0%, rgba(255,255,255,.22), rgba(255,255,255,0) 55%),
+    linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+}
+[data-theme='light'] .abqd-metal{
+  background:
+    radial-gradient(140% 120% at 20% 0%, rgba(255,255,255,.95), rgba(255,255,255,0) 55%),
+    linear-gradient(135deg, rgba(255,255,255,.92), rgba(232,235,240,.78));
+}
+.abqd-metal::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 40%),
+    linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,0) 35%, rgba(255,255,255,.08) 70%, rgba(255,255,255,0));
+  opacity:.85;
+}
+[data-theme='light'] .abqd-metal::before{ opacity:.70; }
+.abqd-metal{
+  box-shadow:
+    0 18px 45px rgba(0,0,0,.22),
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -1px 0 rgba(0,0,0,.12);
+}
+[data-theme='light'] .abqd-metal{
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.12),
+    inset 0 1px 0 rgba(255,255,255,.70),
+    inset 0 -1px 0 rgba(0,0,0,.10);
+}
+
 @media (max-width:520px){
   .abqd-ctaBtnInline{width:100%;}
+}
 }
 `;
 
@@ -683,14 +721,16 @@ export default function ABQDCrmPrototype() {
   const onCompactChange = useCallback((v) => setCompact(v), []);
 
   const onOpenConstructor = useCallback(() => {
-    // ВАЖНО: какой URL должен открываться в проде?
-    // Сейчас открываю внешний: https://app.abqd.ru/constructor/
-    // Если нужно "внутри" текущего домена — скажи точный путь (например "/constructor" или "/constructor/").
+    // Ведём на страницу app.abqd.ru (конструктор)
     const url = "https://app.abqd.ru/constructor/";
     try {
-      window.open(url, "_blank", "noopener,noreferrer");
+      window.location.assign(url);
     } catch {
-      // ignore
+      try {
+        window.location.href = url;
+      } catch {
+        // ignore
+      }
     }
   }, []);
 
@@ -888,7 +928,7 @@ export default function ABQDCrmPrototype() {
 
           <GlassCard className="abqd-bar">
             <div className="abqd-barRow">
-              <button type="button" className={cx("abqd-ctaBtn","abqd-ctaBtnInline")} onClick={onOpenConstructor}>
+              <button type="button" className={cx("abqd-ctaBtn","abqd-ctaBtnInline","abqd-metal")} onClick={onOpenConstructor}>
                 <span style={{ minWidth: 0 }}>
                   <div className="abqd-ctaTitle">Конструктор визитки</div>
                   <div className="abqd-ctaSub">Профиль · NFC · публикация</div>
