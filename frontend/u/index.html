@@ -1,32 +1,222 @@
+# Перейди в правильную папку
+cd /var/www/abqd/prod/frontend
+
+# Создай папку для публичных страниц
+mkdir -p public
+
+# Создай файл profile.html правильно
+cat > public/profile.html << 'EOF'
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="soft">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Профиль</title>
-  <!-- вставь сюда только CSS, нужный для профиля -->
-  <link rel="stylesheet" href="/constructor.css">
+  <title id="pageTitle">Профиль</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --bg: #f4f6fb;
+      --panel: rgba(255,255,255,.62);
+      --text: #10131a;
+      --muted: rgba(16,19,26,.56);
+      --line: rgba(16,19,26,.14);
+      --shadow: 0 18px 60px rgba(18,24,40,.12);
+    }
+    
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      padding: 20px;
+    }
+    
+    .card {
+      background: var(--panel);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .hero { padding: 16px; }
+    .banner { height: 220px; border-radius: 22px; overflow: hidden; margin-bottom: -54px; }
+    .banner img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .heroHead { display: flex; align-items: flex-end; gap: 12px; padding: 0 10px; position: relative; z-index: 3; }
+    .left { display: flex; align-items: flex-end; gap: 12px; }
+    
+    .avatar {
+      width: 106px;
+      height: 106px;
+      border-radius: 999px;
+      border: 4px solid rgba(255,255,255,.9);
+      overflow: hidden;
+      background: rgba(0,0,0,.18);
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar .fallback { font-weight: 800; font-size: 38px; opacity: .92; }
+    
+    .nm { margin: 0; font-size: 28px; letter-spacing: -.02em; line-height: 1.08; font-weight: 800; }
+    .rl { margin: 6px 0 0; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; font-size: 12px; font-weight: 800; }
+    
+    .about { padding: 10px 10px 14px; }
+    .h2 { margin: 10px 0 10px; letter-spacing: .16em; text-transform: uppercase; font-size: 12px; color: var(--muted); font-weight: 800; }
+    .aboutText { margin: 0; line-height: 1.72; font-size: 14.5px; white-space: pre-wrap; color: rgba(16,19,26,.72); }
+    
+    .section { padding: 16px; }
+    .secTitle { margin: 0 0 12px; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+    
+    .chipsRow { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chipA {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.45);
+      text-decoration: none;
+      color: var(--text) !important;
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .chipA:hover { opacity: 0.8; }
+    
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .item {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.45);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .itT { margin: 0; font-weight: 800; font-size: 14px; }
+    .itD { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    @media (max-width: 900px) { .grid3 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .grid3 { grid-template-columns: 1fr; } }
+    
+    .work {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255,255,255,.45);
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+    }
+    .workImg { height: 160px; background: rgba(0,0,0,.12); }
+    .workImg img { width: 100%; height: 100%; object-fit: cover; }
+    .workBody { padding: 12px; }
+    .workT { margin: 0; font-weight: 800; font-size: 14px; line-height: 1.2; }
+    .workM { margin: 7px 0 0; color: var(--muted); font-size: 13px; }
+  </style>
 </head>
 <body>
-  <div id="profileContainer"></div>
-
+  <div id="app"></div>
+  
   <script>
-    // Получаем slug из URL
-    const slug = new URL(window.location).pathname.split('/').pop();
+    const slug = window.location.pathname.split('/')[2];
     
-    // Загружаем данные профиля из API
     fetch(`/api/v1/profile/${slug}`)
-      .then(r => r.json())
-      .then(data => renderProfile(data))
+      .then(res => res.json())
+      .then(data => renderPublicProfile(data))
       .catch(err => {
-        document.body.innerHTML = '<h1>Профиль не найден</h1>';
+        document.body.innerHTML = '<div style="text-align:center;padding:40px"><h1>Профиль не найден</h1></div>';
       });
 
-    function renderProfile(profileData) {
-      const container = document.getElementById('profileContainer');
-      // Тут вставляешь логику рендера из конструктора
-      // (скопируй функцию renderPreview и адаптируй под контейнер)
+    function renderPublicProfile(state) {
+      if (!state || !state.fullName) {
+        document.body.innerHTML = '<div style="text-align:center;padding:40px"><h1>Ошибка: профиль пуст</h1></div>';
+        return;
+      }
+
+      let html = '<div class="card"><div class="hero">';
+      
+      // Баннер
+      if (state.bannerDataUrl) {
+        html += '<div class="banner"><img src="' + escapeHtml(state.bannerDataUrl) + '" alt="banner"></div>';
+      }
+      
+      // Аватар и имя
+      html += '<div class="heroHead"><div class="left"><div class="avatar">';
+      if (state.avatarDataUrl) {
+        html += '<img src="' + escapeHtml(state.avatarDataUrl) + '" alt="avatar">';
+      } else {
+        html += '<span class="fallback">' + (state.fullName[0] || 'A').toUpperCase() + '</span>';
+      }
+      html += '</div><div><h2 class="nm">' + escapeHtml(state.fullName) + '</h2>';
+      if (state.role) html += '<div class="rl">' + escapeHtml(state.role) + '</div>';
+      html += '</div></div></div>';
+      
+      // О себе
+      if (state.about) {
+        html += '<div class="about"><div class="h2">Обо мне</div><p class="aboutText">' + escapeHtml(state.about) + '</p></div>';
+      }
+      
+      html += '</div>';
+      
+      // Контакты
+      if (state.chips && state.chips.length) {
+        html += '<div class="section"><div class="secTitle">Контакты</div><div class="chipsRow">';
+        for (let chip of state.chips) {
+          let url = chip.url || '#';
+          html += '<a href="' + escapeHtml(url) + '" class="chipA" target="_blank">' + escapeHtml(chip.label) + '</a>';
+        }
+        html += '</div></div>';
+      }
+      
+      // Ссылки (points)
+      if (state.points && state.points.length) {
+        html += '<div class="section"><div class="secTitle">' + escapeHtml(state.pointsTitle || 'Ссылки') + '</div><div class="list">';
+        for (let point of state.points) {
+          html += '<div class="item"><div>';
+          if (point.title) html += '<h3 class="itT">' + escapeHtml(point.title) + '</h3>';
+          if (point.text) html += '<p class="itD">' + escapeHtml(point.text) + '</p>';
+          html += '</div></div>';
+        }
+        html += '</div></div>';
+      }
+      
+      // Галерея
+      if (state.gallery && state.gallery.length) {
+        html += '<div class="section"><div class="secTitle">' + escapeHtml(state.galleryTitle || 'Работы') + '</div><div class="grid3">';
+        for (let work of state.gallery) {
+          html += '<div class="work">';
+          if (work.img) html += '<div class="workImg"><img src="' + escapeHtml(work.img) + '" alt="work"></div>';
+          html += '<div class="workBody">';
+          if (work.title) html += '<h4 class="workT">' + escapeHtml(work.title) + '</h4>';
+          if (work.text) html += '<p class="workM">' + escapeHtml(work.text) + '</p>';
+          html += '</div></div>';
+        }
+        html += '</div></div>';
+      }
+      
+      document.getElementById('app').innerHTML = html;
+      document.title = state.fullName || 'Профиль';
+    }
+    
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
   </script>
 </body>
 </html>
+EOF
