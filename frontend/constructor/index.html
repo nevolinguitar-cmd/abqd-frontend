@@ -436,7 +436,138 @@
     .toast small{display:block;margin-top:3px;color:var(--muted);font-weight:700}
   </style>
 </head>
-<body>
+<script>
+/**
+ * ABQD Constructor Publish (боевой)
+ * - Не требует менять твой UI: добавляет кнопку "Опубликовать"
+ * - Берёт state из localStorage("abqd_constructor_demo_v2")
+ * - Публикует через Authorization: Bearer localStorage("abqd_token")
+ * - PUT /api/v1/profile/{slug} body: {title, description, state}
+ */
+(() => {
+  const API = "/api/v1";
+  const LS_TOKEN = "abqd_token";
+  const LS_STATE = "abqd_constructor_demo_v2";
+
+  const qs = (s, r=document) => r.querySelector(s);
+
+  function normalizeSlug(s){
+    return (s || "")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9\-_]/g, "")
+      .slice(0, 64);
+  }
+
+  function toast(msg, isErr=false){
+    let el = qs("#abqdCtorToast");
+    if (!el){
+      el = document.createElement("div");
+      el.id = "abqdCtorToast";
+      el.style.cssText = `
+        position:fixed;left:12px;right:12px;bottom:80px;z-index:99999;
+        padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
+        background:rgba(10,12,18,.88);backdrop-filter:blur(10px);
+        color:rgba(255,255,255,.92);font:600 13px/1.35 Montserrat,system-ui;
+        box-shadow:0 18px 60px rgba(0,0,0,.55);display:none;
+      `;
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.display = "block";
+    el.style.borderColor = isErr ? "rgba(255,140,140,.35)" : "rgba(140,255,200,.28)";
+    clearTimeout(el._t);
+    el._t = setTimeout(()=> el.style.display="none", 2600);
+  }
+
+  function readState(){
+    const raw = localStorage.getItem(LS_STATE);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+
+  function buildUpsert(slug, state){
+    const st = (state && typeof state === "object") ? state : {};
+    st.profile = (st.profile && typeof st.profile === "object") ? st.profile : {};
+    st.profile.slug = slug;
+
+    const title = st.profile.title || st.title || null;
+    const description = st.profile.description || st.description || null;
+
+    return { title, description, state: st };
+  }
+
+  async function publishNow(){
+    const token = localStorage.getItem(LS_TOKEN);
+    if (!token){
+      toast("Нет токена. Сначала войди на /auth/", true);
+      location.href = "/auth/";
+      return;
+    }
+
+    const state = readState();
+    if (!state){
+      toast("Нет данных конструктора (localStorage пуст). Открой/потрогай конструктор и сохрани.", true);
+      return;
+    }
+
+    // slug берём из state.profile.slug или state.slug
+    const slug = normalizeSlug(state?.profile?.slug || state?.slug || "testslug");
+    if (!slug){
+      toast("Slug пустой. Задай slug в профиле.", true);
+      return;
+    }
+
+    const body = buildUpsert(slug, state);
+
+    toast("Публикую…");
+    const r = await fetch(`${API}/profile/${encodeURIComponent(slug)}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await r.json().catch(()=> ({}));
+    if (!r.ok){
+      toast(`Ошибка publish: ${data?.detail || "HTTP " + r.status}`, true);
+      return;
+    }
+
+    toast("Опубликовано ✅");
+    location.href = `/u/${slug}`;
+  }
+
+  function mountButton(){
+    if (qs("#abqdPublishBtn")) return;
+
+    const btn = document.createElement("button");
+    btn.id = "abqdPublishBtn";
+    btn.type = "button";
+    btn.textContent = "Опубликовать";
+    btn.style.cssText = `
+      position:fixed;right:14px;bottom:14px;z-index:99998;
+      padding:12px 14px;border-radius:16px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      color:rgba(255,255,255,.92);
+      font:800 13px/1 Montserrat,system-ui;
+      box-shadow:0 18px 60px rgba(0,0,0,.55);
+      cursor:pointer;
+    `;
+    btn.addEventListener("click", () => publishNow().catch(e => toast(String(e?.message || e), true)));
+    document.body.appendChild(btn);
+  }
+
+  mountButton();
+})();
+</script>
+
+  <body>
   <div class="wrap" id="appWrap">
     <div class="top">
       <div>
