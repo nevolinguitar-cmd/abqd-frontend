@@ -1,76 +1,594 @@
-<!DOCTYPE html>
-<html lang="ru" data-theme="soft">
+<!doctype html>
+<html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title id="pageTitle">Профиль</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ABQD — Профиль</title>
+
+  <!-- Montserrat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      --bg:#f4f6fb;
-      --panel:rgba(255,255,255,.62);
-      --text:#10131a;
-      --muted:rgba(16,19,26,.56);
-      --line:rgba(16,19,26,.14);
-      --shadow:0 18px 60px rgba(18,24,40,.12);
+      --font: "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      --bg0: #07080b;
+      --bg1: #0b0d12;
+      --txt: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --line: rgba(255,255,255,.10);
+      --glass: rgba(255,255,255,.06);
+      --glass2: rgba(255,255,255,.08);
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --r: 22px;
     }
+
     *{box-sizing:border-box}
-    body{margin:0;font-family:var(--font);color:var(--text);background:var(--bg);padding:20px}
-    .card{background:var(--panel);border-radius:22px;border:1px solid var(--line);box-shadow:var(--shadow);max-width:900px;margin:0 auto;padding:30px}
-    .nm{margin:0;font-size:28px;font-weight:800;letter-spacing:-.02em}
-    .rl{margin:6px 0 0;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase}
-    .about{margin:20px 0;line-height:1.6}
-    .avatar{width:120px;height:120px;border-radius:50%;margin-bottom:20px;object-fit:cover}
-    .chipA{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);text-decoration:none;color:var(--text);font-weight:800;font-size:12px;margin:5px 5px 5px 0}
-    .chipA:hover{background:rgba(0,0,0,.05)}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--txt);
+      background:
+        radial-gradient(1100px 600px at 20% -10%, rgba(120,180,255,.18), transparent 60%),
+        radial-gradient(900px 520px at 90% 0%, rgba(120,255,200,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100svh;
+    }
+
+    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 44px}
+    .top{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:14px 16px;border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex;align-items:center;gap:10px}
+    .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.8);box-shadow:0 0 0 6px rgba(255,255,255,.06)}
+    .brand b{font-weight:800;letter-spacing:.4px}
+    .chip{
+      padding:8px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .card{
+      margin-top:14px;
+      border:1px solid var(--line);
+      background:var(--glass);
+      backdrop-filter: blur(12px);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .hero{
+      position:relative;
+      padding:18px 18px 16px;
+      background:
+        radial-gradient(900px 520px at 15% 0%, rgba(120,180,255,.18), transparent 62%),
+        radial-gradient(800px 520px at 95% 0%, rgba(120,255,200,.14), transparent 60%),
+        rgba(255,255,255,.02);
+      border-bottom:1px solid var(--line);
+    }
+
+    .row{display:flex;gap:16px;align-items:flex-start}
+    .ava{
+      width:84px;height:84px;border-radius:24px;flex:0 0 auto;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.25);
+      overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .ava img{width:100%;height:100%;object-fit:cover;display:block}
+    .hgroup{flex:1;min-width:0}
+    .name{font-size:22px;font-weight:800;line-height:1.15;margin:2px 0 6px}
+    .title{color:var(--muted);font-size:14px;line-height:1.4;margin:0}
+    .meta{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
+    .tag{
+      padding:6px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:rgba(255,255,255,.80);
+      font-size:12px;
+      max-width:100%;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+
+    .section{padding:14px 18px}
+    .sec-title{
+      margin:2px 0 10px;
+      font-size:13px;
+      letter-spacing:.2px;
+      color:rgba(255,255,255,.78);
+      font-weight:700;
+      text-transform:uppercase;
+    }
+
+    .btns{display:grid;gap:10px}
+    .btn{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px 14px;border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--txt);
+      text-decoration:none;
+      transition:transform .08s ease, background .15s ease;
+    }
+    .btn:hover{background:rgba(255,255,255,.09);transform:translateY(-1px)}
+    .btn small{color:var(--muted);font-size:12px}
+    .btn .arr{opacity:.7}
+
+    .grid2{display:grid;gap:10px}
+    @media (min-width:820px){ .grid2{grid-template-columns:1fr 1fr} }
+
+    .points{display:grid;gap:10px}
+    .point{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      border-radius:18px;
+      padding:12px 14px;
+    }
+    .point b{display:block;font-size:14px;margin-bottom:6px}
+    .point p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+
+    .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    @media (min-width:820px){ .gallery{grid-template-columns:repeat(4,1fr)} }
+    .ph{
+      border-radius:18px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.22);
+      aspect-ratio:1/1;
+    }
+    .ph img{width:100%;height:100%;object-fit:cover;display:block}
+
+    .notice{
+      padding:14px 18px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+    .notice strong{color:rgba(255,255,255,.88)}
+    .err{color:#ffb4b4}
+
+    .tools{
+      margin-top:14px;
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:18px;
+      padding:14px 14px;
+      background:rgba(255,255,255,.03);
+    }
+    .tools h3{margin:0 0 10px;font-size:13px;color:rgba(255,255,255,.78);text-transform:uppercase;letter-spacing:.2px}
+    .tools .row2{display:flex;gap:10px;flex-wrap:wrap}
+    .tbtn{
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.92);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:13px;
+    }
+    .tbtn:hover{background:rgba(255,255,255,.09)}
+    .log{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.22);
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      color:rgba(255,255,255,.82);
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
   </style>
 </head>
-<body>
-  <div id="app"></div>
 
-  <script>
-    // Получаем slug из URL
-    const slug = window.location.pathname.split('/').filter(Boolean).pop();
-    
-    // Ищем профиль в localStorage
-    const profileData = JSON.parse(localStorage.getItem('abqd_profile_' + slug) || '{}');
-    
-    if (!profileData.fullName) {
-      document.getElementById('app').innerHTML = '<div class="card"><h1>Профиль не найден</h1><p>Убедитесь, что вы используете правильный адрес.</p></div>';
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <span class="dot"></span>
+        <b>ABQD</b>
+      </div>
+      <div class="chip" id="chip">/u/…</div>
+    </div>
+
+    <div class="card" id="card">
+      <div class="hero">
+        <div class="row">
+          <div class="ava" id="ava"></div>
+          <div class="hgroup">
+            <div class="name" id="name">Загрузка…</div>
+            <p class="title" id="title"> </p>
+            <div class="meta" id="meta"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section grid2">
+        <div>
+          <div class="sec-title">Контакты и действия</div>
+          <div class="btns" id="buttons"></div>
+        </div>
+        <div>
+          <div class="sec-title">О себе</div>
+          <div class="points" id="points"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-title">Галерея</div>
+        <div class="gallery" id="gallery"></div>
+      </div>
+
+      <div class="notice" id="notice"></div>
+    </div>
+
+    <div class="tools" id="tools" style="display:none;">
+      <h3>Инструменты публикации (временно)</h3>
+      <div class="row2">
+        <button class="tbtn" id="btnReload">Перезагрузить профиль</button>
+        <button class="tbtn" id="btnPublishDraft">Опубликовать из черновика конструктора</button>
+        <button class="tbtn" id="btnClearCache">Очистить кеш этого slug</button>
+      </div>
+      <div class="log" id="log">—</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const API_BASE = "/api/v1";
+  const LS_DRAFT = "abqd_constructor_demo_v2";
+
+  const $ = (id) => document.getElementById(id);
+
+  function normalizeSlug(s){
+    return (s || "")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9\-_]/g, "");
+  }
+
+  function getSlugFromPath(){
+    const parts = location.pathname.split("/").filter(Boolean);
+    // ожидаем /u/<slug>
+    const slug = (parts[0] === "u") ? parts[1] : "";
+    return normalizeSlug(slug);
+  }
+
+  function safeUrl(u){
+    if(!u) return "";
+    try {
+      const url = new URL(u, location.origin);
+      return url.href;
+    } catch { return ""; }
+  }
+
+  function pickProfile(data){
+    // поддержим разные схемы: {profile:{...}} или плоская
+    return data?.profile && typeof data.profile === "object" ? data.profile : (data || {});
+  }
+
+  function pickButtons(data){
+    const p = pickProfile(data);
+    return data?.buttons || p?.buttons || p?.contacts || [];
+  }
+
+  function pickPoints(data){
+    const p = pickProfile(data);
+    return data?.points || p?.points || p?.about || [];
+  }
+
+  function pickGallery(data){
+    const p = pickProfile(data);
+    return data?.gallery || p?.gallery || p?.photos || [];
+  }
+
+  function setNotice(html, isError=false){
+    const n = $("notice");
+    n.innerHTML = html;
+    n.classList.toggle("err", !!isError);
+  }
+
+  function setLog(text){
+    const el = $("log");
+    if(el) el.textContent = text;
+  }
+
+  function render(profilePayload, slug){
+    const p = pickProfile(profilePayload);
+    $("chip").textContent = `/u/${slug}`;
+
+    const name = p?.name || p?.full_name || p?.title_name || slug || "Профиль";
+    const title = p?.title || p?.role || p?.subtitle || "";
+
+    $("name").textContent = name;
+    $("title").textContent = title;
+
+    // avatar
+    const ava = $("ava");
+    ava.innerHTML = "";
+    const avaUrl = p?.avatar_url || p?.avatar || p?.photo_url || "";
+    if (avaUrl) {
+      const img = document.createElement("img");
+      img.src = avaUrl;
+      img.alt = name;
+      ava.appendChild(img);
     } else {
-      // Выводим профиль
-      let html = '<div class="card">';
-      
-      if (profileData.avatarDataUrl) {
-        html += '<img src="' + profileData.avatarDataUrl + '" class="avatar" alt="avatar">';
-      }
-      
-      html += '<h1 class="nm">' + (profileData.fullName || '') + '</h1>';
-      
-      if (profileData.role) {
-        html += '<div class="rl">' + profileData.role + '</div>';
-      }
-      
-      if (profileData.about) {
-        html += '<div class="about">' + profileData.about.replace(/\n/g, '<br>') + '</div>';
-      }
-      
-      if (profileData.chips && profileData.chips.length) {
-        html += '<div style="margin:20px 0">';
-        for (let chip of profileData.chips) {
-          if (chip.label && chip.url) {
-            html += '<a href="' + chip.url + '" class="chipA" target="_blank">' + chip.label + '</a>';
-          }
-        }
-        html += '</div>';
-      }
-      
-      html += '</div>';
-      
-      document.getElementById('app').innerHTML = html;
-      document.title = profileData.fullName;
+      ava.style.display = "grid";
+      ava.style.placeItems = "center";
+      ava.style.color = "rgba(255,255,255,.7)";
+      ava.style.fontWeight = "800";
+      ava.textContent = (name || "A").trim().slice(0,1).toUpperCase();
     }
-  </script>
+
+    // meta
+    const meta = $("meta");
+    meta.innerHTML = "";
+    const tags = [];
+    const phone = p?.phone || p?.tel || "";
+    const email = p?.email || "";
+    const city = p?.city || p?.location || "";
+    if (phone) tags.push({label: phone});
+    if (email) tags.push({label: email});
+    if (city) tags.push({label: city});
+    tags.slice(0,5).forEach(t=>{
+      const el = document.createElement("span");
+      el.className = "tag";
+      el.textContent = t.label;
+      meta.appendChild(el);
+    });
+
+    // buttons
+    const btns = $("buttons");
+    btns.innerHTML = "";
+    const buttons = pickButtons(profilePayload);
+    if (Array.isArray(buttons) && buttons.length){
+      buttons.slice(0,10).forEach((b, idx)=>{
+        const title = b?.title || b?.text || b?.label || `Ссылка ${idx+1}`;
+        const url = safeUrl(b?.url || b?.href || b?.link || "");
+        if(!url) return;
+        const a = document.createElement("a");
+        a.className = "btn";
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.innerHTML = `<div><div>${escapeHtml(title)}</div><small>${escapeHtml(shorten(url))}</small></div><div class="arr">→</div>`;
+        btns.appendChild(a);
+      });
+    } else {
+      const empty = document.createElement("div");
+      empty.style.color = "rgba(255,255,255,.55)";
+      empty.style.fontSize = "13px";
+      empty.textContent = "Нет кнопок. Добавь их в конструкторе и опубликуй профиль.";
+      btns.appendChild(empty);
+    }
+
+    // points
+    const pts = $("points");
+    pts.innerHTML = "";
+    const points = pickPoints(profilePayload);
+    if (Array.isArray(points) && points.length){
+      points.slice(0,8).forEach((it, idx)=>{
+        const t = it?.title || it?.name || `Пункт ${idx+1}`;
+        const d = it?.text || it?.desc || it?.description || "";
+        const box = document.createElement("div");
+        box.className = "point";
+        box.innerHTML = `<b>${escapeHtml(t)}</b><p>${escapeHtml(d)}</p>`;
+        pts.appendChild(box);
+      });
+    } else {
+      const empty = document.createElement("div");
+      empty.style.color = "rgba(255,255,255,.55)";
+      empty.style.fontSize = "13px";
+      empty.textContent = "Нет описания. Добавь “пункты”/“о себе” в конструкторе.";
+      pts.appendChild(empty);
+    }
+
+    // gallery
+    const g = $("gallery");
+    g.innerHTML = "";
+    const gal = pickGallery(profilePayload);
+    if (Array.isArray(gal) && gal.length){
+      gal.slice(0,12).forEach((it)=>{
+        const u = it?.url || it?.src || it?.image || it;
+        const url = safeUrl(u);
+        if(!url) return;
+        const ph = document.createElement("div");
+        ph.className = "ph";
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "photo";
+        ph.appendChild(img);
+        g.appendChild(ph);
+      });
+    } else {
+      const empty = document.createElement("div");
+      empty.style.color = "rgba(255,255,255,.55)";
+      empty.style.fontSize = "13px";
+      empty.textContent = "Галерея пустая.";
+      g.appendChild(empty);
+    }
+
+    setNotice(`<strong>Публичная страница</strong> загружает данные из API. Для обновления профиля опубликуй изменения из конструктора.`);
+  }
+
+  function shorten(url){
+    try{
+      const u = new URL(url);
+      return (u.host + u.pathname).replace(/\/$/,"");
+    }catch{ return url; }
+  }
+
+  function escapeHtml(s){
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  async function apiGetProfile(slug){
+    const r = await fetch(`${API_BASE}/profile/${encodeURIComponent(slug)}`, {
+      headers: { "Accept":"application/json" },
+      cache: "no-store"
+    });
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error(`API GET failed: ${r.status}`);
+    return await r.json();
+  }
+
+  async function apiUpsertProfile(slug, payload){
+    // пытаемся PUT, если не поддерживается — POST
+    const tryReq = async (method) => {
+      const r = await fetch(`${API_BASE}/profile/${encodeURIComponent(slug)}`, {
+        method,
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (r.ok) return true;
+      // 405/404 — пробуем другой метод
+      if ([404,405].includes(r.status)) return false;
+      const err = await r.text().catch(()=> "");
+      throw new Error(`API ${method} failed: ${r.status} ${err}`);
+    };
+
+    if (await tryReq("PUT")) return true;
+    if (await tryReq("POST")) return true;
+
+    throw new Error("Upsert not supported (PUT/POST both failed)");
+  }
+
+  function cacheKey(slug){ return `abqd_profile_${slug}`; }
+
+  function readCache(slug){
+    const raw = localStorage.getItem(cacheKey(slug));
+    if(!raw) return null;
+    try{
+      const data = JSON.parse(raw);
+      if (normalizeSlug(data?.slug) !== slug) {
+        localStorage.removeItem(cacheKey(slug));
+        return null;
+      }
+      return data;
+    } catch {
+      localStorage.removeItem(cacheKey(slug));
+      return null;
+    }
+  }
+
+  function writeCache(slug, payload){
+    localStorage.setItem(cacheKey(slug), JSON.stringify({ ...payload, slug }));
+  }
+
+  function readConstructorDraft(){
+    const raw = localStorage.getItem(LS_DRAFT);
+    if(!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+
+  function buildPublishPayload(slug, draft){
+    // Отправляем максимально “как есть”, но гарантируем slug внутри.
+    if (!draft || typeof draft !== "object") return { slug };
+
+    // Частый вариант: draft.profile.slug
+    if (draft.profile && typeof draft.profile === "object") {
+      return {
+        ...draft,
+        profile: { ...draft.profile, slug }
+      };
+    }
+
+    // Плоский вариант
+    return { ...draft, slug };
+  }
+
+  async function loadAndRender(slug){
+    setNotice("Загрузка профиля…");
+    $("tools").style.display = (location.hash === "#tools") ? "block" : "none";
+
+    // 1) API first
+    try{
+      const data = await apiGetProfile(slug);
+      if (data) {
+        writeCache(slug, data);
+        render(data, slug);
+        return;
+      }
+    } catch (e) {
+      // не падаем — попробуем кеш
+      setLog(String(e));
+    }
+
+    // 2) cache fallback
+    const cached = readCache(slug);
+    if (cached) {
+      render(cached, slug);
+      setNotice(`<strong>Показан кеш.</strong> API недоступен или профиль не найден в API.`, true);
+      return;
+    }
+
+    // 3) nothing found
+    $("name").textContent = "Профиль не найден";
+    $("title").textContent = "";
+    $("meta").innerHTML = "";
+    $("buttons").innerHTML = "";
+    $("points").innerHTML = "";
+    $("gallery").innerHTML = "";
+    setNotice(`Профиль <strong>${escapeHtml(slug)}</strong> не найден. Открой конструктор, заполни данные и нажми “Опубликовать”.<br><br>
+    Временно: открой эту страницу с <code>#tools</code> и нажми “Опубликовать из черновика конструктора”.`, true);
+  }
+
+  async function publishFromDraft(slug){
+    const draft = readConstructorDraft();
+    if (!draft) throw new Error("Нет черновика конструктора (abqd_constructor_demo_v2). Открой /constructor/ и сохрани данные.");
+    const payload = buildPublishPayload(slug, draft);
+
+    // гарантируем slug в кеше тоже
+    payload.slug = slug;
+    if (payload.profile) payload.profile.slug = slug;
+
+    await apiUpsertProfile(slug, payload);
+    setLog("Опубликовано в API ✅");
+    // после публикации — перезагружаем профиль
+    await loadAndRender(slug);
+  }
+
+  // init
+  const slug = getSlugFromPath();
+  if (!slug) {
+    $("chip").textContent = "/u/<slug>";
+    $("name").textContent = "Неверная ссылка";
+    setNotice("Ожидается URL вида /u/<slug>. Проверь ссылку.", true);
+    return;
+  }
+
+  // tools wiring
+  $("btnReload")?.addEventListener("click", () => loadAndRender(slug));
+  $("btnClearCache")?.addEventListener("click", () => {
+    localStorage.removeItem(cacheKey(slug));
+    setLog("Кеш очищен для: " + slug);
+  });
+  $("btnPublishDraft")?.addEventListener("click", async () => {
+    setLog("Публикую из черновика…");
+    try { await publishFromDraft(slug); }
+    catch(e){ setLog("Ошибка: " + (e?.message || e)); }
+  });
+
+  loadAndRender(slug);
+})();
+</script>
 </body>
 </html>
