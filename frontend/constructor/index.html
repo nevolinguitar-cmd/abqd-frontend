@@ -566,6 +566,99 @@
   mountButton();
 })();
 </script>
+<script>
+(() => {
+  const API = "/api/v1";
+  const LS_TOKEN = "abqd_token";
+  const LS_STATE = "abqd_constructor_demo_v2";
+
+  const qs = (s,r=document)=>r.querySelector(s);
+
+  function normalizeSlug(s){
+    return (s||"").toString().trim().toLowerCase()
+      .replace(/\s+/g,"-")
+      .replace(/[^a-z0-9\-_]/g,"")
+      .slice(0,64);
+  }
+
+  function readState(){
+    const raw = localStorage.getItem(LS_STATE);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+
+  async function publish(){
+    const token = localStorage.getItem(LS_TOKEN);
+    if (!token){
+      alert("Нет токена. Сначала войди на /auth/");
+      location.href="/auth/";
+      return;
+    }
+
+    const state = readState();
+    if (!state){
+      alert("Нет данных конструктора (abqd_constructor_demo_v2 пуст).");
+      return;
+    }
+
+    const slug = normalizeSlug(state?.profile?.slug || state?.slug || "");
+    if (!slug){
+      alert("Пустой slug. Задай slug в профиле.");
+      return;
+    }
+
+    // гарантируем slug в state
+    state.profile = (state.profile && typeof state.profile === "object") ? state.profile : {};
+    state.profile.slug = slug;
+
+    const body = {
+      title: state?.profile?.title || state?.title || null,
+      description: state?.profile?.description || state?.description || null,
+      state
+    };
+
+    const r = await fetch(`${API}/profile/${encodeURIComponent(slug)}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await r.json().catch(()=> ({}));
+    if (!r.ok){
+      alert(`Publish error: ${data?.detail || r.status}`);
+      return;
+    }
+
+    location.href = `/u/${slug}`;
+  }
+
+  // Добавляем кнопку, чтобы не ломать твой UI
+  function mountBtn(){
+    if (qs("#abqdPublishBtn")) return;
+    const btn = document.createElement("button");
+    btn.id="abqdPublishBtn";
+    btn.type="button";
+    btn.textContent="Опубликовать";
+    btn.style.cssText = `
+      position:fixed;right:14px;bottom:14px;z-index:99998;
+      padding:12px 14px;border-radius:16px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      color:rgba(255,255,255,.92);
+      font:800 13px/1 Montserrat,system-ui;
+      box-shadow:0 18px 60px rgba(0,0,0,.55);
+      cursor:pointer;
+    `;
+    btn.addEventListener("click", () => publish().catch(e => alert(e?.message || e)));
+    document.body.appendChild(btn);
+  }
+
+  mountBtn();
+})();
+</script>
 
   <body>
   <div class="wrap" id="appWrap">
