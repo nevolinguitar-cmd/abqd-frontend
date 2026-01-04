@@ -886,6 +886,18 @@
       window.setTimeout(function(){ persistNow(); }, 80);
     }, AUTOSAVE_MS);
   }
+  // После сохранения в localStorage добавь:
+function saveToServer() {
+  fetch('/api/save-profile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      slug: state.slug,
+      data: state
+    })
+  });
+}
+
 
   window.addEventListener('beforeunload', function(){
     if (dirty) persistNow();
