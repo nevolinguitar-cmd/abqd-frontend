@@ -1956,5 +1956,384 @@
     }
   })();
   </script>
+            <!--
+  ABQD • Constructor → /u Publish Bridge (drop‑in) • v1.2 • 2026‑01‑05
+
+  ВСТАВЬ ЭТОТ БЛОК целиком в constructor/index.html ПЕРЕД закрывающим </body>
+  (после всех твоих скриптов).
+
+  Цель:
+  - «Сохранить» = локально сохранить (как раньше) + (если есть токен) опубликовать в API
+  - «Ссылка на профиль» = открыть /u/<slug> (если не опубликовано — сначала publish при наличии токена)
+  - «Предпросмотр» = открыть /u/<slug>/?preview=1 и передать state через postMessage + продублировать в localStorage
+
+  Важно:
+  - Ошибка NO_TOKEN означает: в localStorage нет 'abqd_token'.
+    Это нормально, если пользователь ещё не вошёл через /auth/.
+  - Этот бридж НЕ падает с ошибкой, а показывает подсказку и даёт Preview.
+
+  Для идеального зеркала нужно, чтобы /u/index.html умела:
+  - GET /api/v1/profile/<slug> (боевой режим)
+  - и/или принимать postMessage {type:'abqd_profile_state', state}
+  - и/или читать localStorage 'abqd_preview_state_v1'
+-->
+
+<script>
+(function(){
+  'use strict';
+
+  var STORAGE_KEY = 'abqd_constructor_demo_v2';
+  var TOKEN_KEY   = 'abqd_token';
+  var PREVIEW_KEY = 'abqd_preview_state_v1';
+
+  function clean(s){ return String(s == null ? '' : s).replace(/^\s+|\s+$/g,''); }
+
+  function safeJsonParse(s){
+    try{ return JSON.parse(s); }catch(_e){ return null; }
+  }
+
+  function normalizeSlug(s){
+    s = clean(s).toLowerCase();
+    if (!s) return '';
+    s = s.replace(/\s+/g,'-');
+    // разрешаем a-z 0-9 - _
+    s = s.replace(/[^a-z0-9\-_]/g,'');
+    s = s.replace(/-+/g,'-');
+    s = s.replace(/^[-_]+|[-_]+$/g,'');
+    return s.slice(0, 64);
+  }
+
+  function getState(){
+    // 1) если ты когда-нибудь захочешь — можешь назначить window.abqdState
+    if (window.abqdState && typeof window.abqdState === 'object') return window.abqdState;
+
+    // 2) читаем localStorage как в демо
+    var raw = null;
+    try{ raw = localStorage.getItem(STORAGE_KEY); }catch(_e){ raw = null; }
+    if (!raw) return null;
+    return safeJsonParse(raw);
+  }
+
+  function getToken(){
+    try{ return clean(localStorage.getItem(TOKEN_KEY)); }catch(_e){ return ''; }
+  }
+
+  function findSlugInput(){
+    var el = document.querySelector('[data-abqd="slug"]');
+    if (el) return el;
+
+    el = document.getElementById('slug') || document.getElementById('slugInput');
+    if (el) return el;
+
+    el = document.querySelector('input[name="slug"], input[name="profile_slug"], input[name="page_slug"]');
+    if (el) return el;
+
+    // эвристика
+    var inputs = document.querySelectorAll('input[type="text"], input:not([type])');
+    for (var i=0;i<inputs.length;i++){
+      var p = (inputs[i].getAttribute('placeholder') || '').toLowerCase();
+      var a = (inputs[i].getAttribute('aria-label') || '').toLowerCase();
+      if (p.indexOf('slug') !== -1 || a.indexOf('slug') !== -1) return inputs[i];
+    }
+    return null;
+  }
+
+  function getSlug(){
+    var st = getState() || {};
+    var s = '';
+
+    // разные схемы state
+    if (typeof st.slug === 'string') s = st.slug;
+    if (!s && st.profile && typeof st.profile.slug === 'string') s = st.profile.slug;
+
+    // fallback: input
+    if (!s){
+      var inp = findSlugInput();
+      if (inp) s = inp.value;
+    }
+
+    s = normalizeSlug(s);
+    if (!s) return '';
+    return s;
+  }
+
+  function toast(msg, isErr){
+    var id = 'abqdToast';
+    var el = document.getElementById(id);
+    if (!el){
+      el = document.createElement('div');
+      el.id = id;
+      el.style.cssText = [
+        'position:fixed','right:14px','bottom:14px','z-index:99999',
+        'max-width:420px','padding:10px 12px','border-radius:14px',
+        'background:rgba(15,17,23,.92)','color:#fff',
+        'border:1px solid rgba(255,255,255,.16)',
+        'box-shadow:0 18px 60px rgba(0,0,0,.35)',
+        'font:800 13px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial',
+        'backdrop-filter: blur(10px)','white-space:pre-wrap'
+      ].join(';');
+      document.body.appendChild(el);
+    }
+    el.style.borderColor = isErr ? 'rgba(255,80,80,.45)' : 'rgba(255,255,255,.16)';
+    el.textContent = msg;
+
+    clearTimeout(el._t);
+    el._t = setTimeout(function(){
+      try{ el.remove(); }catch(_e){ el.style.display = 'none'; }
+    }, isErr ? 7000 : 3400);
+  }
+
+  function savePreviewState(slug, st){
+    try{
+      localStorage.setItem(PREVIEW_KEY, JSON.stringify({
+        slug: slug,
+        ts: Date.now(),
+        state: st
+      }));
+    }catch(_e){}
+  }
+
+  function apiFetch(method, url, bodyObj){
+    var token = getToken();
+    if (!token) return Promise.resolve({ __no_token: true });
+
+    return fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: bodyObj ? JSON.stringify(bodyObj) : undefined
+    }).then(function(r){
+      return r.text().then(function(t){
+        var j = null;
+        try{ j = t ? JSON.parse(t) : null; }catch(_e){ j = null; }
+        if (!r.ok){
+          var msg = (j && (j.detail || j.message)) ? (j.detail || j.message) : (t || ('HTTP ' + r.status));
+          throw new Error(msg);
+        }
+        return j || {};
+      });
+    });
+  }
+
+  function publishNow(opts){
+    opts = opts || {};
+
+    var slug = getSlug();
+    if (!slug){
+      toast('Slug не найден. Заполни поле SLUG.', true);
+      return Promise.resolve({ ok:false, reason:'NO_SLUG' });
+    }
+
+    var st = getState();
+    if (!st){
+      toast('State не найден (localStorage ' + STORAGE_KEY + '). Открой/измени конструктор и нажми «Сохранить».', true);
+      return Promise.resolve({ ok:false, reason:'NO_STATE' });
+    }
+
+    // всегда сохраняем preview state — полезно даже без токена
+    savePreviewState(slug, st);
+
+    var token = getToken();
+    if (!token){
+      if (!opts.silentNoToken){
+        toast('Нет токена (abqd_token). Войди через /auth/ чтобы профиль стал публичным.\nPreview можно смотреть без токена.', true);
+      }
+      return Promise.resolve({ ok:false, reason:'NO_TOKEN' });
+    }
+
+    // лёгкая нормализация theme (не ломаем твой state)
+    var theme = (st.theme === 'dark' || st.theme === 'soft') ? st.theme : 'soft';
+
+    toast('Публикую профиль: ' + slug + ' …');
+    return apiFetch('PUT', '/api/v1/profile/' + encodeURIComponent(slug), {
+      slug: slug,
+      theme: theme,
+      state: st
+    }).then(function(res){
+      if (res && res.__no_token){
+        // теоретически сюда не попадём, но пусть будет безопасно
+        toast('Нет токена. Войди через /auth/.', true);
+        return { ok:false, reason:'NO_TOKEN' };
+      }
+      toast('Опубликовано ✓  (' + slug + ')');
+      return { ok:true, slug: slug };
+    }).catch(function(e){
+      toast('Ошибка публикации: ' + (e && e.message ? e.message : e), true);
+      return { ok:false, reason:'PUBLISH_ERROR', error: String(e && e.message ? e.message : e) };
+    });
+  }
+
+  function openPublic(){
+    var slug = getSlug();
+    if (!slug){ toast('Slug не найден.', true); return; }
+
+    // если есть токен — пытаемся догнать публикацию перед открытием
+    publishNow({ silentNoToken:true }).then(function(r){
+      // если нет токена — всё равно можно открыть страницу, но она будет показывать либо preview, либо пусто
+      window.open('/u/' + encodeURIComponent(slug) + '/', '_blank');
+      if (r && r.ok){
+        toast('Открываю публичный профиль: /u/' + slug);
+      } else if (r && r.reason === 'NO_TOKEN'){
+        toast('Открываю /u/' + slug + ' (без токена — только preview/локальные данные).', true);
+      }
+    });
+  }
+
+  function openPreview(){
+    var slug = getSlug();
+    if (!slug){ toast('Slug не найден.', true); return; }
+
+    var st = getState();
+    if (!st){ toast('State не найден.', true); return; }
+
+    savePreviewState(slug, st);
+
+    var w = window.open('/u/' + encodeURIComponent(slug) + '/?preview=1', '_blank');
+    if (!w){ toast('Браузер заблокировал новое окно.', true); return; }
+
+    // несколько попыток отправить state (на случай, если вкладка ещё грузится)
+    var tries = 0;
+    var timer = setInterval(function(){
+      tries++;
+      try{
+        w.postMessage({ type:'abqd_profile_state', slug: slug, state: st }, window.location.origin);
+      }catch(_e){}
+      if (tries >= 20) clearInterval(timer);
+    }, 200);
+
+    toast('Preview открыт. Отправляю state…');
+  }
+
+  function hardStop(e){
+    if (!e) return;
+    try{ e.preventDefault(); }catch(_e){}
+    try{ e.stopImmediatePropagation(); }catch(_e2){}
+    try{ e.stopPropagation(); }catch(_e3){}
+  }
+
+  function bindById(){
+    // В твоём конструкторе есть id: save, preview, profileLink
+    var saveBtn = document.getElementById('save');
+    var prevBtn = document.getElementById('preview');
+    var linkBtn = document.getElementById('profileLink');
+
+    // «Сохранить» — не ломаем твою логику: сначала даём твоим обработчикам сохранить state,
+    // потом публикуем.
+    if (saveBtn){
+      saveBtn.addEventListener('click', function(){
+        setTimeout(function(){ publishNow(); }, 160);
+      }, false);
+    }
+
+    if (prevBtn){
+      // preview уже может иметь свою модалку — НЕ перехватываем полностью.
+      // Добавляем доп. поведение: открыть /u preview в новой вкладке.
+      prevBtn.addEventListener('click', function(){
+        setTimeout(function(){ openPreview(); }, 40);
+      }, false);
+    }
+
+    if (linkBtn){
+      // тут перехватываем, потому что «ссылка на профиль» должна вести на /u
+      linkBtn.addEventListener('click', function(e){
+        hardStop(e);
+        openPublic();
+      }, true);
+    }
+
+    return !!(saveBtn || prevBtn || linkBtn);
+  }
+
+  function bindByText(){
+    // fallback если ids поменяются
+    function hookText(text, fn, capture){
+      var want = clean(text).toLowerCase();
+      var nodes = document.querySelectorAll('button, a');
+      for (var i=0;i<nodes.length;i++){
+        var n = nodes[i];
+        var t = clean(n.textContent).toLowerCase();
+        if (t === want){
+          n.addEventListener('click', function(e){
+            if (capture) hardStop(e);
+            fn();
+          }, !!capture);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    var a = hookText('Ссылка на профиль', openPublic, true);
+    var b = hookText('Предпросмотр', openPreview, false);
+
+    // на «Сохранить» — publish после сохранения
+    var c = hookText('Сохранить', function(){ setTimeout(function(){ publishNow(); }, 160); }, false);
+
+    return (a || b || c);
+  }
+
+  function addMiniPanel(){
+    var id = 'abqdBridgePanel';
+    if (document.getElementById(id)) return;
+
+    var box = document.createElement('div');
+    box.id = id;
+    box.style.cssText = [
+      'position:fixed','left:14px','bottom:14px','z-index:99998',
+      'display:flex','gap:8px','flex-wrap:wrap',
+      'padding:10px','border-radius:16px',
+      'background:rgba(255,255,255,.10)','border:1px solid rgba(255,255,255,.18)',
+      'backdrop-filter: blur(10px)','box-shadow:0 18px 60px rgba(0,0,0,.25)'
+    ].join(';');
+
+    function mk(label, onClick){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.style.cssText = [
+        'cursor:pointer','border-radius:999px','padding:10px 12px',
+        'border:1px solid rgba(255,255,255,.22)','background:rgba(15,17,23,.75)',
+        'color:#fff','font:900 12px/1 system-ui,-apple-system,Segoe UI,Roboto,Arial'
+      ].join(';');
+      b.addEventListener('click', function(e){ hardStop(e); onClick(); });
+      return b;
+    }
+
+    box.appendChild(mk('PUBLISH', function(){ publishNow(); }));
+    box.appendChild(mk('PUBLIC', function(){ openPublic(); }));
+    box.appendChild(mk('PREVIEW', function(){ openPreview(); }));
+
+    document.body.appendChild(box);
+  }
+
+  function runSelfTests(){
+    try{
+      console.assert(normalizeSlug('Ivan Ivanov') === 'ivan-ivanov', 'test normalizeSlug spaces');
+      console.assert(normalizeSlug('---A__B---') === 'a__b', 'test normalizeSlug trims');
+      console.assert(normalizeSlug('тест') === '', 'test normalizeSlug non-latin');
+      // getToken может быть пустой — это НЕ ошибка
+      console.assert(typeof getToken() === 'string', 'test getToken type');
+    }catch(_e){}
+  }
+
+  function boot(){
+    var ok = bindById();
+    if (!ok) ok = bindByText();
+    if (!ok){
+      addMiniPanel();
+      toast('Не нашёл кнопки (id/save/preview/profileLink). Добавил мини‑панель снизу слева.');
+    }
+    runSelfTests();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
 </body>
 </html>
