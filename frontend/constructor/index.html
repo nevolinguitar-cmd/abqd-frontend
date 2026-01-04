@@ -1704,6 +1704,197 @@
   safeOn('modalClose', 'click', closeModal);
   safeOn('modalBackdrop', 'click', closeModal);
   window.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+     /* =========================================================
+   ABQD • PUBLISH OVERRIDE (Save + ProfileLink) • v1.1 • 2026-01-04
+   ========================================================= */
+  (function(){
+    function getToken(){
+      try { return localStorage.getItem('abqd_token') || ''; }
+      catch(e){ return ''; }
+    }
+
+    function apiGetProfile(slug){
+      if (!window.fetch) {
+        return Promise.reject(new Error('fetch-not-supported'));
+      }
+      return fetch('/api/v1/profile/' + encodeURIComponent(slug), { cache: 'no-store' });
+    }
+
+    function stripHeavyMedia(payload){
+      var changed = false;
+
+      function dropIfDataUrl(key){
+        if (payload[key] && String(payload[key]).indexOf('data:') === 0){
+          payload[key] = '';
+          changed = true;
+        }
+      }
+
+      dropIfDataUrl('avatarDataUrl');
+      dropIfDataUrl('bannerDataUrl');
+      dropIfDataUrl('logoDataUrl');
+
+      if (payload.gallery && payload.gallery.length){
+        for (var i = 0; i < payload.gallery.length; i++){
+          var g = payload.gallery[i];
+          if (g && g.img && String(g.img).indexOf('data:') === 0){
+            g.img = '';
+            changed = true;
+          }
+        }
+      }
+
+      return changed;
+    }
+
+    function publishProfileToApi(){
+      if (!window.fetch) {
+        toast('Ошибка', 'Браузер не поддерживает публикацию (нет fetch)');
+        return Promise.reject(new Error('fetch-not-supported'));
+      }
+
+      var token = getToken();
+      var slug = normalizeSlug(state.slug || '');
+
+      if (!slug){
+        toast('Нет slug', 'Сначала задай адрес страницы');
+        return Promise.reject(new Error('no-slug'));
+      }
+      if (!token){
+        toast('Нужен вход', 'Открой /auth и войди, чтобы опубликовать');
+        return Promise.reject(new Error('no-token'));
+      }
+
+      // всегда нормализуем slug в state
+      state.slug = slug;
+
+      // payload = 1-в-1 со state
+      var payload = clone(state);
+      payload.slug = slug;
+
+      // защита от слишком тяжёлых dataURL (base64)
+      var body = '';
+      try { body = JSON.stringify(payload); } catch(e){ body = ''; }
+
+      // ~900KB — безопаснее типичных лимитов
+      if (body && body.length > 900000){
+        var changed = stripHeavyMedia(payload);
+        if (changed){
+          toast('Картинки тяжёлые', 'Для публикации временно убрал base64, текст/кнопки останутся');
+        }
+        body = JSON.stringify(payload);
+
+        if (body.length > 900000){
+          toast('Слишком большой профиль', 'Уменьши изображения или переведи их на ссылки/хранилище');
+          return Promise.reject(new Error('payload-too-large'));
+        }
+      }
+
+      return fetch('/api/v1/profile/' + encodeURIComponent(slug), {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: body
+      }).then(function(res){
+        if (res.status === 200 || res.status === 201){
+          return res.json().catch(function(){ return {}; });
+        }
+        return res.text().then(function(t){
+          var msg = t;
+          try { msg = (JSON.parse(t) || {}).detail || t; } catch(e) {}
+          throw new Error('HTTP ' + res.status + ': ' + msg);
+        });
+      });
+    }
+
+    function setActiveAction(id){
+      var ids = ['save','preview','profileLink'];
+      for (var i = 0; i < ids.length; i++){
+        var el = $(ids[i]);
+        if (el) el.classList.toggle('active', ids[i] === id);
+      }
+    }
+
+    function hardStop(e){
+      if (!e) return;
+      try { e.preventDefault(); } catch(_e){}
+      try { e.stopImmediatePropagation(); } catch(_e2){}
+      try { e.stopPropagation(); } catch(_e3){}
+    }
+
+    function bind(){
+      var saveBtn = $('save');
+      var linkBtn = $('profileLink');
+      if (!saveBtn || !linkBtn) return;
+
+      // Перехватываем клики В CAPTURE, чтобы старые обработчики не срабатывали
+      saveBtn.addEventListener('click', function(e){
+        hardStop(e);
+        setActiveAction('save');
+        try { blurActionButtons(); } catch(_e){}
+
+        // 1) локально сохраняем всегда
+        try {
+          if (typeof saveTimer !== 'undefined' && saveTimer) window.clearTimeout(saveTimer);
+        } catch(_e2){}
+
+        try { persistNow(); } catch(_e3){}
+        // ВАЖНО: статус ставим ПОСЛЕ persistNow(), иначе persistNow перезатрёт
+        try { setSaveStatus('saving', 'Публикация…'); } catch(_e4){}
+
+        // 2) публикуем в API
+        publishProfileToApi().then(function(){
+          try { setSaveStatus('saved', 'Опубликовано'); } catch(_e5){}
+          var s = normalizeSlug(state.slug || '');
+          toast('Опубликовано', 'Профиль: /u/' + s);
+        }).catch(function(err){
+          // локально уже сохранено, но API не приняло
+          try { setSaveStatus('saved', 'Сохранено локально'); } catch(_e6){}
+          toast('Сохранено локально', (err && err.message) ? err.message : 'Не удалось опубликовать');
+        });
+      }, true);
+
+      linkBtn.addEventListener('click', function(e){
+        hardStop(e);
+        setActiveAction('profileLink');
+        try { blurActionButtons(); } catch(_e){}
+
+        var s = normalizeSlug(state.slug || '');
+        if (!s){
+          toast('Нет slug', 'Сначала задай адрес страницы');
+          return;
+        }
+
+        // Если профиля нет — пробуем опубликовать, потом открываем
+        apiGetProfile(s).then(function(r){
+          if (r.status === 200){
+            window.open('/u/' + s, '_blank', 'noopener');
+            toast('Открываю профиль', '/u/' + s);
+            return;
+          }
+
+          publishProfileToApi().then(function(){
+            window.open('/u/' + s, '_blank', 'noopener');
+            toast('Открываю профиль', '/u/' + s);
+          }).catch(function(err){
+            toast('Профиль не опубликован', (err && err.message) ? err.message : 'Нажми «Сохранить» (нужен вход)');
+          });
+        }).catch(function(){
+          toast('Ошибка сети', 'Не удалось проверить профиль');
+        });
+      }, true);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bind, { once:true });
+    } else {
+      bind();
+    }
+  })();
+  /* ===================== end ABQD PUBLISH OVERRIDE ===================== */
+
 
   // ===== minimal tests (console) =====
   function runTests(){
