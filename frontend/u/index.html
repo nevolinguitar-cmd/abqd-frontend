@@ -1,586 +1,885 @@
 <!doctype html>
-<html lang="ru">
+<!--
+  ABQD • Публичный профиль (Mirror Page /u)
+  Зеркало конструктора — только визуал, без редактора
+  Дата: 2026-01-04 (v2: API-backed mirror)
+-->
+<html lang="ru" data-theme="soft">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>ABQD — Профиль</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Профиль визитка" />
+  <title>Профиль</title>
 
+  <!-- Montserrat (UI font) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --font: "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      --bg0: #07080b;
-      --bg1: #0b0d12;
-      --txt: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.68);
-      --line: rgba(255,255,255,.10);
-      --glass: rgba(255,255,255,.06);
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --r: 22px;
+      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --r1:16px;
+      --r2:22px;
+
+      /* DARK (Тёмная) */
+      --bg:#0b0c10;
+      --panel:#0f1117;
+      --panel2:#11131b;
+      --text:#eef1f6;
+      --muted:rgba(238,241,246,.66);
+      --line:rgba(255,255,255,.13);
+      --shadow:0 18px 60px rgba(0,0,0,.30);
+
+      --accent:#ff4d9d;
+      --accent2:#6d5cff;
+      --primary1:#ff4d9d;
+      --primary2:#6d5cff;
+
+      --gridBg: rgba(255,255,255,.03);
+
+      --ok:#39d98a;
+      --ok2:#1bbf63;
     }
+
+    html[data-theme="soft"]{
+      /* WHITE (Белая) — айфон-стекло */
+      --bg:#f4f6fb;
+      --panel:rgba(255,255,255,.62);
+      --panel2:rgba(255,255,255,.78);
+      --text:#10131a;
+      --muted:rgba(16,19,26,.56);
+      --line:rgba(16,19,26,.14);
+      --shadow:0 18px 60px rgba(18,24,40,.12);
+
+      --accent:#2563eb;
+      --accent2:#7c3aed;
+
+      --primary1:#2563eb;
+      --primary2:#7c3aed;
+
+      --gridBg: rgba(255,255,255,.42);
+
+      --ok:#39d98a;
+      --ok2:#1bbf63;
+    }
+
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:var(--font);
-      color:var(--txt);
+    body{margin:0;font-family:var(--font);color:var(--text);font-size:15.5px;line-height:1.62;
       background:
-        radial-gradient(1100px 600px at 20% -10%, rgba(120,180,255,.18), transparent 60%),
-        radial-gradient(900px 520px at 90% 0%, rgba(120,255,200,.12), transparent 55%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
-      min-height:100svh;
+        radial-gradient(1100px 700px at 15% 10%, rgba(109,92,255,.16), transparent 55%),
+        radial-gradient(1100px 700px at 85% 15%, rgba(255,77,157,.14), transparent 55%),
+        var(--bg);
     }
-    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 44px}
-    .top{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:14px 16px;border-radius:18px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      backdrop-filter: blur(10px);
-    }
-    .brand{display:flex;align-items:center;gap:10px}
-    .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.8);box-shadow:0 0 0 6px rgba(255,255,255,.06)}
-    .brand b{font-weight:800;letter-spacing:.4px}
-    .chip{
-      padding:8px 10px;border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.05);
-      color:var(--muted);
-      font-size:12px;
-      white-space:nowrap;
-    }
-    .card{
-      margin-top:14px;
-      border:1px solid var(--line);
-      background:var(--glass);
-      backdrop-filter: blur(12px);
-      border-radius:var(--r);
+
+    /* лёгкая «плёнка/зерно» */
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+      opacity:.055;mix-blend-mode:overlay;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+      transform:translateZ(0)}
+
+    .wrap{position:relative;z-index:1}
+    .wrap{max-width:1320px;margin:0 auto;padding:18px 14px 44px;}
+
+    .topBar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;margin-bottom:12px;border-bottom:1px solid var(--line)}
+    .themeSwitcher{display:inline-flex;border:1px solid var(--line);background:rgba(0,0,0,.08);border-radius:999px;overflow:hidden;backdrop-filter:blur(10px)}
+    html[data-theme="soft"] .themeSwitcher{background:rgba(255,255,255,.35)}
+    .themeSwitcher button{border:0;background:transparent;cursor:pointer;padding:9px 12px;font-size:12px;color:var(--muted);font-weight:800}
+    .themeSwitcher button.active{color:var(--text);background:linear-gradient(90deg,rgba(255,255,255,.16),rgba(255,255,255,.06))}
+
+    .card{position:relative;border:1px solid var(--line);
+      background:
+        radial-gradient(120% 140% at 10% 0%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(180deg,var(--panel),rgba(255,255,255,.04));
+      border-radius:var(--r2);
       box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .hero{
-      position:relative;
-      padding:18px 18px 16px;
-      background:
-        radial-gradient(900px 520px at 15% 0%, rgba(120,180,255,.18), transparent 62%),
-        radial-gradient(800px 520px at 95% 0%, rgba(120,255,200,.14), transparent 60%),
-        rgba(255,255,255,.02);
-      border-bottom:1px solid var(--line);
-    }
-    .row{display:flex;gap:16px;align-items:flex-start}
-    .ava{
-      width:84px;height:84px;border-radius:24px;flex:0 0 auto;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.25);
-      overflow:hidden;
-      box-shadow:0 10px 30px rgba(0,0,0,.35);
-    }
-    .ava img{width:100%;height:100%;object-fit:cover;display:block}
-    .hgroup{flex:1;min-width:0}
-    .name{font-size:22px;font-weight:800;line-height:1.15;margin:2px 0 6px}
-    .title{color:var(--muted);font-size:14px;line-height:1.4;margin:0}
-    .meta{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
-    .tag{
-      padding:6px 10px;border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.05);
-      color:rgba(255,255,255,.80);
-      font-size:12px;
-      max-width:100%;
-      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-    }
-    .section{padding:14px 18px}
-    .sec-title{
-      margin:2px 0 10px;
-      font-size:13px;
-      letter-spacing:.2px;
-      color:rgba(255,255,255,.78);
-      font-weight:700;
-      text-transform:uppercase;
-    }
-    .btns{display:grid;gap:10px}
-    .btn{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:12px 14px;border-radius:16px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);
-      color:var(--txt);
-      text-decoration:none;
-      transition:transform .08s ease, background .15s ease;
-    }
-    .btn:hover{background:rgba(255,255,255,.09);transform:translateY(-1px)}
-    .btn small{color:var(--muted);font-size:12px}
-    .btn .arr{opacity:.7}
-    .grid2{display:grid;gap:10px}
-    @media (min-width:820px){ .grid2{grid-template-columns:1fr 1fr} }
-    .points{display:grid;gap:10px}
-    .point{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.05);
-      border-radius:18px;
-      padding:12px 14px;
-    }
-    .point b{display:block;font-size:14px;margin-bottom:6px}
-    .point p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
-    .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-    @media (min-width:820px){ .gallery{grid-template-columns:repeat(4,1fr)} }
-    .ph{
-      border-radius:18px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter:blur(12px);
+      overflow:hidden}
+    .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+      background:linear-gradient(135deg, rgba(255,255,255,.22), transparent 42%, rgba(255,255,255,.10));
+      opacity:.18;mix-blend-mode:overlay}
+    html[data-theme="soft"] .card::before{opacity:.10;mix-blend-mode:normal}
+
+    .hero{padding:16px}
+
+    .banner{position:relative;height:220px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--line);background:rgba(0,0,0,.10);z-index:1}
+    .bannerPlh{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px;
+      color:var(--muted);background:linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+      pointer-events:none}
+    html[data-theme="soft"] .bannerPlh{background:linear-gradient(180deg, rgba(255,255,255,.30), transparent)}
+    .banner img{width:100%;height:100%;object-fit:cover;display:block}
+
+    .bannerLogo{position:absolute;right:12px;top:12px;width:56px;height:56px;border-radius:16px;
+      border:1px solid var(--line);background:rgba(0,0,0,.18);backdrop-filter:blur(10px);
+      display:flex;align-items:center;justify-content:center;overflow:hidden;text-decoration:none;
+      box-shadow:0 10px 30px rgba(0,0,0,.18)}
+    html[data-theme="soft"] .bannerLogo{background:rgba(255,255,255,.55)}
+    .bannerLogo img{width:100%;height:100%;object-fit:cover;display:block}
+
+    .heroHead{margin-top:-54px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 10px;position:relative;z-index:3}
+
+    .left{display:flex;align-items:flex-end;gap:12px}
+    .avatar{width:106px;height:106px;border-radius:999px;border:4px solid rgba(255,255,255,.9);overflow:hidden;background:rgba(0,0,0,.18);
+      box-shadow:0 18px 60px rgba(0,0,0,.20);flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+      position:relative;z-index:4}
+    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .avatar .fallback{font-weight:800;font-size:38px;opacity:.92}
+
+    .nm{margin:0;font-size:28px;letter-spacing:-.02em;line-height:1.08;font-weight:800}
+    .rl{margin:6px 0 0;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:800}
+
+    .about{padding:10px 10px 14px}
+    .h2{margin:10px 0 10px;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--muted);font-weight:800}
+    .aboutText{margin:0;line-height:1.72;font-size:14.5px;white-space:pre-wrap;color:rgba(238,241,246,.78)}
+    html[data-theme="soft"] .aboutText{color:rgba(16,19,26,.72)}
+
+    .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .cta a{border:1px solid var(--line);border-radius:999px;padding:11px 14px;font-weight:800;font-size:13px;text-decoration:none;
+      color:#fff;
       background:rgba(0,0,0,.22);
-      aspect-ratio:1/1;
+      position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0);
+      transition:transform .14s ease, filter .14s ease}
+    .cta a:active{transform:translateY(1px)}
+
+    .cta a.primary{border:0 !important;background:transparent !important;color:#fff !important;border-radius:999px;overflow:hidden;position:relative;isolation:isolate;transform:translateZ(0);box-shadow:0 10px 26px rgba(0,0,0,.14)}
+    .cta a.primary::before{content:"";position:absolute;inset:-1px;background:linear-gradient(90deg,var(--primary1),var(--primary2));border-radius:inherit;z-index:-1;transform:translateZ(0)}
+
+    html[data-theme="soft"] .cta a.primary{color:var(--text) !important;text-shadow:none;border:1px solid rgba(16,19,26,.16) !important;box-shadow:0 16px 36px rgba(18,24,40,.14),0 1px 0 rgba(255,255,255,.70) inset,0 -1px 0 rgba(0,0,0,.06) inset;letter-spacing:.01em}
+    html[data-theme="soft"] .cta a.primary::before{background:linear-gradient(180deg, rgba(226,229,235,.98) 0%, rgba(196,203,214,.96) 48%, rgba(168,177,191,.95) 100%)}
+
+    .section{padding:16px}
+    .secTitle{margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;position:relative}
+
+    .footer{padding:14px 16px 18px;text-align:center;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.04em}
+    .footer .copy{opacity:.92}
+
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{border:1px solid var(--line);background:rgba(0,0,0,.05);border-radius:var(--r1);padding:12px;display:flex;gap:12px;align-items:flex-start;position:relative;overflow:hidden}
+    html[data-theme="soft"] .item{background:rgba(255,255,255,.45)}
+
+    .check{width:28px;height:28px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.08);color:var(--ok);
+      display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;line-height:1;flex:0 0 auto;
+      box-shadow:0 10px 26px rgba(0,0,0,.16),0 0 0 1px rgba(255,255,255,.06) inset;}
+    html[data-theme="soft"] .check{background:rgba(255,255,255,.45);box-shadow:0 10px 26px rgba(18,24,40,.10),0 0 0 1px rgba(0,0,0,.06) inset;}
+
+    .itT{margin:0;font-weight:800;font-size:14px}
+    .itD{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.55;white-space:pre-wrap}
+
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    @media (max-width: 900px){.grid3{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 560px){.grid3{grid-template-columns:1fr}}
+
+    .work{border:1px solid var(--line);border-radius:var(--r1);overflow:hidden;background:rgba(0,0,0,.05);cursor:pointer;transition:.18s ease;min-height:220px;display:flex;flex-direction:column}
+    html[data-theme="soft"] .work{background:rgba(255,255,255,.45)}
+    .work:hover{transform:translateY(-2px)}
+    .workImg{height:160px;background:rgba(0,0,0,.12)}
+    .workImg img{width:100%;height:100%;object-fit:cover;display:block}
+    .workBody{padding:12px}
+    .workT{margin:0;font-weight:800;font-size:14px;line-height:1.2;white-space:pre-wrap;word-break:break-word}
+    .workM{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.5;white-space:pre-wrap}
+
+    .chipsRow{display:flex;flex-wrap:wrap;gap:10px}
+    .chipA{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(0,0,0,.05);text-decoration:none;color:var(--muted)!important;font-weight:800;font-size:12px;
+      position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0);
+      transition:transform .14s ease, filter .14s ease}
+    html[data-theme="soft"] .chipA{background:rgba(255,255,255,.45)}
+    .chipA:visited{color:var(--muted)!important}
+    .chipA:hover{color:var(--text)!important}
+    .chipA:active{transform:translateY(1px)}
+    .chipI{opacity:.9;color:var(--muted)}
+
+    .hide{display:none!important}
+
+    /* Mirror page: без верхней панели/свитчера/футера */
+    .topBar{display:none!important}
+    .themeSwitcher{display:none!important}
+    .footer{display:none!important}
+
+    .errBox{border:1px solid var(--line);border-radius:var(--r2);background:rgba(0,0,0,.06);padding:14px 14px;margin:14px 0 0;
+      color:var(--muted);font-weight:700;white-space:pre-wrap;}
+    html[data-theme="soft"] .errBox{background:rgba(255,255,255,.45)}
+
+    @media (max-width: 560px){
+      .wrap{padding-top:18px}
+      .nm{font-size:22px}
+      .topBar{flex-direction:column;align-items:flex-start}
     }
-    .ph img{width:100%;height:100%;object-fit:cover;display:block}
-    .notice{
-      padding:14px 18px;
-      border-top:1px solid var(--line);
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.55;
-    }
-    .notice strong{color:rgba(255,255,255,.88)}
-    .err{color:#ffb4b4}
-    .tools{
-      margin-top:14px;
-      border:1px dashed rgba(255,255,255,.18);
-      border-radius:18px;
-      padding:14px 14px;
-      background:rgba(255,255,255,.03);
-    }
-    .tools h3{margin:0 0 10px;font-size:13px;color:rgba(255,255,255,.78);text-transform:uppercase;letter-spacing:.2px}
-    .tools .row2{display:flex;gap:10px;flex-wrap:wrap}
-    .tbtn{
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(255,255,255,.06);
-      color:rgba(255,255,255,.92);
-      padding:10px 12px;
-      border-radius:14px;
-      cursor:pointer;
-      font-weight:700;
-      font-size:13px;
-    }
-    .tbtn:hover{background:rgba(255,255,255,.09)}
-    .log{
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.22);
-      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:12px;
-      color:rgba(255,255,255,.82);
-      white-space:pre-wrap;
-      word-break:break-word;
-    }
+
+    a:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(255,77,157,.16)}
+    html[data-theme="soft"] a:focus-visible{box-shadow:0 0 0 4px rgba(37,99,235,.12)}
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand"><span class="dot"></span><b>ABQD</b></div>
-      <div class="chip" id="chip">/u/…</div>
+  <div class="wrap" id="appWrap">
+    <!-- TOP BAR with Theme Switcher -->
+    <div class="topBar">
+      <div style="flex:1">
+        <h1 style="margin:0;font-size:18px;font-weight:700" id="pageTitle">Профиль</h1>
+      </div>
+      <div class="themeSwitcher" id="themeSwitcher">
+        <button type="button" data-theme="dark">🌙 Тёмная</button>
+        <button type="button" data-theme="soft">☀️ Белая</button>
+      </div>
     </div>
 
-    <div class="card">
+    <!-- PROFILE CARD -->
+    <div class="card" id="profileCard">
       <div class="hero">
-        <div class="row">
-          <div class="ava" id="ava"></div>
-          <div class="hgroup">
-            <div class="name" id="name">Загрузка…</div>
-            <p class="title" id="title"></p>
-            <div class="meta" id="meta"></div>
+        <div class="banner" id="bannerBox">
+          <div class="bannerPlh" id="bannerPlh" aria-hidden="true"></div>
+        </div>
+
+        <div class="heroHead">
+          <div class="left">
+            <div class="avatar" id="avatarBox"><span class="fallback">A</span></div>
+            <div>
+              <h2 class="nm" id="nameEl">Загрузка…</h2>
+              <div class="rl" id="roleEl"></div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="section grid2">
-        <div>
-          <div class="sec-title">Контакты и действия</div>
-          <div class="btns" id="buttons"></div>
-        </div>
-        <div>
-          <div class="sec-title">О себе</div>
-          <div class="points" id="points"></div>
+        <div class="about" id="aboutBox">
+          <div class="h2" id="aboutTitleEl">Обо мне</div>
+          <p class="aboutText" id="aboutEl">Загружаем данные…</p>
+          <div class="cta" id="ctaRow"></div>
         </div>
       </div>
 
-      <div class="section">
-        <div class="sec-title">Галерея</div>
-        <div class="gallery" id="gallery"></div>
+      <!-- CONTACTS SECTION -->
+      <div class="section" id="contactsSection">
+        <div class="secTitle">Контакты</div>
+        <div class="chipsRow" id="contactsPreview"></div>
       </div>
 
-      <div class="notice" id="notice"></div>
+      <!-- POINTS SECTION -->
+      <div class="section" id="pointsSection">
+        <div class="secTitle" id="pointsTitleEl">Ссылки</div>
+        <div class="list" id="pointsPreview"></div>
+      </div>
+
+      <!-- GALLERY SECTION -->
+      <div class="section" id="gallerySection">
+        <div class="secTitle" id="galleryTitleEl">Работы</div>
+        <div class="grid3" id="galleryPreview"></div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <span class="copy" id="copyrightEl">© 2026 Профиль</span>
+      </div>
     </div>
 
-    <div class="tools" id="tools" style="display:none;">
-      <h3>Инструменты публикации (временно)</h3>
-      <div class="row2">
-        <button class="tbtn" id="btnReload">Перезагрузить профиль</button>
-        <button class="tbtn" id="btnPublishDraft">Опубликовать из черновика конструктора</button>
-        <button class="tbtn" id="btnClearCache">Очистить кеш этого slug</button>
-      </div>
-      <div class="log" id="log">—</div>
-      <div class="log" style="opacity:.8;margin-top:10px;">
-        Если у тебя включена защита на апсерт профиля — положи токен в
-        <b>localStorage</b> под ключом <b>abqd_admin_token</b>.
-      </div>
-    </div>
+    <div class="errBox hide" id="errBox"></div>
   </div>
 
-<script>
-(() => {
-  // ВАЖНО: у FastAPI реальные пути /v1/..., но nginx делает /api/* -> /*.
-  // Поэтому фронту удобно ходить на /api/v1/... (попадёт в /v1/...).
-  const API_BASE = "/api/v1";
-  const LS_DRAFT = "abqd_constructor_demo_v2";
-  const LS_ADMIN = "abqd_admin_token";
+  <script>
+  (function(){
+    // =========================
+    // CONFIG
+    // =========================
+    var API_DEFAULT_ORIGIN = "https://app.abqd.ru"; // публичная витрина может быть на abqd.ru, API — на app.abqd.ru
+    var CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 часов
+    var CACHE_PREFIX = "abqd_u_cache_v1:";
+    
+    function $(id){ return document.getElementById(id); }
+    function qs(s){ return document.querySelector(s); }
 
-  const $ = (id) => document.getElementById(id);
+    function clean(s){ return String(s == null ? '' : s).replace(/^\s+|\s+$/g,''); }
+    function normalizeSlug(s){ return clean(s).toLowerCase().replace(/\/+$/,''); }
 
-  function normalizeSlug(s){
-    return (s || "")
-      .toString()
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9\-_]/g, "");
-  }
+    function normUrl(u){
+      u = clean(u);
+      if (!u) return '';
+      var low = u.toLowerCase();
+      if (low.indexOf('http://') === 0 || low.indexOf('https://') === 0) return u;
+      if (low.indexOf('mailto:') === 0 || low.indexOf('tel:') === 0 || low.indexOf('tg://') === 0) return u;
+      return 'https://' + u;
+    }
 
-  function getSlugFromPath(){
-    const parts = location.pathname.split("/").filter(Boolean);
-    const slug = (parts[0] === "u") ? parts[1] : "";
-    return normalizeSlug(slug);
-  }
+    function contactUrl(u){
+      u = clean(u);
+      if (!u) return '';
+      var low = u.toLowerCase();
+      if (low.indexOf('http://') === 0 || low.indexOf('https://') === 0 || low.indexOf('mailto:') === 0 || low.indexOf('tel:') === 0 || low.indexOf('tg://') === 0) return u;
+      if (u.indexOf('@') !== -1 && u.indexOf(' ') === -1) return 'mailto:' + u;
 
-  function escapeHtml(s){
-    return (s ?? "").toString()
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  function shorten(url){
-    try{
-      const u = new URL(url);
-      return (u.host + u.pathname).replace(/\/$/,"");
-    }catch{ return url; }
-  }
-
-  function safeUrl(u){
-    if(!u) return "";
-    try { return new URL(u, location.origin).href; }
-    catch { return ""; }
-  }
-
-  function getState(payload){
-    // В API профиля структура: {title, description, state:{...конструктор...}}
-    return (payload && payload.state && typeof payload.state === "object") ? payload.state : payload;
-  }
-
-  function pickProfile(payload){
-    const s = getState(payload);
-    return (s?.profile && typeof s.profile === "object") ? s.profile : (s || {});
-  }
-
-  function pickButtons(payload){
-    const s = getState(payload);
-    const p = pickProfile(payload);
-    return s?.buttons || p?.buttons || p?.contacts || [];
-  }
-
-  function pickPoints(payload){
-    const s = getState(payload);
-    const p = pickProfile(payload);
-    return s?.points || p?.points || p?.about || [];
-  }
-
-  function pickGallery(payload){
-    const s = getState(payload);
-    const p = pickProfile(payload);
-    return s?.gallery || p?.gallery || p?.photos || [];
-  }
-
-  function setNotice(html, isError=false){
-    const n = $("notice");
-    n.innerHTML = html;
-    n.classList.toggle("err", !!isError);
-  }
-
-  function setLog(text){
-    const el = $("log");
-    if(el) el.textContent = text;
-  }
-
-  function cacheKey(slug){ return `abqd_profile_${slug}`; }
-
-  function readCache(slug){
-    const raw = localStorage.getItem(cacheKey(slug));
-    if(!raw) return null;
-    try{
-      const data = JSON.parse(raw);
-      if (normalizeSlug(data?.slug) !== slug) {
-        localStorage.removeItem(cacheKey(slug));
-        return null;
+      var s = u;
+      if (s && (s[0] === '+' || (s[0] >= '0' && s[0] <= '9')) && s.length >= 6) {
+        if (/^[0-9\s()\-\.+]+$/.test(s)) {
+          var digits = s.replace(/[\s\-().]/g, '');
+          return 'tel:' + digits;
+        }
       }
-      return data;
-    } catch {
-      localStorage.removeItem(cacheKey(slug));
-      return null;
-    }
-  }
-
-  function writeCache(slug, payload){
-    localStorage.setItem(cacheKey(slug), JSON.stringify({ ...payload, slug }));
-  }
-
-  async function apiGetProfile(slug){
-    const r = await fetch(`${API_BASE}/profile/${encodeURIComponent(slug)}`, {
-      headers: { "Accept":"application/json" },
-      cache: "no-store"
-    });
-    if (r.status === 404) return null;
-    if (!r.ok) throw new Error(`API GET failed: ${r.status}`);
-    return await r.json();
-  }
-
-  async function apiUpsertProfile(slug, upsertBody){
-    const admin = localStorage.getItem(LS_ADMIN);
-    const headers = {
-      "Content-Type":"application/json",
-      ...(admin ? {"X-Admin-Token": admin} : {})
-    };
-
-    const tryReq = async (method) => {
-      const r = await fetch(`${API_BASE}/profile/${encodeURIComponent(slug)}`, {
-        method,
-        headers,
-        body: JSON.stringify(upsertBody)
-      });
-      if (r.ok) return true;
-      if ([404,405].includes(r.status)) return false;
-      const err = await r.text().catch(()=> "");
-      throw new Error(`API ${method} failed: ${r.status} ${err}`);
-    };
-
-    if (await tryReq("PUT")) return true;
-    if (await tryReq("POST")) return true;
-    throw new Error("Upsert not supported (PUT/POST both failed)");
-  }
-
-  function render(payload, slug){
-    $("chip").textContent = `/u/${slug}`;
-
-    const p = pickProfile(payload);
-    const displayName = p?.name || p?.full_name || slug;
-    const displayTitle = p?.title || p?.role || payload?.title || "";
-
-    $("name").textContent = displayName;
-    $("title").textContent = displayTitle;
-
-    // avatar
-    const ava = $("ava");
-    ava.innerHTML = "";
-    const avaUrl = p?.avatar_url || p?.avatar || p?.photo_url || "";
-    if (avaUrl) {
-      const img = document.createElement("img");
-      img.src = avaUrl;
-      img.alt = displayName;
-      ava.appendChild(img);
-    } else {
-      ava.style.display = "grid";
-      ava.style.placeItems = "center";
-      ava.style.color = "rgba(255,255,255,.7)";
-      ava.style.fontWeight = "800";
-      ava.textContent = (displayName || "A").trim().slice(0,1).toUpperCase();
+      return 'https://' + u;
     }
 
-    // meta
-    const meta = $("meta");
-    meta.innerHTML = "";
-    const tags = [];
-    const phone = p?.phone || p?.tel || "";
-    const email = p?.email || "";
-    const city = p?.city || p?.location || "";
-    if (phone) tags.push(phone);
-    if (email) tags.push(email);
-    if (city) tags.push(city);
-    tags.slice(0,5).forEach(t=>{
-      const el = document.createElement("span");
-      el.className = "tag";
-      el.textContent = t;
-      meta.appendChild(el);
-    });
-
-    // buttons
-    const btns = $("buttons");
-    btns.innerHTML = "";
-    const buttons = pickButtons(payload);
-    if (Array.isArray(buttons) && buttons.length){
-      buttons.slice(0,10).forEach((b, idx)=>{
-        const title = b?.title || b?.text || b?.label || `Ссылка ${idx+1}`;
-        const url = safeUrl(b?.url || b?.href || b?.link || "");
-        if(!url) return;
-        const a = document.createElement("a");
-        a.className = "btn";
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener";
-        a.innerHTML = `<div><div>${escapeHtml(title)}</div><small>${escapeHtml(shorten(url))}</small></div><div class="arr">→</div>`;
-        btns.appendChild(a);
-      });
-    } else {
-      const empty = document.createElement("div");
-      empty.style.color = "rgba(255,255,255,.55)";
-      empty.style.fontSize = "13px";
-      empty.textContent = "Нет кнопок. Добавь их в конструкторе и опубликуй профиль.";
-      btns.appendChild(empty);
-    }
-
-    // points
-    const pts = $("points");
-    pts.innerHTML = "";
-    const points = pickPoints(payload);
-    if (Array.isArray(points) && points.length){
-      points.slice(0,8).forEach((it, idx)=>{
-        const t = it?.title || it?.name || `Пункт ${idx+1}`;
-        const d = it?.text || it?.desc || it?.description || "";
-        const box = document.createElement("div");
-        box.className = "point";
-        box.innerHTML = `<b>${escapeHtml(t)}</b><p>${escapeHtml(d)}</p>`;
-        pts.appendChild(box);
-      });
-    } else {
-      const empty = document.createElement("div");
-      empty.style.color = "rgba(255,255,255,.55)";
-      empty.style.fontSize = "13px";
-      empty.textContent = "Нет описания. Добавь “пункты/о себе” в конструкторе.";
-      pts.appendChild(empty);
-    }
-
-    // gallery
-    const g = $("gallery");
-    g.innerHTML = "";
-    const gal = pickGallery(payload);
-    if (Array.isArray(gal) && gal.length){
-      gal.slice(0,12).forEach((it)=>{
-        const u = it?.url || it?.src || it?.image || it;
-        const url = safeUrl(u);
-        if(!url) return;
-        const ph = document.createElement("div");
-        ph.className = "ph";
-        const img = document.createElement("img");
-        img.src = url;
-        img.alt = "photo";
-        ph.appendChild(img);
-        g.appendChild(ph);
-      });
-    } else {
-      const empty = document.createElement("div");
-      empty.style.color = "rgba(255,255,255,.55)";
-      empty.style.fontSize = "13px";
-      empty.textContent = "Галерея пустая.";
-      g.appendChild(empty);
-    }
-
-    setNotice(`<strong>Публичная страница</strong> грузит профиль из API (/v1/profile/{slug} через /api/v1/profile/{slug}).`);
-  }
-
-  function readConstructorDraft(){
-    const raw = localStorage.getItem(LS_DRAFT);
-    if(!raw) return null;
-    try { return JSON.parse(raw); } catch { return null; }
-  }
-
-  function buildProfileUpsert(slug, draft){
-    const state = (draft && typeof draft === "object") ? draft : {};
-    // Попробуем красиво вытащить title/description из draft.profile
-    const p = (state.profile && typeof state.profile === "object") ? state.profile : {};
-    const title = p.title || state.title || null;
-    const description = p.description || state.description || null;
-
-    // гарантируем slug в state.profile.slug
-    if (state.profile && typeof state.profile === "object") {
-      state.profile.slug = slug;
-    } else {
-      state.profile = { slug };
-    }
-
-    return { title, description, state };
-  }
-
-  async function loadAndRender(slug){
-    $("tools").style.display = (location.hash === "#tools") ? "block" : "none";
-    setNotice("Загрузка профиля…");
-
-    try{
-      const data = await apiGetProfile(slug);
-      if (data) {
-        writeCache(slug, data);
-        render(data, slug);
-        return;
+    function phoneToTel(s){
+      s = clean(s);
+      if (!s) return '';
+      var out = '';
+      for (var i = 0; i < s.length; i++) {
+        var ch = s.charAt(i);
+        if (ch >= '0' && ch <= '9') out += ch;
+        else if (ch === '+' && out.length === 0) out += ch;
       }
-    } catch (e) {
-      setLog(String(e));
+      var digits = (out.charAt(0) === '+') ? out.slice(1) : out;
+      if (digits.length < 6) return '';
+      return 'tel:' + out;
     }
 
-    const cached = readCache(slug);
-    if (cached) {
-      render(cached, slug);
-      setNotice(`<strong>Показан кеш.</strong> API недоступен или профиль отсутствует в API.`, true);
+    function wrapFixedChars(text, n){
+      text = String(text == null ? '' : text);
+      n = (typeof n === 'number' && n > 0) ? n : 17;
+      if (!text) return text;
+      var lines = text.split(/\r?\n/);
+      var out = [];
+      for (var li = 0; li < lines.length; li++) {
+        var line = lines[li];
+        if (line.length <= n) { out.push(line); continue; }
+        for (var i = 0; i < line.length; i += n) out.push(line.slice(i, i + n));
+      }
+      return out.join('\n');
+    }
+
+    function getSlugFromUrl(){
+      // /u/<slug>  OR /u/index.html?slug=<slug>
+      var path = (location.pathname || "/").replace(/\/+$/,'');
+      var parts = path.split("/").filter(Boolean);
+
+      var idx = parts.indexOf("u");
+      if (idx >= 0) {
+        var next = parts[idx + 1] || "";
+        if (next && next !== "index.html") return normalizeSlug(next);
+      }
+
+      if (parts.length >= 2 && parts[0] === "u" && parts[1] && parts[1] !== "index.html") {
+        return normalizeSlug(parts[1]);
+      }
+
+      try{
+        var u = new URL(location.href);
+        var q = u.searchParams.get("slug") || u.searchParams.get("s") || "";
+        return normalizeSlug(q);
+      }catch(_e){
+        return "";
+      }
+    }
+
+    function getApiOrigin(){
+      try{
+        var u = new URL(location.href);
+        var api = clean(u.searchParams.get("api") || "");
+        if (api && /^https?:\/\//i.test(api)) return api.replace(/\/+$/," ");
+      }catch(_e){}
+
+      if (location.hostname === "app.abqd.ru") return location.origin;
+      return API_DEFAULT_ORIGIN;
+    }
+
+    function showError(msg){
+      var box = $("errBox");
+      if(!box) return;
+      box.classList.remove("hide");
+      box.textContent = msg || "Ошибка";
+    }
+
+    function hideError(){
+      var box = $("errBox");
+      if(!box) return;
+      box.classList.add("hide");
+      box.textContent = "";
+    }
+
+    // =========================
+    // THEME
+    // =========================
+    var slug = getSlugFromUrl();
+    
+    function applyTheme(theme){
+      if (theme !== "dark" && theme !== "soft") theme = "soft";
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+
+    function bindThemeSwitcher(){
+      var sw = $("themeSwitcher");
+      if(!sw) return;
+      sw.addEventListener("click", function(e){
+        var btn = e.target.closest('button[data-theme]');
+        if(!btn) return;
+        applyTheme(btn.getAttribute("data-theme"));
+      });
+    }
+
+    // =========================
+    // API + CACHE
+    // =========================
+    var API_ORIGIN = getApiOrigin();
+    var API_BASE = API_ORIGIN + "/api/v1";
+
+    function cacheKey(sl){
+      return CACHE_PREFIX + normalizeSlug(sl || "");
+    }
+
+    function readCache(sl){
+      try{
+        var raw = localStorage.getItem(cacheKey(sl));
+        if(!raw) return null;
+        var data = JSON.parse(raw);
+        if(!data || !data.ts || !data.profile) return null;
+        if ((Date.now() - data.ts) > CACHE_TTL_MS) return null;
+        return data.profile;
+      }catch(_e){ return null; }
+    }
+
+    function writeCache(sl, profile){
+      try{ localStorage.setItem(cacheKey(sl), JSON.stringify({ ts: Date.now(), profile: profile })); }catch(_e){}
+    }
+
+    function fetchJson(url, timeoutMs){
+      timeoutMs = timeoutMs || 10000;
+      return new Promise(function(resolve, reject){
+        var done = false;
+        var t = setTimeout(function(){
+          if(done) return;
+          done = true;
+          reject(new Error("Timeout"));
+        }, timeoutMs);
+
+        fetch(url, { method:"GET" })
+          .then(function(r){
+            return r.text().then(function(text){
+              var json = null;
+              try{ json = text ? JSON.parse(text) : null; }catch(_e){ json = null; }
+              if(!r.ok){
+                var d = (json && json.detail) ? json.detail : ("HTTP " + r.status);
+                throw new Error(d);
+              }
+              return json;
+            });
+          })
+          .then(function(json){
+            if(done) return;
+            done = true;
+            clearTimeout(t);
+            resolve(json);
+          })
+          .catch(function(err){
+            if(done) return;
+            done = true;
+            clearTimeout(t);
+            reject(err);
+          });
+      });
+    }
+
+    // =========================
+    // ADAPTER: API profile -> view state
+    // =========================
+    function asArr(x){ return Array.isArray(x) ? x : []; }
+    function pick(){
+      for (var i=0;i<arguments.length;i++){
+        var v = arguments[i];
+        if (v == null) continue;
+        if (typeof v === "string" && clean(v)) return clean(v);
+        if (typeof v === "number" || typeof v === "boolean") return String(v);
+      }
+      return "";
+    }
+
+    function normalizeBtnStyle(s){
+      s = (s || "").toString().toLowerCase();
+      if (s === "primary" || s === "accent") return "primary";
+      return "ghost";
+    }
+
+    function adaptProfileToState(profile){
+      var st = (profile && profile.state) ? profile.state : {};
+      var p  = (st && st.profile) ? st.profile : {};
+
+      var looksLikeOld = (typeof st.fullName === "string") || (typeof st.avatarDataUrl === "string") || (Array.isArray(st.points));
+      if (looksLikeOld) {
+        var old = Object.assign({}, st);
+        if (!clean(old.avatarDataUrl) && profile && profile.avatar && profile.avatar.url) old.avatarDataUrl = profile.avatar.url;
+        return old;
+      }
+
+      var out = {};
+      out.fullName = pick(p.name, p.fullName, profile && profile.title, "Профиль");
+      out.role     = pick(p.role, p.subtitle, p.tagline, "");
+      out.about    = pick(p.about, p.bio, profile && profile.description, "");
+
+      out.phone    = pick(p.phone, p.tel, p.mobile, "");
+      out.callStyle = pick(p.callStyle, "primary");
+
+      out.avatarDataUrl = pick(profile && profile.avatar && profile.avatar.url, p.avatarUrl, p.avatar, p.avatar_data_url, p.avatarDataUrl, "");
+      out.bannerDataUrl = pick(p.bannerUrl, (p.banner && p.banner.url), p.bannerDataUrl, "");
+      out.logoDataUrl   = pick(p.logoUrl, (p.logo && p.logo.url), p.logoDataUrl, "");
+      out.logoLink      = pick(p.logoLink, p.website, "https://abqd.ru");
+
+      var btns = asArr(st && st.buttons);
+      out.buttons = btns.map(function(b){
+        return {
+          label: pick(b && b.title, b && b.label, b && b.text, ""),
+          url: pick(b && b.url, b && b.href, ""),
+          style: normalizeBtnStyle(b && b.style)
+        };
+      }).filter(function(b){ return clean(b.label) || clean(b.url); });
+
+      var pts = asArr(st && (st.points || st.links || (st.sections && st.sections.points)));
+      out.pointsTitle = pick(st && st.pointsTitle, (st.sections && st.sections.pointsTitle), "Ссылки");
+      out.points = pts.map(function(x){
+        return { title: pick(x && x.title, x && x.name, ""), text: pick(x && x.text, x && x.desc, x && x.description, ""), url: pick(x && x.url, x && x.href, "") };
+      }).filter(function(x){ return clean(x.title) || clean(x.text) || clean(x.url); });
+
+      var gal = asArr(st && (st.gallery || st.works || (st.sections && st.sections.gallery)));
+      out.galleryTitle = pick(st && st.galleryTitle, (st.sections && st.sections.galleryTitle), "Работы");
+      out.gallery = gal.map(function(g){
+        return { title: pick(g && g.title, g && g.name, ""), text: pick(g && g.text, g && g.desc, g && g.description, ""), img: pick(g && g.img, g && g.image, g && g.imageUrl, ""), url: pick(g && g.url, g && g.href, "") };
+      }).filter(function(g){ return clean(g.title) || clean(g.text) || clean(g.img) || clean(g.url); });
+
+      var chips = asArr(st && (st.chips || st.contacts));
+      out.chips = chips.map(function(c){
+        return { label: pick(c && c.label, c && c.title, c && c.name, ""), url: pick(c && c.url, c && c.href, c && c.value, ""), icon: pick(c && c.icon, "") };
+      }).filter(function(c){ return clean(c.label) || clean(c.url); });
+
+      out.theme = pick(st && st.theme, p.theme, "");
+      return out;
+    }
+
+    // =========================
+    // RENDER
+    // =========================
+    function renderProfile(state){
+      hideError();
+
+      var nameRaw = clean(state.fullName || '');
+      var showName = nameRaw || 'Профиль';
+
+      var pageTitle = $("pageTitle");
+      if (pageTitle) pageTitle.textContent = showName;
+
+      var nameEl = $('nameEl');
+      if (nameEl) nameEl.textContent = showName;
+
+      var roleRaw = clean(state.role || '');
+      var roleEl = $('roleEl');
+      if (roleEl) {
+        roleEl.textContent = roleRaw;
+        roleEl.style.display = roleRaw ? 'block' : 'none';
+      }
+
+      var aboutEl = $('aboutEl');
+      var aboutRaw = clean(state.about || '');
+      var aboutTitleEl = $('aboutTitleEl');
+      if (aboutTitleEl) aboutTitleEl.style.display = aboutRaw ? 'block' : 'none';
+      if (aboutEl) { aboutEl.textContent = state.about || ''; aboutEl.style.display = aboutRaw ? 'block' : 'none'; }
+
+      var banner = $('bannerBox');
+      var plh = $('bannerPlh');
+      var hasBanner = !!clean(state.bannerDataUrl);
+      if (plh) plh.style.display = hasBanner ? 'none' : 'flex';
+
+      if (banner) {
+        banner.innerHTML = '';
+        if (plh) banner.appendChild(plh);
+
+        if (hasBanner) {
+          var imgB = document.createElement('img');
+          imgB.src = state.bannerDataUrl;
+          imgB.alt = 'banner';
+          banner.insertBefore(imgB, banner.firstChild);
+
+          if (clean(state.logoDataUrl)) {
+            var link = clean(state.logoLink) ? normUrl(state.logoLink) : '';
+            var a = document.createElement('a');
+            a.className = 'bannerLogo';
+            a.href = link || '#';
+            a.target = '_blank';
+            a.rel = 'noopener';
+            if (!link) a.style.pointerEvents = 'none';
+
+            var li = document.createElement('img');
+            li.src = state.logoDataUrl;
+            li.alt = 'logo';
+            a.appendChild(li);
+            banner.appendChild(a);
+          }
+        }
+      }
+
+      var av = $('avatarBox');
+      if (av) {
+        av.innerHTML = '';
+        if (clean(state.avatarDataUrl)) {
+          var imgA = document.createElement('img');
+          imgA.src = state.avatarDataUrl;
+          imgA.alt = 'avatar';
+          av.appendChild(imgA);
+        } else {
+          var letter = (nameRaw || 'A').slice(0, 1).toUpperCase();
+          var span = document.createElement('span');
+          span.className = 'fallback';
+          span.textContent = letter;
+          av.appendChild(span);
+        }
+      }
+
+      var cta = $('ctaRow');
+      if (cta) {
+        cta.innerHTML = '';
+
+        var phoneRaw = clean(state.phone || '');
+        var hasPhone = !!phoneRaw;
+
+        if (hasPhone) {
+          var tel = phoneToTel(phoneRaw);
+          var callBtn = document.createElement('a');
+          callBtn.textContent = 'Позвонить';
+          callBtn.className = (clean(state.callStyle) === 'primary') ? 'primary' : '';
+          callBtn.href = tel || '#';
+          callBtn.target = '_self';
+          callBtn.rel = 'nofollow';
+          if (!tel) {
+            callBtn.style.opacity = '.55';
+            callBtn.style.pointerEvents = 'none';
+          }
+          cta.appendChild(callBtn);
+        }
+
+        var maxButtons = hasPhone ? 5 : 6;
+        var btns = Array.isArray(state.buttons) ? state.buttons : [];
+        for (var bi = 0; bi < btns.length && bi < maxButtons; bi++) {
+          var btn = btns[bi];
+          if (!btn) continue;
+          var label = clean(btn.label || btn.title);
+          if (!label) continue;
+
+          var a2 = document.createElement('a');
+          a2.textContent = label;
+          a2.className = (clean(btn.style) === 'primary') ? 'primary' : '';
+          a2.href = normUrl(btn.url) || '#';
+          a2.target = '_blank';
+          a2.rel = 'noopener';
+          if (!clean(btn.url)) {
+            a2.style.opacity = '.55';
+            a2.style.pointerEvents = 'none';
+          }
+          cta.appendChild(a2);
+        }
+        cta.style.display = cta.children.length ? 'flex' : 'none';
+      }
+      var aboutBox = $('aboutBox');
+      if (aboutBox) aboutBox.style.display = (typeof aboutRaw !== 'undefined' && aboutRaw) || (cta && cta.children.length) ? 'block' : 'none';
+
+      var contactsPreview = $('contactsPreview');
+      if (contactsPreview) {
+        contactsPreview.innerHTML = '';
+        var chips = Array.isArray(state.chips) ? state.chips : [];
+        for (var ci = 0; ci < chips.length && ci < 20; ci++) {
+          var c = chips[ci];
+          var label = clean(c && c.label);
+          var rawUrl = clean(c && c.url);
+          var iconValue = clean(c && c.icon);
+          if (!label && !rawUrl) continue;
+
+          var a3 = document.createElement('a');
+          a3.className = 'chipA';
+
+          if (iconValue) {
+            var icon = document.createElement('span');
+            icon.className = 'chipI';
+            icon.textContent = iconValue;
+            a3.appendChild(icon);
+          }
+
+          var text = document.createElement('span');
+          text.textContent = label || rawUrl;
+          a3.appendChild(text);
+
+          var href = contactUrl(rawUrl);
+          a3.href = href || '#';
+          a3.target = '_blank';
+          a3.rel = 'noopener';
+          if (!href) {
+            a3.style.opacity = '.55';
+            a3.style.pointerEvents = 'none';
+          }
+
+          contactsPreview.appendChild(a3);
+        }
+      }
+
+      var contactsSection = $('contactsSection');
+      var hasContacts = !!(state.chips && state.chips.length);
+      if (contactsSection) contactsSection.classList.toggle('hide', !hasContacts);
+
+      var pointsTitleEl = $('pointsTitleEl');
+      if (pointsTitleEl) pointsTitleEl.textContent = state.pointsTitle || 'Ссылки';
+
+      var pl2 = $('pointsPreview');
+      if (pl2) {
+        pl2.innerHTML = '';
+        var pts = Array.isArray(state.points) ? state.points : [];
+        for (var pi = 0; pi < pts.length && pi < 12; pi++) {
+          var p = pts[pi];
+          if (!p) continue;
+          var title = clean(p.title);
+          var text2 = clean(p.text);
+          var url2 = clean(p.url);
+          if (!title && !text2 && !url2) continue;
+
+          var el = document.createElement('div');
+          el.className = 'item';
+
+          var chk = document.createElement('div');
+          chk.className = 'check';
+          chk.textContent = '✓';
+
+          var box = document.createElement('div');
+          box.style.minWidth = '0';
+
+          if (title) {
+            var t2 = document.createElement('p');
+            t2.className = 'itT';
+            t2.textContent = title;
+            box.appendChild(t2);
+          }
+
+          if (text2) {
+            var d = document.createElement('div');
+            d.className = 'itD';
+            d.textContent = text2;
+            box.appendChild(d);
+          }
+
+          if (url2) {
+            var link2 = document.createElement('a');
+            link2.style.cssText = 'font-size:12px;color:var(--muted);font-weight:800;text-decoration:none;display:inline-block;margin-top:6px';
+            link2.href = normUrl(url2);
+            link2.target = '_blank';
+            link2.rel = 'noopener';
+            link2.textContent = '→ Открыть';
+            box.appendChild(link2);
+          }
+
+          el.appendChild(chk);
+          el.appendChild(box);
+          pl2.appendChild(el);
+        }
+      }
+
+      var pointsSection = $('pointsSection');
+      var hasPoints = !!(state.points && state.points.length);
+      if (pointsSection) pointsSection.classList.toggle('hide', !hasPoints);
+
+      var galleryTitleEl = $('galleryTitleEl');
+      if (galleryTitleEl) galleryTitleEl.textContent = state.galleryTitle || 'Работы';
+
+      var gg = $('galleryPreview');
+      if (gg) {
+        gg.innerHTML = '';
+        var gal = Array.isArray(state.gallery) ? state.gallery : [];
+        for (var gi = 0; gi < gal.length && gi < 12; gi++) {
+          (function(g){
+            if(!g) return;
+            var card = document.createElement('div');
+            card.className = 'work';
+
+            var imgWrap = document.createElement('div');
+            imgWrap.className = 'workImg';
+            if (clean(g.img)) {
+              var img = document.createElement('img');
+              img.src = g.img;
+              img.alt = '';
+              imgWrap.appendChild(img);
+            }
+
+            var body = document.createElement('div');
+            body.className = 'workBody';
+
+            var title = document.createElement('p');
+            title.className = 'workT';
+            title.textContent = wrapFixedChars(clean(g.title || ''), 17);
+            body.appendChild(title);
+
+            if (clean(g.text)) {
+              var desc = document.createElement('div');
+              desc.className = 'workM';
+              desc.textContent = g.text;
+              body.appendChild(desc);
+            }
+
+            card.appendChild(imgWrap);
+            card.appendChild(body);
+
+            card.addEventListener('click', function(){
+              if (clean(g.url)) window.open(normUrl(g.url), '_blank', 'noopener');
+            });
+
+            gg.appendChild(card);
+          })(gal[gi]);
+        }
+      }
+
+      var gallerySection = $('gallerySection');
+      var hasGallery = !!(state.gallery && state.gallery.length);
+      if (gallerySection) gallerySection.classList.toggle('hide', !hasGallery);
+
+      var year = new Date().getFullYear();
+      var copyrightEl = $('copyrightEl');
+      if (copyrightEl) copyrightEl.textContent = '© ' + year + ' ' + showName;
+
+      document.title = showName + ' — Профиль';
+    }
+
+    // =========================
+    // BOOT
+    // =========================
+    
+    if (!slug) {
+      applyTheme('soft');
+      renderProfile({ fullName: 'Профиль', role: '', about: 'Не указан slug.\nОткройте ссылку вида /u/<slug> (или добавьте ?slug=<slug>).', buttons: [], pointsTitle: 'Ссылки', points: [], galleryTitle: 'Работы', gallery: [], chips: [] });
+      showError('Slug не найден в URL.\nПример: /u/testslug\nFallback: /u/?slug=testslug');
       return;
     }
 
-    $("name").textContent = "Профиль не найден";
-    $("title").textContent = "";
-    $("meta").innerHTML = "";
-    $("buttons").innerHTML = "";
-    $("points").innerHTML = "";
-    $("gallery").innerHTML = "";
-    setNotice(
-      `Профиль <strong>${escapeHtml(slug)}</strong> не найден в API.<br><br>` +
-      `Открой <strong>/constructor/</strong>, заполни данные и опубликуй.<br>` +
-      `Временно: открой эту страницу с <code>#tools</code> и нажми “Опубликовать из черновика конструктора”.`,
-      true
-    );
-  }
+    applyTheme('soft');
 
-  async function publishFromDraft(slug){
-    const draft = readConstructorDraft();
-    if (!draft) throw new Error("Нет черновика конструктора (abqd_constructor_demo_v2). Открой /constructor/ и сохрани данные.");
-    const upsert = buildProfileUpsert(slug, draft);
+    var cachedProfile = readCache(slug);
+    if (cachedProfile) {
+      try{
+        var cachedState = adaptProfileToState(cachedProfile);
+        if (clean(cachedState.theme)) applyTheme(cachedState.theme);
+        renderProfile(cachedState);
+      }catch(_e){}
+    }
 
-    await apiUpsertProfile(slug, upsert);
-    setLog("Опубликовано в API ✅");
-    await loadAndRender(slug);
-  }
+    var url = API_BASE + '/profile/' + encodeURIComponent(slug);
+    fetchJson(url, 12000)
+      .then(function(profile){
+        writeCache(slug, profile);
+        var st = adaptProfileToState(profile);
+        if (clean(st.theme)) applyTheme(st.theme);
+        renderProfile(st);
+      })
+      .catch(function(err){
+        if (!cachedProfile) {
+          renderProfile({ fullName: 'Профиль не найден', role: '', about: 'Похоже, профиль ещё не опубликован или slug неверный.', buttons: [], pointsTitle: 'Ссылки', points: [], galleryTitle: 'Работы', gallery: [], chips: [] });
+        }
+        showError(
+          'Не удалось загрузить профиль из API.\n' +
+          'slug: ' + slug + '\n' +
+          'api: ' + url + '\n\n' +
+          'Ошибка: ' + (err && err.message ? err.message : err) + '\n\n' +
+          'Если /u открыта на abqd.ru, а API на app.abqd.ru — проверь CORS (разрешить Origin https://abqd.ru).'
+        );
+      });
 
-  const slug = getSlugFromPath();
-  if (!slug) {
-    $("chip").textContent = "/u/<slug>";
-    $("name").textContent = "Неверная ссылка";
-    setNotice("Ожидается URL вида /u/<slug>.", true);
-    return;
-  }
-
-  $("btnReload")?.addEventListener("click", () => loadAndRender(slug));
-  $("btnClearCache")?.addEventListener("click", () => {
-    localStorage.removeItem(cacheKey(slug));
-    setLog("Кеш очищен для: " + slug);
-  });
-  $("btnPublishDraft")?.addEventListener("click", async () => {
-    setLog("Публикую из черновика…");
-    try { await publishFromDraft(slug); }
-    catch(e){ setLog("Ошибка: " + (e?.message || e)); }
-  });
-
-  loadAndRender(slug);
-})();
-</script>
+  })();
+  </script>
 </body>
 </html>
