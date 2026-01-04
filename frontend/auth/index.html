@@ -437,6 +437,140 @@
   </style>
 </head>
 
+  <script>
+/**
+ * ABQD Auth Bootstrap (боевой)
+ * - Автоматически находит формы login/register на странице
+ * - Делает POST /api/v1/auth/login и /api/v1/auth/register
+ * - Сохраняет access_token в localStorage("abqd_token")
+ * - Редиректит в /constructor/
+ */
+(() => {
+  const API = "/api/v1";
+  const LS_TOKEN = "abqd_token";
+
+  const qs = (sel, root=document) => root.querySelector(sel);
+  const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  function toast(msg, isErr=false){
+    let el = qs("#abqdToast");
+    if (!el){
+      el = document.createElement("div");
+      el.id = "abqdToast";
+      el.style.cssText = `
+        position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;
+        padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
+        background:rgba(10,12,18,.88);backdrop-filter:blur(10px);
+        color:rgba(255,255,255,.92);font:600 13px/1.35 Montserrat,system-ui;
+        box-shadow:0 18px 60px rgba(0,0,0,.55);display:none;
+      `;
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.display = "block";
+    el.style.borderColor = isErr ? "rgba(255,140,140,.35)" : "rgba(140,255,200,.28)";
+    clearTimeout(el._t);
+    el._t = setTimeout(()=> el.style.display="none", 2600);
+  }
+
+  function valInput(form, selectors){
+    for (const sel of selectors){
+      const el = qs(sel, form);
+      if (el && typeof el.value === "string") return el.value.trim();
+    }
+    return "";
+  }
+
+  async function apiJson(url, body){
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json().catch(()=> ({}));
+    if (!r.ok) throw new Error(data?.detail || `HTTP ${r.status}`);
+    return data;
+  }
+
+  async function doLogin(email, password){
+    const data = await apiJson(`${API}/auth/login`, { email, password });
+    if (!data?.ok || !data?.access_token) throw new Error("Login: token not received");
+    localStorage.setItem(LS_TOKEN, data.access_token);
+    toast("Вход выполнен ✅");
+    location.href = "/constructor/";
+  }
+
+  async function doRegister(name, email, phone, password){
+    await apiJson(`${API}/auth/register`, { name, email, phone: phone || null, password });
+    toast("Аккаунт создан ✅");
+    await doLogin(email, password);
+  }
+
+  function detectForms(){
+    const forms = qsa("form").filter(f => f.querySelector("input"));
+    const candidates = forms.map(f => {
+      const hasEmail = !!qs('input[type="email"], input[name="email"]', f);
+      const hasPass  = !!qs('input[type="password"], input[name="password"]', f);
+      const hasName  = !!qs('input[name="name"], input[autocomplete="name"]', f);
+      if (!hasEmail || !hasPass) return null;
+      return { f, kind: hasName ? "register" : "login" };
+    }).filter(Boolean);
+
+    // если нашлись явно обе — хорошо. если только одна — тоже ок.
+    let loginForm = candidates.find(c => c.kind === "login")?.f || null;
+    let regForm   = candidates.find(c => c.kind === "register")?.f || null;
+
+    // если одна форма и есть два режима в UI — всё равно повесим обработчик submit на неё
+    if (!loginForm && candidates[0]) loginForm = candidates[0].f;
+
+    return { loginForm, regForm };
+  }
+
+  function bind(){
+    const { loginForm, regForm } = detectForms();
+
+    if (loginForm){
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try{
+          const email = valInput(loginForm, ['input[type="email"]','input[name="email"]']);
+          const pass  = valInput(loginForm, ['input[type="password"]','input[name="password"]']);
+          if (!email || !pass) { toast("Введи email и пароль", true); return; }
+          toast("Входим…");
+          await doLogin(email, pass);
+        }catch(err){
+          toast(`Ошибка входа: ${err?.message || err}`, true);
+        }
+      }, { capture:true });
+    }
+
+    if (regForm){
+      regForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try{
+          const name  = valInput(regForm, ['input[name="name"]','input[autocomplete="name"]']);
+          const email = valInput(regForm, ['input[type="email"]','input[name="email"]']);
+          const phone = valInput(regForm, ['input[name="phone"]','input[type="tel"]']);
+          const pass  = valInput(regForm, ['input[type="password"]','input[name="password"]']);
+          if (!name || !email || !pass) { toast("Имя, email и пароль обязательны", true); return; }
+          toast("Регистрируем…");
+          await doRegister(name, email, phone, pass);
+        }catch(err){
+          toast(`Ошибка регистрации: ${err?.message || err}`, true);
+        }
+      }, { capture:true });
+    }
+
+    // fallback: если форм не нашли — добавим маленькую подсказку
+    if (!loginForm && !regForm){
+      toast("⚠️ Не нашёл формы. Проверь, что на странице есть <form> с email+password.", true);
+    }
+  }
+
+  bind();
+})();
+</script>
+
 <body>
   <div class="stage">
     <div class="bgImage" aria-hidden="true"></div>
