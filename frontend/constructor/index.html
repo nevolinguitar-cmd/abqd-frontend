@@ -1709,16 +1709,25 @@
    ========================================================= */
   (function(){
     function getToken(){
-      try { return localStorage.getItem('abqd_token') || ''; }
-      catch(e){ return ''; }
-    }
+  var t = '';
+  try { t = localStorage.getItem('abqd_token') || ''; } catch(e){ t=''; }
+  t = String(t || '').trim();
+  if (!t) return '';
 
-    function apiGetProfile(slug){
-      if (!window.fetch) {
-        return Promise.reject(new Error('fetch-not-supported'));
-      }
-      return fetch('/api/v1/profile/' + encodeURIComponent(slug), { cache: 'no-store' });
-    }
+  // если токен лежит JSON-строкой
+  if (t.charAt(0) === '{') {
+    try {
+      var o = JSON.parse(t);
+      t = (o && (o.access_token || o.token || o.jwt)) ? (o.access_token || o.token || o.jwt) : '';
+    } catch(e){}
+    t = String(t || '').trim();
+  }
+
+  // если уже содержит "Bearer "
+  if (t.toLowerCase().indexOf('bearer ') === 0) t = t.slice(7).trim();
+
+  return t;
+}
 
     function stripHeavyMedia(payload){
       var changed = false;
@@ -1875,24 +1884,83 @@
             return;
           }
 
-          publishProfileToApi().then(function(){
-            window.open('/u/' + s, '_blank', 'noopener');
-            toast('Открываю профиль', '/u/' + s);
-          }).catch(function(err){
-            toast('Профиль не опубликован', (err && err.message) ? err.message : 'Нажми «Сохранить» (нужен вход)');
-          });
-        }).catch(function(){
-          toast('Ошибка сети', 'Не удалось проверить профиль');
-        });
-      }, true);
-    }
+          function publishProfileToApi(){
+  if (!window.fetch) {
+    toast('Ошибка', 'Браузер не поддерживает публикацию (нет fetch)');
+    return Promise.reject(new Error('fetch-not-supported'));
+  }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', bind, { once:true });
-    } else {
-      bind();
+  var slug = normalizeSlug(state.slug || '');
+  if (!slug){
+    toast('Нет slug', 'Сначала задай адрес страницы');
+    return Promise.reject(new Error('no-slug'));
+  }
+
+  // всегда нормализуем slug в state
+  state.slug = slug;
+
+  // payload = 1-в-1 со state
+  var payload = clone(state);
+  payload.slug = slug;
+
+  // защита от тяжёлых dataURL (base64)
+  var body = '';
+  try { body = JSON.stringify(payload); } catch(e){ body = ''; }
+
+  if (body && body.length > 900000){
+    var changed = stripHeavyMedia(payload);
+    if (changed){
+      toast('Картинки тяжёлые', 'Для публикации временно убрал base64, текст/кнопки останутся');
     }
-  })();
+    body = JSON.stringify(payload);
+
+    if (body.length > 900000){
+      toast('Слишком большой профиль', 'Уменьши изображения или переведи их на ссылки/хранилище');
+      return Promise.reject(new Error('payload-too-large'));
+    }
+  }
+
+  function handleRes(res){
+    if (res.status === 200 || res.status === 201){
+      return res.json().catch(function(){ return {}; });
+    }
+    return res.text().then(function(t){
+      var msg = t;
+      try { msg = (JSON.parse(t) || {}).detail || t; } catch(e) {}
+      throw new Error('HTTP ' + res.status + ': ' + msg);
+    });
+  }
+
+  function doPost(){
+    return fetch('/api/v1/profile', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: body
+    }).then(handleRes);
+  }
+
+  var token = getToken(); // твоя функция, которую мы уже улучшали
+  if (!token){
+    // бесплатный режим: публикуем через POST
+    return doPost();
+  }
+
+  // пробуем защищённый PUT, и если 401/403 — падаем на POST
+  return fetch('/api/v1/profile/' + encodeURIComponent(slug), {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: body
+  }).then(function(res){
+    if (res.status === 401 || res.status === 403) {
+      return doPost();
+    }
+    return handleRes(res);
+  });
+}
+
   /* ===================== end ABQD PUBLISH OVERRIDE ===================== */
 
 
