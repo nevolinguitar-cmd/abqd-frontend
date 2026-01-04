@@ -719,6 +719,11 @@
       if (low.indexOf('mailto:') === 0 || low.indexOf('tel:') === 0 || low.indexOf('tg://') === 0) return u;
       return 'https://' + u;
     }
+    function openPublicProfile(slug){
+      slug = (slug || '').trim();
+      if(!slug) return alert('Укажи slug');
+      window.open(`/u/${encodeURIComponent(slug)}/?fresh=1`, '_blank');
+  }
 
     function contactUrl(u){
       u = clean(u);
