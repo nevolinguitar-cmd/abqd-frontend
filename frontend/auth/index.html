@@ -95,14 +95,12 @@
       transform: translateZ(0);
     }
 
-    /* ✅ FIX: псевдо-элементы должны иметь content + позиционирование */
     .floor::before,
     .floor::after{
       content:"";
       position:absolute;
       inset:0;
       display:block;
-
       opacity:.14;
       background-image:
         linear-gradient(to right, rgba(92,170,255,.18) 1px, rgba(0,0,0,0) 1px),
@@ -136,14 +134,8 @@
       @keyframes glowBreath{ 0%,100%{opacity:.10} 45%{opacity:.22} 78%{opacity:.12} }
 
       @keyframes seamSweep{
-        0%{
-          background-position:
-            0 0, 0 0, 0 0, 0 0;
-        }
-        100%{
-          background-position:
-            0 0, 0 0, 520px -140px, -640px 260px;
-        }
+        0%{ background-position: 0 0, 0 0, 0 0, 0 0; }
+        100%{ background-position: 0 0, 0 0, 520px -140px, -640px 260px; }
       }
 
       @keyframes seamSpark{
@@ -437,140 +429,6 @@
   </style>
 </head>
 
-  <script>
-/**
- * ABQD Auth Bootstrap (боевой)
- * - Автоматически находит формы login/register на странице
- * - Делает POST /api/v1/auth/login и /api/v1/auth/register
- * - Сохраняет access_token в localStorage("abqd_token")
- * - Редиректит в /constructor/
- */
-(() => {
-  const API = "/api/v1";
-  const LS_TOKEN = "abqd_token";
-
-  const qs = (sel, root=document) => root.querySelector(sel);
-  const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-
-  function toast(msg, isErr=false){
-    let el = qs("#abqdToast");
-    if (!el){
-      el = document.createElement("div");
-      el.id = "abqdToast";
-      el.style.cssText = `
-        position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;
-        padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
-        background:rgba(10,12,18,.88);backdrop-filter:blur(10px);
-        color:rgba(255,255,255,.92);font:600 13px/1.35 Montserrat,system-ui;
-        box-shadow:0 18px 60px rgba(0,0,0,.55);display:none;
-      `;
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-    el.style.display = "block";
-    el.style.borderColor = isErr ? "rgba(255,140,140,.35)" : "rgba(140,255,200,.28)";
-    clearTimeout(el._t);
-    el._t = setTimeout(()=> el.style.display="none", 2600);
-  }
-
-  function valInput(form, selectors){
-    for (const sel of selectors){
-      const el = qs(sel, form);
-      if (el && typeof el.value === "string") return el.value.trim();
-    }
-    return "";
-  }
-
-  async function apiJson(url, body){
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(body)
-    });
-    const data = await r.json().catch(()=> ({}));
-    if (!r.ok) throw new Error(data?.detail || `HTTP ${r.status}`);
-    return data;
-  }
-
-  async function doLogin(email, password){
-    const data = await apiJson(`${API}/auth/login`, { email, password });
-    if (!data?.ok || !data?.access_token) throw new Error("Login: token not received");
-    localStorage.setItem(LS_TOKEN, data.access_token);
-    toast("Вход выполнен ✅");
-    location.href = "/constructor/";
-  }
-
-  async function doRegister(name, email, phone, password){
-    await apiJson(`${API}/auth/register`, { name, email, phone: phone || null, password });
-    toast("Аккаунт создан ✅");
-    await doLogin(email, password);
-  }
-
-  function detectForms(){
-    const forms = qsa("form").filter(f => f.querySelector("input"));
-    const candidates = forms.map(f => {
-      const hasEmail = !!qs('input[type="email"], input[name="email"]', f);
-      const hasPass  = !!qs('input[type="password"], input[name="password"]', f);
-      const hasName  = !!qs('input[name="name"], input[autocomplete="name"]', f);
-      if (!hasEmail || !hasPass) return null;
-      return { f, kind: hasName ? "register" : "login" };
-    }).filter(Boolean);
-
-    // если нашлись явно обе — хорошо. если только одна — тоже ок.
-    let loginForm = candidates.find(c => c.kind === "login")?.f || null;
-    let regForm   = candidates.find(c => c.kind === "register")?.f || null;
-
-    // если одна форма и есть два режима в UI — всё равно повесим обработчик submit на неё
-    if (!loginForm && candidates[0]) loginForm = candidates[0].f;
-
-    return { loginForm, regForm };
-  }
-
-  function bind(){
-    const { loginForm, regForm } = detectForms();
-
-    if (loginForm){
-      loginForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        try{
-          const email = valInput(loginForm, ['input[type="email"]','input[name="email"]']);
-          const pass  = valInput(loginForm, ['input[type="password"]','input[name="password"]']);
-          if (!email || !pass) { toast("Введи email и пароль", true); return; }
-          toast("Входим…");
-          await doLogin(email, pass);
-        }catch(err){
-          toast(`Ошибка входа: ${err?.message || err}`, true);
-        }
-      }, { capture:true });
-    }
-
-    if (regForm){
-      regForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        try{
-          const name  = valInput(regForm, ['input[name="name"]','input[autocomplete="name"]']);
-          const email = valInput(regForm, ['input[type="email"]','input[name="email"]']);
-          const phone = valInput(regForm, ['input[name="phone"]','input[type="tel"]']);
-          const pass  = valInput(regForm, ['input[type="password"]','input[name="password"]']);
-          if (!name || !email || !pass) { toast("Имя, email и пароль обязательны", true); return; }
-          toast("Регистрируем…");
-          await doRegister(name, email, phone, pass);
-        }catch(err){
-          toast(`Ошибка регистрации: ${err?.message || err}`, true);
-        }
-      }, { capture:true });
-    }
-
-    // fallback: если форм не нашли — добавим маленькую подсказку
-    if (!loginForm && !regForm){
-      toast("⚠️ Не нашёл формы. Проверь, что на странице есть <form> с email+password.", true);
-    }
-  }
-
-  bind();
-})();
-</script>
-
 <body>
   <div class="stage">
     <div class="bgImage" aria-hidden="true"></div>
@@ -676,7 +534,6 @@
             <div class="social" aria-label="Регистрация через соцсети">
               <div class="socialLabel">Регистрация через</div>
               <div class="socialRow">
-                <!-- те же кнопки, что выше -->
                 <button class="socialBtn" type="button" data-oauth="google" aria-label="Регистрация через Google">
                   <svg class="socialIco" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.6 6 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10.5 0 19-8.5 19-19 0-1.3-.1-2.6-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.6 6 29.5 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.2-2 13.9-5.2l-6.4-5.2C29.4 35.2 26.8 36 24 36c-5.3 0-9.8-3.4-11.4-8.1l-6.7 5.2C9.1 39.6 16 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.3 3.5-4.6 6-8.8 6-5.3 0-9.8-3.4-11.4-8.1l-6.7 5.2C9.1 39.6 16 44 24 44c10.5 0 19-8.5 19-19 0-1.3-.1-2.6-.4-3.5z"/></svg>
                   Google
@@ -728,7 +585,7 @@
               </div>
               <div>
                 <label for="regPhone">Телефон</label>
-                <input class="field" id="regPhone" type="tel" inputmode="tel" required placeholder="+7 999 000-12-34" />
+                <input class="field" id="regPhone" type="tel" inputmode="tel" placeholder="+7 999 000-12-34" />
                 <div class="hint">В международном формате: +7… / +385…</div>
               </div>
             </div>
@@ -761,7 +618,7 @@
   </div>
 
   <script>
-    // === ABQD AUTH (staging/prod safe) ===
+    // === ABQD AUTH (prod safe) ===
     const BACKEND_ORIGIN = window.location.origin;
 
     const API = {
@@ -781,48 +638,6 @@
     }
     const AFTER_LOGIN = getReturnUrl();
 
-    // OAuth start endpoints (server must implement)
-    const OAUTH_START = BACKEND_ORIGIN + "/api/v1/auth/oauth";
-
-    function navigateTo(url){
-      try{
-        if(window.top && window.top !== window.self) window.top.location.href = url;
-        else window.location.href = url;
-      }catch(_e){
-        window.location.href = url;
-      }
-    }
-
-    function oauthStartUrl(provider){
-      return OAUTH_START + "/" + encodeURIComponent(provider) + "/start?return=" + encodeURIComponent(AFTER_LOGIN);
-    }
-
-    // token from URL after OAuth callback (?token=... or ?access_token=...)
-    (function takeTokenFromUrl(){
-      try{
-        const u = new URL(window.location.href);
-        const t = u.searchParams.get("access_token") || u.searchParams.get("token") || "";
-        if(t){
-          localStorage.setItem("abqd_token", t);
-          u.searchParams.delete("access_token");
-          u.searchParams.delete("token");
-          window.history.replaceState({}, "", u.toString());
-          setTimeout(()=>navigateTo(AFTER_LOGIN), 120);
-        }
-      }catch(_e){}
-    })();
-
-    (function bindOAuthButtons(){
-      document.querySelectorAll('[data-oauth]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          clearToast();
-          const p = btn.getAttribute('data-oauth') || '';
-          if(!p) return;
-          window.location.href = oauthStartUrl(p);
-        });
-      });
-    })();
-
     const toast = document.getElementById("toast");
     function safeMsg(x){
       if(x == null) return "";
@@ -835,6 +650,25 @@
       toast.textContent = safeMsg(msg) || "Ошибка";
     }
     function clearToast(){ toast.className = "toast"; toast.textContent = ""; }
+
+    function navigateTo(url){
+      try{
+        if(window.top && window.top !== window.self) window.top.location.href = url;
+        else window.location.href = url;
+      }catch(_e){
+        window.location.href = url;
+      }
+    }
+
+    // Если уже есть токен — не мучаем человека лишним экраном
+    try{
+      const has = localStorage.getItem("abqd_token");
+      if(has && !location.search.includes("stay=1")){
+        // мягко: не редиректим если человек явно пришёл "выйти" — позже добавим logout
+        // но пока делаем удобно
+        // navigateTo(AFTER_LOGIN);
+      }
+    }catch(_e){}
 
     async function postJSON(url, data){
       const r = await fetch(url, {
@@ -905,6 +739,15 @@
     setTab(readInitialTab(), true);
     window.addEventListener("popstate", ()=>setTab(readInitialTab(), true));
 
+    // Соцкнопки: UI оставляем, но честно показываем статус
+    document.querySelectorAll("[data-oauth]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        clearToast();
+        const p = btn.getAttribute("data-oauth") || "";
+        showToast(`Вход через ${p.toUpperCase()} будет подключён позже (нужны OAuth-эндпоинты на сервере).`, "err");
+      });
+    });
+
     // LOGIN
     const formLogin = document.getElementById("formLogin");
     const btnLogin = document.getElementById("btnLogin");
@@ -922,7 +765,7 @@
         const token = res && (res.access_token || res.token);
         if(token) localStorage.setItem("abqd_token", token);
         showToast("Вход выполнен. Перенаправляю…", "ok");
-        setTimeout(()=>navigateTo(AFTER_LOGIN), 350);
+        setTimeout(()=>navigateTo(AFTER_LOGIN), 250);
       }catch(e){
         showToast(e && e.message ? e.message : e, "err");
       }finally{
@@ -982,27 +825,25 @@
       const password = document.getElementById("regPass").value || "";
       const password2 = document.getElementById("regPass2").value || "";
 
-      if(!name || !email || !phone || !password){
-        showToast("Имя, телефон, email и пароль обязательны.", "err"); return;
+      if(!name || !email || !password){
+        showToast("Имя, email и пароль обязательны.", "err"); return;
       }
       if(password.length < 8){ showToast("Пароль слишком короткий (минимум 8).", "err"); return; }
       if(password !== password2){ showToast("Пароли не совпадают.", "err"); return; }
 
       setBusy(btnRegister, true);
       try{
-        // ✅ register ideally returns token + trial info
-        const reg = await postJSON(API.register, { name, email, phone, password });
+        const reg = await postJSON(API.register, { name, email, phone: phone || null, password });
 
         let token = reg && (reg.access_token || reg.token);
         if(!token){
-          // fallback: login (если сервер пока так устроен)
           const res = await postJSON(API.login, { email, password });
           token = res && (res.access_token || res.token);
         }
         if(token) localStorage.setItem("abqd_token", token);
 
-        showToast("Аккаунт создан (7 дней бесплатно). Перенаправляю…", "ok");
-        setTimeout(()=>navigateTo(AFTER_LOGIN), 350);
+        showToast("Аккаунт создан. Перенаправляю…", "ok");
+        setTimeout(()=>navigateTo(AFTER_LOGIN), 250);
       }catch(e){
         showToast(e && e.message ? e.message : e, "err");
       }finally{
