@@ -266,6 +266,14 @@
     html[data-theme="soft"] .cta a:focus-visible{box-shadow:0 0 0 4px rgba(37,99,235,.12)}
 
     /* ===== Увеличенный «Редактор» ===== */
+    <iframe
+  id="abqdUMirror"
+  src="/u/preview?preview=1"
+  style="width:100%; height: calc(100vh - 24px); border:0; border-radius:18px; overflow:hidden;"
+  loading="lazy"
+  referrerpolicy="no-referrer"
+></iframe>
+
     .editorCard{align-self:start}
     @media (min-width: 981px){
       .editorCard{position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:hidden;}
@@ -959,6 +967,106 @@
         return fileToCoverDataUrl(file, w, h, quality);
       });
     }
+
+    <script>
+(function(){
+  var LS_KEY = "abqd_constructor_demo_v2";
+  var frame = document.getElementById("abqdUMirror");
+  if (!frame) return;
+
+  // ВАЖНО: если /u на другом домене, укажи полный URL
+  // var U_BASE = "https://app.abqd.ru";
+  var U_BASE = ""; // same-origin
+  var lastRaw = "";
+
+  function safeJsonParse(s){
+    try { return s ? JSON.parse(s) : null; } catch(e){ return null; }
+  }
+
+  function normalizeSlug(s){
+    s = String(s || "").trim().toLowerCase().replace(/\/+$/,'');
+    return s;
+  }
+
+  function pickSlug(state){
+    // подстраховка: ищем slug в нескольких местах
+    return normalizeSlug(
+      (state && state.slug) ||
+      (state && state.profile && state.profile.slug) ||
+      (state && state.profileSlug) ||
+      ""
+    );
+  }
+
+  function buildPayload(state){
+    // Можно отправлять “как есть” (старый schema) — /u уже поддерживает.
+    // Но лучше завернуть в новый schema (стабильнее на будущее):
+    return {
+      schema: "abqd_profile_v1",
+      theme: state && state.theme ? state.theme : "soft",
+      profile: {
+        name: (state && (state.fullName || (state.profile && state.profile.name))) || "",
+        role: (state && (state.role || (state.profile && state.profile.role))) || "",
+        about: (state && (state.about || (state.profile && state.profile.about))) || "",
+        phone: (state && (state.phone || (state.profile && state.profile.phone))) || "",
+        avatar_url: (state && (state.avatarDataUrl || (state.profile && state.profile.avatarUrl))) || "",
+        banner_url: (state && (state.bannerDataUrl || (state.profile && state.profile.bannerUrl))) || "",
+        logo_url: (state && (state.logoDataUrl || (state.profile && state.profile.logoUrl))) || "",
+        logo_link: (state && (state.logoLink || (state.profile && state.profile.logoLink))) || ""
+      },
+      ui: {
+        callStyle: (state && state.callStyle) || "primary",
+        pointsTitle: (state && state.pointsTitle) || "Ссылки",
+        galleryTitle: (state && state.galleryTitle) || "Работы"
+      },
+      buttons: (state && state.buttons) || [],
+      contacts: (state && (state.chips || state.contacts)) || [],
+      points: (state && state.points) || [],
+      gallery: (state && state.gallery) || []
+    };
+  }
+
+  function postToUMirror(state){
+    if (!frame || !frame.contentWindow) return;
+    var payload = buildPayload(state);
+    frame.contentWindow.postMessage({ type: "abqd_profile_state", state: payload }, "*");
+  }
+
+  function sync(){
+    var raw = localStorage.getItem(LS_KEY) || "";
+    if (!raw || raw === lastRaw) return;
+    lastRaw = raw;
+
+    var st = safeJsonParse(raw);
+    if (!st) return;
+
+    // если есть slug — подставляем его в src (чтобы /u/<slug> тоже было корректно)
+    var slug = pickSlug(st) || "preview";
+    var wantSrc = U_BASE + "/u/" + encodeURIComponent(slug) + "?preview=1";
+    if (frame.getAttribute("src") !== wantSrc) frame.setAttribute("src", wantSrc);
+
+    postToUMirror(st);
+  }
+
+  // /u в preview-mode присылает "готов" — тогда пуляем сразу актуальный state
+  window.addEventListener("message", function(e){
+    var d = e && e.data;
+    if (d && d.type === "abqd_u_ready") sync();
+  });
+
+  // триггеры
+  window.addEventListener("storage", function(e){
+    if (e && e.key === LS_KEY) sync();
+  });
+
+  // на случай когда конструктор сам пишет в localStorage в этой же вкладке
+  setInterval(sync, 600);
+
+  // первый старт
+  sync();
+})();
+</script>
+
 
     // ===== MODAL =====
     var previewHomeParent = null;
