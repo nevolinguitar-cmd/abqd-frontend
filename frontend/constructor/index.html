@@ -663,7 +663,7 @@
 (function(){
   // ES5‑совместимая версия (убрали const/let/=>/template strings), чтобы не ловить SyntaxError на старых движках.
 
-  var KEY = 'abqd_constructor_demo_v2';
+  var KEY = 'abqd_profile_' + state.slug;
   var BUILD = 'Конструктор NFC 1.1';
   try { window.__ABQD_CONSTRUCTOR_BUILD = BUILD; } catch(e) {}
   function $(id){ return document.getElementById(id); }
