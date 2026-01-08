@@ -1,49 +1,23 @@
 <!doctype html>
-<!--
-  ABQD • Публичный профиль (Mirror Page /u)
-  Зеркало конструктора — только визуал, без редактора
-  Дата: 2026-01-04 (v2: API-backed mirror)
--->
 <html lang="ru" data-theme="soft">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Профиль визитка" />
   <title>Профиль</title>
 
-  <!-- Montserrat (UI font) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- ВАЖНО: стили берём те же, что у превью конструктора.
+       Чтобы не дублировать гигантский CSS — проще держать один общий CSS в /assets.
+       Но если у тебя CSS только внутри constructor — оставь этот u/index.html как есть сейчас и просто замени его на этот файл.
+  -->
   <style>
     :root{
-      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      --r1:16px;
-      --r2:22px;
+      --font:'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --r1:16px; --r2:22px;
 
-      /* DARK (Тёмная) */
-      --bg:#0b0c10;
-      --panel:#0f1117;
-      --panel2:#11131b;
-      --text:#eef1f6;
-      --muted:rgba(238,241,246,.66);
-      --line:rgba(255,255,255,.13);
-      --shadow:0 18px 60px rgba(0,0,0,.30);
-
-      --accent:#ff4d9d;
-      --accent2:#6d5cff;
-      --primary1:#ff4d9d;
-      --primary2:#6d5cff;
-
-      --gridBg: rgba(255,255,255,.03);
-
-      --ok:#39d98a;
-      --ok2:#1bbf63;
-    }
-
-    html[data-theme="soft"]{
-      /* WHITE (Белая) — айфон-стекло */
       --bg:#f4f6fb;
       --panel:rgba(255,255,255,.62);
       --panel2:rgba(255,255,255,.78);
@@ -63,30 +37,39 @@
       --ok:#39d98a;
       --ok2:#1bbf63;
     }
+    html[data-theme="dark"]{
+      --bg:#0b0c10;
+      --panel:#0f1117;
+      --panel2:#11131b;
+      --text:#eef1f6;
+      --muted:rgba(238,241,246,.66);
+      --line:rgba(255,255,255,.13);
+      --shadow:0 18px 60px rgba(0,0,0,.30);
 
+      --accent:#ff4d9d;
+      --accent2:#6d5cff;
+      --primary1:#ff4d9d;
+      --primary2:#6d5cff;
+
+      --gridBg: rgba(255,255,255,.03);
+
+      --ok:#39d98a;
+      --ok2:#1bbf63;
+    }
     *{box-sizing:border-box}
-    body{margin:0;font-family:var(--font);color:var(--text);font-size:15.5px;line-height:1.62;
+    body{
+      margin:0;font-family:var(--font);color:var(--text);font-size:15.5px;line-height:1.62;
       background:
         radial-gradient(1100px 700px at 15% 10%, rgba(109,92,255,.16), transparent 55%),
         radial-gradient(1100px 700px at 85% 15%, rgba(255,77,157,.14), transparent 55%),
         var(--bg);
     }
-
-    /* лёгкая «плёнка/зерно» */
     body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
       opacity:.055;mix-blend-mode:overlay;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
       transform:translateZ(0)}
 
-    .wrap{position:relative;z-index:1}
-    .wrap{max-width:1320px;margin:0 auto;padding:18px 14px 44px;}
-
-    .topBar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;margin-bottom:12px;border-bottom:1px solid var(--line)}
-    .themeSwitcher{display:inline-flex;border:1px solid var(--line);background:rgba(0,0,0,.08);border-radius:999px;overflow:hidden;backdrop-filter:blur(10px)}
-    html[data-theme="soft"] .themeSwitcher{background:rgba(255,255,255,.35)}
-    .themeSwitcher button{border:0;background:transparent;cursor:pointer;padding:9px 12px;font-size:12px;color:var(--muted);font-weight:800}
-    .themeSwitcher button.active{color:var(--text);background:linear-gradient(90deg,rgba(255,255,255,.16),rgba(255,255,255,.06))}
-
+    .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:18px 14px 44px}
     .card{position:relative;border:1px solid var(--line);
       background:
         radial-gradient(120% 140% at 10% 0%, rgba(255,255,255,.10), transparent 55%),
@@ -95,13 +78,9 @@
       box-shadow:var(--shadow);
       backdrop-filter:blur(12px);
       overflow:hidden}
-    .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-      background:linear-gradient(135deg, rgba(255,255,255,.22), transparent 42%, rgba(255,255,255,.10));
-      opacity:.18;mix-blend-mode:overlay}
-    html[data-theme="soft"] .card::before{opacity:.10;mix-blend-mode:normal}
-
+    .cardHd{padding:14px 14px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .cardHd b{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
     .hero{padding:16px}
-
     .banner{position:relative;height:220px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--line);background:rgba(0,0,0,.10);z-index:1}
     .bannerPlh{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
       font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px;
@@ -109,777 +88,185 @@
       pointer-events:none}
     html[data-theme="soft"] .bannerPlh{background:linear-gradient(180deg, rgba(255,255,255,.30), transparent)}
     .banner img{width:100%;height:100%;object-fit:cover;display:block}
-
     .bannerLogo{position:absolute;right:12px;top:12px;width:56px;height:56px;border-radius:16px;
       border:1px solid var(--line);background:rgba(0,0,0,.18);backdrop-filter:blur(10px);
       display:flex;align-items:center;justify-content:center;overflow:hidden;text-decoration:none;
       box-shadow:0 10px 30px rgba(0,0,0,.18)}
     html[data-theme="soft"] .bannerLogo{background:rgba(255,255,255,.55)}
     .bannerLogo img{width:100%;height:100%;object-fit:cover;display:block}
-
     .heroHead{margin-top:-54px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 10px;position:relative;z-index:3}
-
     .left{display:flex;align-items:flex-end;gap:12px}
     .avatar{width:106px;height:106px;border-radius:999px;border:4px solid rgba(255,255,255,.9);overflow:hidden;background:rgba(0,0,0,.18);
       box-shadow:0 18px 60px rgba(0,0,0,.20);flex:0 0 auto;display:flex;align-items:center;justify-content:center;
       position:relative;z-index:4}
     .avatar img{width:100%;height:100%;object-fit:cover;display:block}
     .avatar .fallback{font-weight:800;font-size:38px;opacity:.92}
-
     .nm{margin:0;font-size:28px;letter-spacing:-.02em;line-height:1.08;font-weight:800}
     .rl{margin:6px 0 0;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:800}
-
     .about{padding:10px 10px 14px}
     .h2{margin:10px 0 10px;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--muted);font-weight:800}
-    .aboutText{margin:0;line-height:1.72;font-size:14.5px;white-space:pre-wrap;color:rgba(238,241,246,.78)}
-    html[data-theme="soft"] .aboutText{color:rgba(16,19,26,.72)}
-
+    .aboutText{margin:0;line-height:1.72;font-size:14.5px;white-space:pre-wrap;color:rgba(16,19,26,.72)}
+    html[data-theme="dark"] .aboutText{color:rgba(238,241,246,.78)}
     .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
     .cta a{border:1px solid var(--line);border-radius:999px;padding:11px 14px;font-weight:800;font-size:13px;text-decoration:none;
-      color:#fff;
-      background:rgba(0,0,0,.22);
-      position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0);
-      transition:transform .14s ease, filter .14s ease}
-    .cta a:active{transform:translateY(1px)}
-
-    .cta a.primary{border:0 !important;background:transparent !important;color:#fff !important;border-radius:999px;overflow:hidden;position:relative;isolation:isolate;transform:translateZ(0);box-shadow:0 10px 26px rgba(0,0,0,.14)}
-    .cta a.primary::before{content:"";position:absolute;inset:-1px;background:linear-gradient(90deg,var(--primary1),var(--primary2));border-radius:inherit;z-index:-1;transform:translateZ(0)}
-
-    html[data-theme="soft"] .cta a.primary{color:var(--text) !important;text-shadow:none;border:1px solid rgba(16,19,26,.16) !important;box-shadow:0 16px 36px rgba(18,24,40,.14),0 1px 0 rgba(255,255,255,.70) inset,0 -1px 0 rgba(0,0,0,.06) inset;letter-spacing:.01em}
+      color:#fff;background:rgba(0,0,0,.22);position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0)}
+    .cta a.primary{border:0!important;background:transparent!important;color:#fff!important;box-shadow:0 10px 26px rgba(0,0,0,.14)}
+    .cta a.primary::before{content:"";position:absolute;inset:-1px;background:linear-gradient(90deg,var(--primary1),var(--primary2));border-radius:inherit;z-index:-1}
+    html[data-theme="soft"] .cta a.primary{color:var(--text)!important;border:1px solid rgba(16,19,26,.16)!important}
     html[data-theme="soft"] .cta a.primary::before{background:linear-gradient(180deg, rgba(226,229,235,.98) 0%, rgba(196,203,214,.96) 48%, rgba(168,177,191,.95) 100%)}
-
     .section{padding:16px}
-    .secTitle{margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;position:relative}
-
-    .footer{padding:14px 16px 18px;text-align:center;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.04em}
-    .footer .copy{opacity:.92}
-
+    .secTitle{margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800}
+    .chipsRow{display:flex;flex-wrap:wrap;gap:10px}
+    .chipA{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(255,255,255,.45);text-decoration:none;color:var(--muted)!important;font-weight:800;font-size:12px}
+    html[data-theme="dark"] .chipA{background:rgba(0,0,0,.05)}
+    .chipI{opacity:.9;color:var(--muted)}
     .list{display:flex;flex-direction:column;gap:10px}
-    .item{border:1px solid var(--line);background:rgba(0,0,0,.05);border-radius:var(--r1);padding:12px;display:flex;gap:12px;align-items:flex-start;position:relative;overflow:hidden}
-    html[data-theme="soft"] .item{background:rgba(255,255,255,.45)}
-
-    .check{width:28px;height:28px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.08);color:var(--ok);
-      display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;line-height:1;flex:0 0 auto;
-      box-shadow:0 10px 26px rgba(0,0,0,.16),0 0 0 1px rgba(255,255,255,.06) inset;}
-    html[data-theme="soft"] .check{background:rgba(255,255,255,.45);box-shadow:0 10px 26px rgba(18,24,40,.10),0 0 0 1px rgba(0,0,0,.06) inset;}
-
+    .item{border:1px solid var(--line);background:rgba(255,255,255,.45);border-radius:var(--r1);padding:12px;display:flex;gap:12px;align-items:flex-start}
+    html[data-theme="dark"] .item{background:rgba(0,0,0,.05)}
+    .check{width:28px;height:28px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(255,255,255,.45);color:var(--ok);display:flex;align-items:center;justify-content:center;font-weight:900}
+    html[data-theme="dark"] .check{background:rgba(0,0,0,.08)}
     .itT{margin:0;font-weight:800;font-size:14px}
     .itD{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.55;white-space:pre-wrap}
-
     .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
     @media (max-width: 900px){.grid3{grid-template-columns:repeat(2,1fr)}}
     @media (max-width: 560px){.grid3{grid-template-columns:1fr}}
-
-    .work{border:1px solid var(--line);border-radius:var(--r1);overflow:hidden;background:rgba(0,0,0,.05);cursor:pointer;transition:.18s ease;min-height:220px;display:flex;flex-direction:column}
-    html[data-theme="soft"] .work{background:rgba(255,255,255,.45)}
-    .work:hover{transform:translateY(-2px)}
+    .work{border:1px solid var(--line);border-radius:var(--r1);overflow:hidden;background:rgba(255,255,255,.45);cursor:pointer;min-height:220px;display:flex;flex-direction:column}
+    html[data-theme="dark"] .work{background:rgba(0,0,0,.05)}
     .workImg{height:160px;background:rgba(0,0,0,.12)}
     .workImg img{width:100%;height:100%;object-fit:cover;display:block}
     .workBody{padding:12px}
     .workT{margin:0;font-weight:800;font-size:14px;line-height:1.2;white-space:pre-wrap;word-break:break-word}
     .workM{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.5;white-space:pre-wrap}
-
-    .chipsRow{display:flex;flex-wrap:wrap;gap:10px}
-    .chipA{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);
-      background:rgba(0,0,0,.05);text-decoration:none;color:var(--muted)!important;font-weight:800;font-size:12px;
-      position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0);
-      transition:transform .14s ease, filter .14s ease}
-    html[data-theme="soft"] .chipA{background:rgba(255,255,255,.45)}
-    .chipA:visited{color:var(--muted)!important}
-    .chipA:hover{color:var(--text)!important}
-    .chipA:active{transform:translateY(1px)}
-    .chipI{opacity:.9;color:var(--muted)}
-
     .hide{display:none!important}
 
-    /* Mirror page: без верхней панели/свитчера/футера */
-    .topBar{display:none!important}
-    .themeSwitcher{display:none!important}
-    .footer{display:none!important}
-
-    .errBox{border:1px solid var(--line);border-radius:var(--r2);background:rgba(0,0,0,.06);padding:14px 14px;margin:14px 0 0;
-      color:var(--muted);font-weight:700;white-space:pre-wrap;}
-    html[data-theme="soft"] .errBox{background:rgba(255,255,255,.45)}
-
-    @media (max-width: 560px){
-      .wrap{padding-top:18px}
-      .nm{font-size:22px}
-      .topBar{flex-direction:column;align-items:flex-start}
-    }
-
-    a:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(255,77,157,.16)}
-    html[data-theme="soft"] a:focus-visible{box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+    .err{margin:10px 0 0;color:var(--muted);font-weight:800;font-size:13px}
   </style>
+
+  <script src="/assets/profile-render.js"></script>
 </head>
-
 <body>
-  <div class="wrap" id="appWrap">
-    <!-- TOP BAR with Theme Switcher -->
-    <div class="topBar">
-      <div style="flex:1">
-        <h1 style="margin:0;font-size:18px;font-weight:700" id="pageTitle">Профиль</h1>
+  <div class="wrap">
+    <div class="card" id="previewCard">
+      <div class="cardHd">
+        <b>Профиль</b>
+        <span class="err" id="err"></span>
       </div>
-      <div class="themeSwitcher" id="themeSwitcher">
-        <button type="button" data-theme="dark">🌙 Тёмная</button>
-        <button type="button" data-theme="soft">☀️ Белая</button>
-      </div>
-    </div>
 
-    <!-- PROFILE CARD -->
-    <div class="card" id="profileCard">
       <div class="hero">
         <div class="banner" id="bannerBox">
-          <div class="bannerPlh" id="bannerPlh" aria-hidden="true"></div>
+          <div class="bannerPlh" id="bannerPlh">Баннер (1600×800)</div>
         </div>
 
         <div class="heroHead">
           <div class="left">
             <div class="avatar" id="avatarBox"><span class="fallback">A</span></div>
             <div>
-              <h2 class="nm" id="nameEl">Загрузка…</h2>
+              <h2 class="nm" id="nameEl"></h2>
               <div class="rl" id="roleEl"></div>
             </div>
           </div>
         </div>
 
-        <div class="about" id="aboutBox">
-          <div class="h2" id="aboutTitleEl">Обо мне</div>
-          <p class="aboutText" id="aboutEl">Загружаем данные…</p>
+        <div class="about">
+          <div class="h2">Обо мне</div>
+          <p class="aboutText" id="aboutEl"></p>
           <div class="cta" id="ctaRow"></div>
         </div>
       </div>
 
-      <!-- CONTACTS SECTION -->
-      <div class="section" id="contactsSection">
-        <div class="secTitle">Контакты</div>
+      <div class="section" id="contactsSection" style="padding:0 10px 16px">
+        <div class="secTitle" id="contactsTitleEl">Контакты</div>
         <div class="chipsRow" id="contactsPreview"></div>
       </div>
 
-      <!-- POINTS SECTION -->
       <div class="section" id="pointsSection">
         <div class="secTitle" id="pointsTitleEl">Ссылки</div>
         <div class="list" id="pointsPreview"></div>
       </div>
 
-      <!-- GALLERY SECTION -->
       <div class="section" id="gallerySection">
         <div class="secTitle" id="galleryTitleEl">Работы</div>
         <div class="grid3" id="galleryPreview"></div>
+        <div class="galleryFoot"></div>
       </div>
 
-      <!-- FOOTER -->
-      <div class="footer">
-        <span class="copy" id="copyrightEl">© 2026 Профиль</span>
-      </div>
+      <div class="footer" id="profileFooter"></div>
     </div>
-
-    <div class="errBox hide" id="errBox"></div>
   </div>
 
-  <script>
-  (function(){
-    // =========================
-    // CONFIG
-    // =========================
-    var API_DEFAULT_ORIGIN = "https://app.abqd.ru"; // публичная витрина может быть на abqd.ru, API — на app.abqd.ru
-    var CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 часов
-    var CACHE_PREFIX = "abqd_u_cache_v1:";
-    
-    function $(id){ return document.getElementById(id); }
-    function qs(s){ return document.querySelector(s); }
-
-    function clean(s){ return String(s == null ? '' : s).replace(/^\s+|\s+$/g,''); }
-    function normalizeSlug(s){ return clean(s).toLowerCase().replace(/\/+$/,''); }
-
-    function normUrl(u){
-      u = clean(u);
-      if (!u) return '';
-      var low = u.toLowerCase();
-      if (low.indexOf('http://') === 0 || low.indexOf('https://') === 0) return u;
-      if (low.indexOf('mailto:') === 0 || low.indexOf('tel:') === 0 || low.indexOf('tg://') === 0) return u;
-      return 'https://' + u;
+<script>
+(function(){
+  function clean(s){ return String(s == null ? '' : s).replace(/^\s+|\s+$/g,''); }
+  function normalizeSlug(s){
+    s = clean(s).toLowerCase();
+    if (!s) return '';
+    var allowed = 'abcdefghijklmnopqrstuvwxyz0123456789-_.';
+    var out = '';
+    var prevDash = false;
+    for (var i=0;i<s.length;i++){
+      var ch = s.charAt(i);
+      if (ch === ' ') { if(!prevDash){ out+='-'; prevDash=true; } continue; }
+      if (allowed.indexOf(ch) !== -1){ out += ch; prevDash = (ch==='-'); }
+      else { if(!prevDash){ out+='-'; prevDash=true; } }
     }
-
-    function contactUrl(u){
-      u = clean(u);
-      if (!u) return '';
-      var low = u.toLowerCase();
-      if (low.indexOf('http://') === 0 || low.indexOf('https://') === 0 || low.indexOf('mailto:') === 0 || low.indexOf('tel:') === 0 || low.indexOf('tg://') === 0) return u;
-      if (u.indexOf('@') !== -1 && u.indexOf(' ') === -1) return 'mailto:' + u;
-
-      var s = u;
-      if (s && (s[0] === '+' || (s[0] >= '0' && s[0] <= '9')) && s.length >= 6) {
-        if (/^[0-9\s()\-\.+]+$/.test(s)) {
-          var digits = s.replace(/[\s\-().]/g, '');
-          return 'tel:' + digits;
-        }
-      }
-      return 'https://' + u;
-    }
-
-    function phoneToTel(s){
-      s = clean(s);
-      if (!s) return '';
-      var out = '';
-      for (var i = 0; i < s.length; i++) {
-        var ch = s.charAt(i);
-        if (ch >= '0' && ch <= '9') out += ch;
-        else if (ch === '+' && out.length === 0) out += ch;
-      }
-      var digits = (out.charAt(0) === '+') ? out.slice(1) : out;
-      if (digits.length < 6) return '';
-      return 'tel:' + out;
-    }
-
-    function wrapFixedChars(text, n){
-      text = String(text == null ? '' : text);
-      n = (typeof n === 'number' && n > 0) ? n : 17;
-      if (!text) return text;
-      var lines = text.split(/\r?\n/);
-      var out = [];
-      for (var li = 0; li < lines.length; li++) {
-        var line = lines[li];
-        if (line.length <= n) { out.push(line); continue; }
-        for (var i = 0; i < line.length; i += n) out.push(line.slice(i, i + n));
-      }
-      return out.join('\n');
-    }
-
-    function getSlugFromUrl(){
-      // /u/<slug>  OR /u/index.html?slug=<slug>
-      var path = (location.pathname || "/").replace(/\/+$/,'');
-      var parts = path.split("/").filter(Boolean);
-
-      var idx = parts.indexOf("u");
-      if (idx >= 0) {
-        var next = parts[idx + 1] || "";
-        if (next && next !== "index.html") return normalizeSlug(next);
-      }
-
-      if (parts.length >= 2 && parts[0] === "u" && parts[1] && parts[1] !== "index.html") {
-        return normalizeSlug(parts[1]);
-      }
-
-      try{
-        var u = new URL(location.href);
-        var q = u.searchParams.get("slug") || u.searchParams.get("s") || "";
-        return normalizeSlug(q);
-      }catch(_e){
-        return "";
-      }
-    }
-
-    function getApiOrigin(){
-      try{
-        var u = new URL(location.href);
-        var api = clean(u.searchParams.get("api") || "");
-        if (api && /^https?:\/\//i.test(api)) return api.replace(/\/+$/," ");
-      }catch(_e){}
-
-      if (location.hostname === "app.abqd.ru") return location.origin;
-      return API_DEFAULT_ORIGIN;
-    }
-
-    function showError(msg){
-      var box = $("errBox");
-      if(!box) return;
-      box.classList.remove("hide");
-      box.textContent = msg || "Ошибка";
-    }
-
-    function hideError(){
-      var box = $("errBox");
-      if(!box) return;
-      box.classList.add("hide");
-      box.textContent = "";
-    }
-
-    // =========================
-    // THEME
-    // =========================
-    var slug = getSlugFromUrl();
-    
-    function applyTheme(theme){
-      if (theme !== "dark" && theme !== "soft") theme = "soft";
-      document.documentElement.setAttribute("data-theme", theme);
-    }
-
-    function bindThemeSwitcher(){
-      var sw = $("themeSwitcher");
-      if(!sw) return;
-      sw.addEventListener("click", function(e){
-        var btn = e.target.closest('button[data-theme]');
-        if(!btn) return;
-        applyTheme(btn.getAttribute("data-theme"));
-      });
-    }
-
-    // =========================
-    // API + CACHE
-    // =========================
-    var API_ORIGIN = getApiOrigin();
-    var API_BASE = API_ORIGIN + "/api/v1";
-
-    function cacheKey(sl){
-      return CACHE_PREFIX + normalizeSlug(sl || "");
-    }
-
-    function readCache(sl){
-      try{
-        var raw = localStorage.getItem(cacheKey(sl));
-        if(!raw) return null;
-        var data = JSON.parse(raw);
-        if(!data || !data.ts || !data.profile) return null;
-        if ((Date.now() - data.ts) > CACHE_TTL_MS) return null;
-        return data.profile;
-      }catch(_e){ return null; }
-    }
-
-    function writeCache(sl, profile){
-      try{ localStorage.setItem(cacheKey(sl), JSON.stringify({ ts: Date.now(), profile: profile })); }catch(_e){}
-    }
-
-    function fetchJson(url, timeoutMs){
-      timeoutMs = timeoutMs || 10000;
-      return new Promise(function(resolve, reject){
-        var done = false;
-        var t = setTimeout(function(){
-          if(done) return;
-          done = true;
-          reject(new Error("Timeout"));
-        }, timeoutMs);
-
-        fetch(url, { method:"GET" })
-          .then(function(r){
-            return r.text().then(function(text){
-              var json = null;
-              try{ json = text ? JSON.parse(text) : null; }catch(_e){ json = null; }
-              if(!r.ok){
-                var d = (json && json.detail) ? json.detail : ("HTTP " + r.status);
-                throw new Error(d);
-              }
-              return json;
-            });
-          })
-          .then(function(json){
-            if(done) return;
-            done = true;
-            clearTimeout(t);
-            resolve(json);
-          })
-          .catch(function(err){
-            if(done) return;
-            done = true;
-            clearTimeout(t);
-            reject(err);
-          });
-      });
-    }
-
-    // =========================
-    // ADAPTER: API profile -> view state
-    // =========================
-    function asArr(x){ return Array.isArray(x) ? x : []; }
-    function pick(){
-      for (var i=0;i<arguments.length;i++){
-        var v = arguments[i];
-        if (v == null) continue;
-        if (typeof v === "string" && clean(v)) return clean(v);
-        if (typeof v === "number" || typeof v === "boolean") return String(v);
-      }
-      return "";
-    }
-
-    function normalizeBtnStyle(s){
-      s = (s || "").toString().toLowerCase();
-      if (s === "primary" || s === "accent") return "primary";
-      return "ghost";
-    }
-
-    function adaptProfileToState(profile){
-      var st = (profile && profile.state) ? profile.state : {};
-      var p  = (st && st.profile) ? st.profile : {};
-
-      var looksLikeOld = (typeof st.fullName === "string") || (typeof st.avatarDataUrl === "string") || (Array.isArray(st.points));
-      if (looksLikeOld) {
-        var old = Object.assign({}, st);
-        if (!clean(old.avatarDataUrl) && profile && profile.avatar && profile.avatar.url) old.avatarDataUrl = profile.avatar.url;
-        return old;
-      }
-
-      var out = {};
-      out.fullName = pick(p.name, p.fullName, profile && profile.title, "Профиль");
-      out.role     = pick(p.role, p.subtitle, p.tagline, "");
-      out.about    = pick(p.about, p.bio, profile && profile.description, "");
-
-      out.phone    = pick(p.phone, p.tel, p.mobile, "");
-      out.callStyle = pick(p.callStyle, "primary");
-
-      out.avatarDataUrl = pick(profile && profile.avatar && profile.avatar.url, p.avatarUrl, p.avatar, p.avatar_data_url, p.avatarDataUrl, "");
-      out.bannerDataUrl = pick(p.bannerUrl, (p.banner && p.banner.url), p.bannerDataUrl, "");
-      out.logoDataUrl   = pick(p.logoUrl, (p.logo && p.logo.url), p.logoDataUrl, "");
-      out.logoLink      = pick(p.logoLink, p.website, "https://abqd.ru");
-
-      var btns = asArr(st && st.buttons);
-      out.buttons = btns.map(function(b){
-        return {
-          label: pick(b && b.title, b && b.label, b && b.text, ""),
-          url: pick(b && b.url, b && b.href, ""),
-          style: normalizeBtnStyle(b && b.style)
-        };
-      }).filter(function(b){ return clean(b.label) || clean(b.url); });
-
-      var pts = asArr(st && (st.points || st.links || (st.sections && st.sections.points)));
-      out.pointsTitle = pick(st && st.pointsTitle, (st.sections && st.sections.pointsTitle), "Ссылки");
-      out.points = pts.map(function(x){
-        return { title: pick(x && x.title, x && x.name, ""), text: pick(x && x.text, x && x.desc, x && x.description, ""), url: pick(x && x.url, x && x.href, "") };
-      }).filter(function(x){ return clean(x.title) || clean(x.text) || clean(x.url); });
-
-      var gal = asArr(st && (st.gallery || st.works || (st.sections && st.sections.gallery)));
-      out.galleryTitle = pick(st && st.galleryTitle, (st.sections && st.sections.galleryTitle), "Работы");
-      out.gallery = gal.map(function(g){
-        return { title: pick(g && g.title, g && g.name, ""), text: pick(g && g.text, g && g.desc, g && g.description, ""), img: pick(g && g.img, g && g.image, g && g.imageUrl, ""), url: pick(g && g.url, g && g.href, "") };
-      }).filter(function(g){ return clean(g.title) || clean(g.text) || clean(g.img) || clean(g.url); });
-
-      var chips = asArr(st && (st.chips || st.contacts));
-      out.chips = chips.map(function(c){
-        return { label: pick(c && c.label, c && c.title, c && c.name, ""), url: pick(c && c.url, c && c.href, c && c.value, ""), icon: pick(c && c.icon, "") };
-      }).filter(function(c){ return clean(c.label) || clean(c.url); });
-
-      out.theme = pick(st && st.theme, p.theme, "");
-      return out;
-    }
-
-    // =========================
-    // RENDER
-    // =========================
-    function renderProfile(state){
-      hideError();
-
-      var nameRaw = clean(state.fullName || '');
-      var showName = nameRaw || 'Профиль';
-
-      var pageTitle = $("pageTitle");
-      if (pageTitle) pageTitle.textContent = showName;
-
-      var nameEl = $('nameEl');
-      if (nameEl) nameEl.textContent = showName;
-
-      var roleRaw = clean(state.role || '');
-      var roleEl = $('roleEl');
-      if (roleEl) {
-        roleEl.textContent = roleRaw;
-        roleEl.style.display = roleRaw ? 'block' : 'none';
-      }
-
-      var aboutEl = $('aboutEl');
-      var aboutRaw = clean(state.about || '');
-      var aboutTitleEl = $('aboutTitleEl');
-      if (aboutTitleEl) aboutTitleEl.style.display = aboutRaw ? 'block' : 'none';
-      if (aboutEl) { aboutEl.textContent = state.about || ''; aboutEl.style.display = aboutRaw ? 'block' : 'none'; }
-
-      var banner = $('bannerBox');
-      var plh = $('bannerPlh');
-      var hasBanner = !!clean(state.bannerDataUrl);
-      if (plh) plh.style.display = hasBanner ? 'none' : 'flex';
-
-      if (banner) {
-        banner.innerHTML = '';
-        if (plh) banner.appendChild(plh);
-
-        if (hasBanner) {
-          var imgB = document.createElement('img');
-          imgB.src = state.bannerDataUrl;
-          imgB.alt = 'banner';
-          banner.insertBefore(imgB, banner.firstChild);
-
-          if (clean(state.logoDataUrl)) {
-            var link = clean(state.logoLink) ? normUrl(state.logoLink) : '';
-            var a = document.createElement('a');
-            a.className = 'bannerLogo';
-            a.href = link || '#';
-            a.target = '_blank';
-            a.rel = 'noopener';
-            if (!link) a.style.pointerEvents = 'none';
-
-            var li = document.createElement('img');
-            li.src = state.logoDataUrl;
-            li.alt = 'logo';
-            a.appendChild(li);
-            banner.appendChild(a);
-          }
-        }
-      }
-
-      var av = $('avatarBox');
-      if (av) {
-        av.innerHTML = '';
-        if (clean(state.avatarDataUrl)) {
-          var imgA = document.createElement('img');
-          imgA.src = state.avatarDataUrl;
-          imgA.alt = 'avatar';
-          av.appendChild(imgA);
-        } else {
-          var letter = (nameRaw || 'A').slice(0, 1).toUpperCase();
-          var span = document.createElement('span');
-          span.className = 'fallback';
-          span.textContent = letter;
-          av.appendChild(span);
-        }
-      }
-
-      var cta = $('ctaRow');
-      if (cta) {
-        cta.innerHTML = '';
-
-        var phoneRaw = clean(state.phone || '');
-        var hasPhone = !!phoneRaw;
-
-        if (hasPhone) {
-          var tel = phoneToTel(phoneRaw);
-          var callBtn = document.createElement('a');
-          callBtn.textContent = 'Позвонить';
-          callBtn.className = (clean(state.callStyle) === 'primary') ? 'primary' : '';
-          callBtn.href = tel || '#';
-          callBtn.target = '_self';
-          callBtn.rel = 'nofollow';
-          if (!tel) {
-            callBtn.style.opacity = '.55';
-            callBtn.style.pointerEvents = 'none';
-          }
-          cta.appendChild(callBtn);
-        }
-
-        var maxButtons = hasPhone ? 5 : 6;
-        var btns = Array.isArray(state.buttons) ? state.buttons : [];
-        for (var bi = 0; bi < btns.length && bi < maxButtons; bi++) {
-          var btn = btns[bi];
-          if (!btn) continue;
-          var label = clean(btn.label || btn.title);
-          if (!label) continue;
-
-          var a2 = document.createElement('a');
-          a2.textContent = label;
-          a2.className = (clean(btn.style) === 'primary') ? 'primary' : '';
-          a2.href = normUrl(btn.url) || '#';
-          a2.target = '_blank';
-          a2.rel = 'noopener';
-          if (!clean(btn.url)) {
-            a2.style.opacity = '.55';
-            a2.style.pointerEvents = 'none';
-          }
-          cta.appendChild(a2);
-        }
-        cta.style.display = cta.children.length ? 'flex' : 'none';
-      }
-      var aboutBox = $('aboutBox');
-      if (aboutBox) aboutBox.style.display = (typeof aboutRaw !== 'undefined' && aboutRaw) || (cta && cta.children.length) ? 'block' : 'none';
-
-      var contactsPreview = $('contactsPreview');
-      if (contactsPreview) {
-        contactsPreview.innerHTML = '';
-        var chips = Array.isArray(state.chips) ? state.chips : [];
-        for (var ci = 0; ci < chips.length && ci < 20; ci++) {
-          var c = chips[ci];
-          var label = clean(c && c.label);
-          var rawUrl = clean(c && c.url);
-          var iconValue = clean(c && c.icon);
-          if (!label && !rawUrl) continue;
-
-          var a3 = document.createElement('a');
-          a3.className = 'chipA';
-
-          if (iconValue) {
-            var icon = document.createElement('span');
-            icon.className = 'chipI';
-            icon.textContent = iconValue;
-            a3.appendChild(icon);
-          }
-
-          var text = document.createElement('span');
-          text.textContent = label || rawUrl;
-          a3.appendChild(text);
-
-          var href = contactUrl(rawUrl);
-          a3.href = href || '#';
-          a3.target = '_blank';
-          a3.rel = 'noopener';
-          if (!href) {
-            a3.style.opacity = '.55';
-            a3.style.pointerEvents = 'none';
-          }
-
-          contactsPreview.appendChild(a3);
-        }
-      }
-
-      var contactsSection = $('contactsSection');
-      var hasContacts = !!(state.chips && state.chips.length);
-      if (contactsSection) contactsSection.classList.toggle('hide', !hasContacts);
-
-      var pointsTitleEl = $('pointsTitleEl');
-      if (pointsTitleEl) pointsTitleEl.textContent = state.pointsTitle || 'Ссылки';
-
-      var pl2 = $('pointsPreview');
-      if (pl2) {
-        pl2.innerHTML = '';
-        var pts = Array.isArray(state.points) ? state.points : [];
-        for (var pi = 0; pi < pts.length && pi < 12; pi++) {
-          var p = pts[pi];
-          if (!p) continue;
-          var title = clean(p.title);
-          var text2 = clean(p.text);
-          var url2 = clean(p.url);
-          if (!title && !text2 && !url2) continue;
-
-          var el = document.createElement('div');
-          el.className = 'item';
-
-          var chk = document.createElement('div');
-          chk.className = 'check';
-          chk.textContent = '✓';
-
-          var box = document.createElement('div');
-          box.style.minWidth = '0';
-
-          if (title) {
-            var t2 = document.createElement('p');
-            t2.className = 'itT';
-            t2.textContent = title;
-            box.appendChild(t2);
-          }
-
-          if (text2) {
-            var d = document.createElement('div');
-            d.className = 'itD';
-            d.textContent = text2;
-            box.appendChild(d);
-          }
-
-          if (url2) {
-            var link2 = document.createElement('a');
-            link2.style.cssText = 'font-size:12px;color:var(--muted);font-weight:800;text-decoration:none;display:inline-block;margin-top:6px';
-            link2.href = normUrl(url2);
-            link2.target = '_blank';
-            link2.rel = 'noopener';
-            link2.textContent = '→ Открыть';
-            box.appendChild(link2);
-          }
-
-          el.appendChild(chk);
-          el.appendChild(box);
-          pl2.appendChild(el);
-        }
-      }
-
-      var pointsSection = $('pointsSection');
-      var hasPoints = !!(state.points && state.points.length);
-      if (pointsSection) pointsSection.classList.toggle('hide', !hasPoints);
-
-      var galleryTitleEl = $('galleryTitleEl');
-      if (galleryTitleEl) galleryTitleEl.textContent = state.galleryTitle || 'Работы';
-
-      var gg = $('galleryPreview');
-      if (gg) {
-        gg.innerHTML = '';
-        var gal = Array.isArray(state.gallery) ? state.gallery : [];
-        for (var gi = 0; gi < gal.length && gi < 12; gi++) {
-          (function(g){
-            if(!g) return;
-            var card = document.createElement('div');
-            card.className = 'work';
-
-            var imgWrap = document.createElement('div');
-            imgWrap.className = 'workImg';
-            if (clean(g.img)) {
-              var img = document.createElement('img');
-              img.src = g.img;
-              img.alt = '';
-              imgWrap.appendChild(img);
-            }
-
-            var body = document.createElement('div');
-            body.className = 'workBody';
-
-            var title = document.createElement('p');
-            title.className = 'workT';
-            title.textContent = wrapFixedChars(clean(g.title || ''), 17);
-            body.appendChild(title);
-
-            if (clean(g.text)) {
-              var desc = document.createElement('div');
-              desc.className = 'workM';
-              desc.textContent = g.text;
-              body.appendChild(desc);
-            }
-
-            card.appendChild(imgWrap);
-            card.appendChild(body);
-
-            card.addEventListener('click', function(){
-              if (clean(g.url)) window.open(normUrl(g.url), '_blank', 'noopener');
-            });
-
-            gg.appendChild(card);
-          })(gal[gi]);
-        }
-      }
-
-      var gallerySection = $('gallerySection');
-      var hasGallery = !!(state.gallery && state.gallery.length);
-      if (gallerySection) gallerySection.classList.toggle('hide', !hasGallery);
-
-      var year = new Date().getFullYear();
-      var copyrightEl = $('copyrightEl');
-      if (copyrightEl) copyrightEl.textContent = '© ' + year + ' ' + showName;
-
-      document.title = showName + ' — Профиль';
-    }
-
-    // =========================
-    // BOOT
-    // =========================
-    
-    if (!slug) {
-      applyTheme('soft');
-      renderProfile({ fullName: 'Профиль', role: '', about: 'Не указан slug.\nОткройте ссылку вида /u/<slug> (или добавьте ?slug=<slug>).', buttons: [], pointsTitle: 'Ссылки', points: [], galleryTitle: 'Работы', gallery: [], chips: [] });
-      showError('Slug не найден в URL.\nПример: /u/testslug\nFallback: /u/?slug=testslug');
-      return;
-    }
-
-    applyTheme('soft');
-
-    var cachedProfile = readCache(slug);
-    if (cachedProfile) {
-      try{
-        var cachedState = adaptProfileToState(cachedProfile);
-        if (clean(cachedState.theme)) applyTheme(cachedState.theme);
-        renderProfile(cachedState);
-      }catch(_e){}
-    }
-
-    var url = API_BASE + '/profile/' + encodeURIComponent(slug);
-    fetchJson(url, 12000)
-      .then(function(profile){
-        writeCache(slug, profile);
-        var st = adaptProfileToState(profile);
-        if (clean(st.theme)) applyTheme(st.theme);
-        renderProfile(st);
-      })
-      .catch(function(err){
-        if (!cachedProfile) {
-          renderProfile({ fullName: 'Профиль не найден', role: '', about: 'Похоже, профиль ещё не опубликован или slug неверный.', buttons: [], pointsTitle: 'Ссылки', points: [], galleryTitle: 'Работы', gallery: [], chips: [] });
-        }
-        showError(
-          'Не удалось загрузить профиль из API.\n' +
-          'slug: ' + slug + '\n' +
-          'api: ' + url + '\n\n' +
-          'Ошибка: ' + (err && err.message ? err.message : err) + '\n\n' +
-          'Если /u открыта на abqd.ru, а API на app.abqd.ru — проверь CORS (разрешить Origin https://abqd.ru).'
-        );
-      });
-
-  })();
-  </script>
+    while(out.indexOf('--')!==-1) out = out.replace(/--/g,'-');
+    while(out.charAt(0)==='-'||out.charAt(0)==='.') out = out.slice(1);
+    while(out.charAt(out.length-1)==='-'||out.charAt(out.length-1)==='.') out = out.slice(0,-1);
+    return out;
+  }
+
+  function getSlug(){
+    // /u/<slug> or /u/?slug=
+    var path = (location.pathname || '/').replace(/\/+$/,'');
+    var parts = path.split('/').filter(Boolean);
+    var idx = parts.indexOf('u');
+    if (idx >= 0 && parts[idx+1] && parts[idx+1] !== 'index.html') return normalizeSlug(parts[idx+1]);
+    try{
+      var u = new URL(location.href);
+      return normalizeSlug(u.searchParams.get('slug') || u.searchParams.get('s') || '');
+    }catch(_e){ return ''; }
+  }
+
+  function apiOrigin(){
+    try{
+      var u = new URL(location.href);
+      var api = clean(u.searchParams.get('api') || '');
+      if (api && /^https?:\/\//i.test(api)) return api.replace(/\/+$/,'');
+    }catch(_e){}
+    return 'https://api.abqd.ru';
+  }
+
+  function setErr(msg){
+    var el = document.getElementById('err');
+    if (el) el.textContent = msg || '';
+  }
+
+  var slug = getSlug();
+  if (!slug){
+    setErr('Нет slug в URL');
+    ABQDProfileRender.render({ theme:'soft', fullName:'Профиль', role:'', about:'Открой ссылку вида /u/<slug>.' });
+    return;
+  }
+
+  var url = apiOrigin() + '/api/v1/profile/' + encodeURIComponent(slug);
+
+  fetch(url, { method:'GET' })
+    .then(function(r){ return r.text().then(function(t){ return { ok:r.ok, status:r.status, text:t }; }); })
+    .then(function(x){
+      if (!x.ok) throw new Error('HTTP ' + x.status);
+      var json = {};
+      try{ json = x.text ? JSON.parse(x.text) : {}; }catch(_e){ json = {}; }
+      var st = ABQDProfileRender.apiToConstructorState(json);
+      ABQDProfileRender.render(st);
+      document.title = (st.fullName || slug) + ' — Профиль';
+    })
+    .catch(function(err){
+      setErr('Ошибка загрузки профиля');
+      ABQDProfileRender.render({ theme:'soft', fullName:slug, role:'', about:'Не удалось загрузить данные профиля.\n' + (err && err.message ? err.message : '') });
+    });
+})();
+</script>
 </body>
 </html>
