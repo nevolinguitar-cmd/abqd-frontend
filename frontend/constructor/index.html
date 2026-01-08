@@ -1,4 +1,8 @@
 <!doctype html>
+<!--
+  ABQD • Конструктор NFC 1.1 (фиксированная версия-эталон для отката)
+  Дата фиксации: 2025-12-28
+-->
 <html lang="ru" data-theme="soft">
 <head>
   <meta charset="utf-8" />
@@ -660,6 +664,8 @@
   // ES5‑совместимая версия (убрали const/let/=>/template strings), чтобы не ловить SyntaxError на старых движках.
 
   var KEY = 'abqd_constructor_demo_v2';
+  var BUILD = 'Конструктор NFC 1.1';
+  try { window.__ABQD_CONSTRUCTOR_BUILD = BUILD; } catch(e) {}
   function $(id){ return document.getElementById(id); }
 
   function clone(obj){
@@ -1412,7 +1418,7 @@
           '    <div><label>Текст</label><input data-c="label" data-i="' + m + '" value="' + escapeHtml(c.label || '') + '" placeholder="Напр. Телефон" /></div>' +
           '    <div><label>URL / Email / Телефон</label><input data-c="url" data-i="' + m + '" value="' + escapeHtml(c.url || '') + '" placeholder="+7..., name@mail.com, https://..." /></div>' +
           '  </div>' +
-          '  <div style="margin-top:10px"><label>Иконка (опционально)</label><input data-c="icon" data-i="' + m + '" value="' + escapeHtml(c.icon || '') + '" placeholder="Если нужно: ☎️ ✉️ 📍" /></div>' +
+          '  <div style="margin-top:10px"><label>Иконка (опционально)</label><input data-c="icon" data-i="' + m + '" value="' + escapeHtml(c.icon || '') + '" placeholder="Если нужно: ☎️ ✉️ ????" /></div>' +
           '  <div class="btnRow">' +
           '    <button class="btn danger" type="button" data-act="delChip" data-i="' + m + '">Удалить</button>' +
           '    <button class="btn" type="button" data-act="upChip" data-i="' + m + '">↑</button>' +
