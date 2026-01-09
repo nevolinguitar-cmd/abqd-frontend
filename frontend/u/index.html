@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Профиль</title>
+  <title>ABQD</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +14,13 @@
        Но если у тебя CSS только внутри constructor — оставь этот u/index.html как есть сейчас и просто замени его на этот файл.
   -->
   <style>
+    /* =========================
+       ABQD_U_HIDE_PROFILE_LABELS_v1 • 2026-01-09
+       Hide header label "Профиль" and any copyright footer on /u pages
+       ========================= */
+    #previewCard .cardHd b{ display:none !important; }
+    #profileFooter{ display:none !important; }
+
     :root{
       --font:'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       --r1:16px; --r2:22px;
@@ -150,7 +157,7 @@
   <div class="wrap">
     <div class="card" id="previewCard">
       <div class="cardHd">
-        <b>Профиль</b>
+        <b></b>
         <span class="err" id="err"></span>
       </div>
 
@@ -260,7 +267,7 @@
       try{ json = x.text ? JSON.parse(x.text) : {}; }catch(_e){ json = {}; }
       var st = ABQDProfileRender.apiToConstructorState(json);
       ABQDProfileRender.render(st);
-      document.title = (st.fullName || slug) + ' — Профиль';
+      document.title = (st.fullName || slug) || 'ABQD');
     })
     .catch(function(err){
       setErr('Ошибка загрузки профиля');

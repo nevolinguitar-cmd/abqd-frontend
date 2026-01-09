@@ -1706,6 +1706,393 @@
   window.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
 
   // ===== minimal tests (console) =====
+
+  /* =========================
+     ABQD_UPLOAD_VIA_API_ALL_MEDIA_v1 • 2026-01-09
+     Upload avatar/banner/gallery via API /api/v1/media/upload (jpeg/png/webp, <=5MB).
+     Store URLs into state.*DataUrl and gallery[i].img. Strip base64 before publish.
+     ========================= */
+  (function(){
+    function apiOrigin(){
+      try{
+        var u=new URL(location.href);
+        var api=clean(u.searchParams.get('api')||'');
+        if(api && /^https?:\/\//i.test(api)) return api.replace(/\/+$/,'');
+      }catch(_e){}
+      return 'https://api.abqd.ru';
+    }
+
+    function requireSlug(){
+      var slug = normalizeSlug(state.slug || '');
+      if (!slug){
+        toast('Нет slug', 'Сначала задай адрес страницы (slug)');
+        throw new Error('no-slug');
+      }
+      state.slug = slug;
+      return slug;
+    }
+
+    function uploadViaApi(slug, kind, file){
+      var fd=new FormData();
+      fd.append('slug', slug);
+      fd.append('kind', kind);
+      fd.append('file', file, file.name || kind);
+      return fetch(apiOrigin() + '/api/v1/media/upload', { method:'POST', body: fd })
+        .then(function(r){ return r.text().then(function(t){
+          var j={}; try{ j=t?JSON.parse(t):{} }catch(_e){}
+          if(!r.ok) throw new Error(j.detail || ('HTTP '+r.status));
+          if(!j.public_url) throw new Error('no public_url');
+          return j.public_url;
+        });});
+    }
+
+    function stripBase64(){
+      function isData(x){ return x && String(x).indexOf('data:') === 0; }
+      if (isData(state.avatarDataUrl)) state.avatarDataUrl = '';
+      if (isData(state.bannerDataUrl)) state.bannerDataUrl = '';
+      if (isData(state.logoDataUrl)) state.logoDataUrl = '';
+      if (state.gallery && state.gallery.length){
+        for (var i=0;i<state.gallery.length;i++){
+          if (state.gallery[i] && isData(state.gallery[i].img)) state.gallery[i].img = '';
+        }
+      }
+    }
+
+    // AVATAR
+    var av = document.getElementById('avatarFile');
+    if (av){
+      av.addEventListener('change', function(e){
+        var f = e.target.files && e.target.files[0]; if(!f) return;
+
+        // preview instantly
+        fileToCoverDataUrl(f,800,800,0.86).then(function(preview){
+          state.avatarDataUrl = preview;
+          try{ renderPreview(); }catch(_e){}
+          // ABQD_NO_PERSIST_BASE64_PREVIEW_v1
+          }).catch(function(){});
+
+        var slug; try{ slug=requireSlug(); }catch(_e){ return; }
+        setSaveStatus('saving','Загрузка аватара…');
+
+        uploadViaApi(slug,'avatar',f).then(function(url){
+          state.avatarDataUrl = url;
+          state.avatarUrl = url;
+          persistNow(); renderPreview();
+          setSaveStatus('saved','Аватар загружен');
+          toast('Аватар загружен','Сохранить → опубликует профиль');
+        }).catch(function(err){
+          setSaveStatus('saved','Сохранено локально');
+          toast('Аватар не загружен', err && err.message ? err.message : 'upload failed');
+        });
+      }, true);
+    }
+
+    // BANNER
+    var bn = document.getElementById('bannerFile');
+    if (bn){
+      bn.addEventListener('change', function(e){
+        var f = e.target.files && e.target.files[0]; if(!f) return;
+
+        fileToCoverDataUrl(f,1600,800,0.86).then(function(preview){
+          state.bannerDataUrl = preview;
+          try{ renderPreview(); }catch(_e){}
+          // ABQD_NO_PERSIST_BASE64_PREVIEW_v1
+          }).catch(function(){});
+
+        var slug; try{ slug=requireSlug(); }catch(_e){ return; }
+        setSaveStatus('saving','Загрузка баннера…');
+
+        uploadViaApi(slug,'banner',f).then(function(url){
+          state.bannerDataUrl = url;
+          state.bannerUrl = url;
+          persistNow(); renderPreview();
+          setSaveStatus('saved','Баннер загружен');
+          toast('Баннер загружен','Сохранить → опубликует профиль');
+        }).catch(function(err){
+          setSaveStatus('saved','Сохранено локально');
+          toast('Баннер не загружен', err && err.message ? err.message : 'upload failed');
+        });
+      }, true);
+    }
+
+    // GALLERY
+    document.body.addEventListener('change', function(e){
+      var t=e.target;
+      if(!t || !t.dataset) return;
+      if(t.dataset.g !== 'imgfile') return;
+      try{ e.stopImmediatePropagation(); }catch(_e0){}
+      try{ e.stopPropagation(); }catch(_e1){}
+      var idx = Number(t.dataset.i);
+      if(!isFinite(idx)) return;
+      var f = t.files && t.files[0]; if(!f) return;
+
+      fileToCoverDataUrl(f,1600,1000,0.86).then(function(preview){
+        if(!state.gallery) state.gallery=[];
+        if(!state.gallery[idx]) state.gallery[idx]={title:'',text:'',img:'',url:''};
+        state.gallery[idx].img = preview;
+        try{ renderLists(); }catch(_e){}
+        try{ renderPreview(); }catch(_e){}
+        // ABQD_NO_PERSIST_BASE64_PREVIEW_v1
+        }).catch(function(){});
+
+      var slug; try{ slug=requireSlug(); }catch(_e){ return; }
+      setSaveStatus('saving','Загрузка фото…');
+
+      uploadViaApi(slug,'gallery',f).then(function(url){
+        if(!state.gallery) state.gallery=[];
+        if(!state.gallery[idx]) state.gallery[idx]={title:'',text:'',img:'',url:''};
+        state.gallery[idx].img = url;
+        persistNow(); renderLists(); renderPreview();
+        setSaveStatus('saved','Фото загружено');
+        toast('Фото загружено','Сохранить → опубликует профиль');
+      }).catch(function(err){
+        setSaveStatus('saved','Сохранено локально');
+        toast('Фото не загружено', err && err.message ? err.message : 'upload failed');
+      });
+    }, true);
+
+    // Ensure publish sends URLs (not base64)
+    var saveBtn = document.getElementById('save');
+    if (saveBtn){
+      saveBtn.addEventListener('click', function(){
+        try{ stripBase64(); persistNow(); }catch(_e){}
+      }, true);
+    }
+  })();
+  /* ===================== end ABQD_UPLOAD_VIA_API_ALL_MEDIA_v1 ===================== */
+
+  /* =========================
+     ABQD_GALLERY_FILE_DETECT_v1 • 2026-01-09
+     Fallback: uploads gallery photos even if inputs don't have data-g="imgfile"
+     ========================= */
+  (function(){
+    function clean(x){ return String(x==null?'':x).replace(/^\s+|\s+$/g,''); }
+
+    function apiOrigin(){
+      try{
+        var u=new URL(location.href);
+        var api=clean(u.searchParams.get('api')||'');
+        if(api && /^https?:\/\//i.test(api)) return api.replace(/\/+$/,'');
+      }catch(_e){}
+      return 'https://api.abqd.ru';
+    }
+
+    function normalizeIfPossible(s){
+      try{ if (typeof normalizeSlug==='function') return normalizeSlug(s||''); }catch(_e){}
+      return clean(s||'').toLowerCase();
+    }
+
+    function requireSlug(){
+      var slug = normalizeIfPossible(state && state.slug ? state.slug : '');
+      if(!slug){
+        try{ toast('Нет slug','Сначала задай адрес страницы (slug)'); }catch(_e){}
+        throw new Error('no-slug');
+      }
+      state.slug = slug;
+      return slug;
+    }
+
+    function uploadViaApi(slug, kind, file){
+      var fd=new FormData();
+      fd.append('slug', slug);
+      fd.append('kind', kind);
+      fd.append('file', file, file.name || kind);
+      return fetch(apiOrigin() + '/api/v1/media/upload', { method:'POST', body: fd })
+        .then(function(r){ return r.text().then(function(t){
+          var j={}; try{ j=t?JSON.parse(t):{} }catch(_e){}
+          if(!r.ok) throw new Error(j.detail || ('HTTP '+r.status));
+          if(!j.public_url) throw new Error('no public_url');
+          return j.public_url;
+        });});
+    }
+
+    function guessIndex(input){
+      var idx = -1;
+      try{ if (input && input.dataset && input.dataset.i) idx = Number(input.dataset.i); }catch(_e){}
+      if (isFinite(idx) && idx >= 0) return idx;
+
+      var id = clean(input && input.id);
+      var m = id.match(/(\d{1,3})/);
+      if(m){
+        idx = Number(m[1]);
+        if(isFinite(idx) && idx >= 0) return idx;
+      }
+
+      try{
+        if (!state.gallery) state.gallery=[];
+        return state.gallery.length;
+      }catch(_e2){ return 0; }
+    }
+
+    function isInsideGallery(input){
+      try{
+        if (input && input.closest){
+          if (input.closest('#galleryList, #gallerySection, #gallery, [data-section="gallery"], .gallery')) return True;
+        }
+      }catch(_e){}
+      return False;
+    }
+
+    function looksLikeGalleryInput(input){
+      if(!input) return false;
+      if (input.dataset && input.dataset.g === 'imgfile') return false; // уже обработано основным обработчиком
+      if ((input.type||'').toLowerCase() !== 'file') return false;
+
+      // если есть возможность определить по DOM — это лучший признак
+      try{
+        if (input.closest && input.closest('#galleryList, #gallerySection, #gallery, [data-section="gallery"], .gallery')) return true;
+      }catch(_e){}
+
+      // иначе — по названию/классам (безопасно отсекаем avatar/banner/logo)
+      var hint = (input.id||'') + ' ' + (input.name||'') + ' ' + (input.className||'');
+      if (/avatar|banner|logo/i.test(hint)) return false;
+      return /gallery|work|portfolio|gimg|gfile|photo|image|img/i.test(hint);
+    }
+
+    document.body.addEventListener('change', function(e){
+      var t = e.target;
+      if (!looksLikeGalleryInput(t)) return;
+
+      var f = t.files && t.files[0]; if(!f) return;
+      try{ e.stopImmediatePropagation(); }catch(_e0){}
+      try{ e.stopPropagation(); }catch(_e1){}
+
+      var idx = guessIndex(t);
+
+      // preview instantly
+      try{
+        fileToCoverDataUrl(f,1600,1000,0.86).then(function(preview){
+          if(!state.gallery) state.gallery=[];
+          if(!state.gallery[idx]) state.gallery[idx]={title:'',text:'',img:'',url:''};
+          state.gallery[idx].img = preview;
+          try{ renderLists(); }catch(_e){}
+        try{ renderPreview(); }catch(_e){}
+        // ABQD_NO_PERSIST_BASE64_PREVIEW_v1
+        }).catch(function(){});
+      }catch(_e2){}
+
+      var slug; try{ slug=requireSlug(); }catch(_e3){ return; }
+      try{ setSaveStatus('saving','Загрузка фото…'); }catch(_e4){}
+
+      uploadViaApi(slug,'gallery',f).then(function(url){
+        if(!state.gallery) state.gallery=[];
+        if(!state.gallery[idx]) state.gallery[idx]={title:'',text:'',img:'',url:''};
+        state.gallery[idx].img = url;
+        persistNow(); renderLists(); renderPreview();
+        try{ setSaveStatus('saved','Фото загружено'); }catch(_e5){}
+        try{ toast('Фото загружено','Сохранить → опубликует профиль'); }catch(_e6){}
+      }).catch(function(err){
+        try{ setSaveStatus('saved','Сохранено локально'); }catch(_e7){}
+        try{ toast('Фото не загружено', err && err.message ? err.message : 'upload failed'); }catch(_e8){}
+      });
+    }, true);
+  })();
+  window.ABQD_GALLERY_FILE_DETECT_v1 = true;
+  /* ===================== end ABQD_GALLERY_FILE_DETECT_v1 ===================== */
+
+
+
+/* =========================
+     
+
+
+
+ABQD_PUBLISH_TO_API_v3 • 2026-01-09
+     Save -> PUT https://api.abqd.ru/api/v1/profile/<slug> {state}
+     Capture listener (не зависит от старых обработчиков)
+     ========================= */
+  (function(){
+    function apiOrigin(){ return 'https://api.abqd.ru'; }
+    function clean(x){ return String(x==null?'':x).replace(/^\s+|\s+$/g,''); }
+    function isData(x){ return x && String(x).indexOf('data:')===0; }
+
+    function safeStatus(st, txt){
+      try{ if (typeof setSaveStatus === 'function') setSaveStatus(st, txt); }catch(_e){}
+    }
+    function safeToast(a,b){
+      try{ if (typeof toast === 'function') toast(a,b); }catch(_e){}
+    }
+
+    function stripBase64(){
+      try{
+        if (isData(state.avatarDataUrl)) state.avatarDataUrl = '';
+        if (isData(state.bannerDataUrl)) state.bannerDataUrl = '';
+        if (isData(state.logoDataUrl)) state.logoDataUrl = '';
+        if (state.gallery && state.gallery.length){
+          for (var i=0;i<state.gallery.length;i++){
+            if (state.gallery[i] && isData(state.gallery[i].img)) state.gallery[i].img = '';
+          }
+        }
+      }catch(_e){}
+    }
+
+    function publishNow(){
+      if (typeof state !== 'object' || !state){
+        safeToast('Ошибка','state не найден');
+        return;
+      }
+      var slug = '';
+      try{
+        slug = (typeof normalizeSlug === 'function')
+          ? normalizeSlug(state.slug || '')
+          : clean(state.slug || '');
+      }catch(_e){}
+
+      if (!slug){
+        safeToast('Нет slug','Сначала задай адрес страницы (slug)');
+        return;
+      }
+      state.slug = slug;
+
+      stripBase64();
+      try{ if (typeof persistNow === 'function') persistNow(); }catch(_e){}
+
+      safeStatus('saving','Публикация…');
+
+      fetch(apiOrigin() + '/api/v1/profile/' + encodeURIComponent(slug), {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ state: state })
+      }).then(function(r){
+        if (!r.ok) return r.text().then(function(t){ throw new Error(t || ('HTTP '+r.status)); });
+        return r.text();
+      }).then(function(){
+        safeStatus('saved','Опубликовано');
+        safeToast('Опубликовано','/u/' + slug);
+      }).catch(function(err){
+        safeStatus('saved','Сохранено локально');
+        safeToast('Не опубликовано', err && err.message ? err.message : 'publish failed');
+      });
+    }
+
+    function isSaveEl(el){
+      if (!el) return false;
+      if (el.id === 'save') return true;
+      try{
+        var t = clean(el.textContent || '');
+        if (t === 'Сохранить' || t === 'Сохранить профиль') return true;
+      }catch(_e){}
+      return false;
+    }
+
+    document.addEventListener('click', function(e){
+      var el = e.target;
+      while(el && el !== document){
+        if (isSaveEl(el)){
+          try{ e.preventDefault(); }catch(_e){}
+          try{ e.stopImmediatePropagation(); }catch(_e2){}
+          try{ e.stopPropagation(); }catch(_e3){}
+          publishNow();
+          return;
+        }
+        el = el.parentElement;
+      }
+    }, true);
+
+    window.ABQD_PUBLISH_TO_API_v3 = true;
+  })();
+  /* ===================== end ABQD_PUBLISH_TO_API_v3 ===================== */
+
   function runTests(){
     try {
       // existing tests (не меняем)
