@@ -1,0 +1,4 @@
+
+# ABQD local backups
+*.bak.*
+*.repo.bak.*
