@@ -389,7 +389,7 @@
     var footer = $('profileFooter');
     if (footer){
       var year = new Date().getFullYear();
-      footer.innerHTML = ''; try{ footer.style.display='none'; }catch(_e){};
+      footer.innerHTML = ''; try{ footer.style.display='none'; }catch(_e){}
     }
   }
 

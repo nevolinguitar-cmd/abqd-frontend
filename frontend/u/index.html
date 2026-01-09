@@ -157,7 +157,7 @@
   <div class="wrap">
     <div class="card" id="previewCard">
       <div class="cardHd">
-        <b></b>
+        
         <span class="err" id="err"></span>
       </div>
 
@@ -267,7 +267,7 @@
       try{ json = x.text ? JSON.parse(x.text) : {}; }catch(_e){ json = {}; }
       var st = ABQDProfileRender.apiToConstructorState(json);
       ABQDProfileRender.render(st);
-      document.title = (st.fullName || slug) || 'ABQD');
+      document.title = (st.fullName || slug) || 'ABQD';
     })
     .catch(function(err){
       setErr('Ошибка загрузки профиля');
