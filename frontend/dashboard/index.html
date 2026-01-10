@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="soft">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Личный кабинет • ABQD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css?v=1">
+  <style>
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+      margin-top:18px;
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .pill{
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.06);
+      border-radius:999px;
+      padding:8px 12px;
+      font-weight:900;
+      font-size:12px;
+      color:var(--text);
+    }
+    html[data-theme="soft"] .pill{background:rgba(255,255,255,.45)}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btnWide{width:auto;min-width:220px}
+    .muted{color:var(--muted);font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="navline">
+      <a class="brand" href="/">ABQD</a>
+
+      <div class="navActions">
+        <a class="miniBtn" href="/tariffs/">Тарифы</a>
+        <a class="miniBtn" href="/constructor/">Конструктор</a>
+        <div class="seg" id="themeSeg">
+          <button type="button" data-theme="dark">Тёмная</button>
+          <button type="button" data-theme="soft" class="active">Белая</button>
+        </div>
+        <button class="miniBtn" id="btnLogout" type="button">Выйти</button>
+      </div>
+    </div>
+
+    <div>
+      <h1>Личный кабинет</h1>
+      <p class="help">Один кабинет. Разные режимы — это права (plan/role). Не “4 разных кабинета”.</p>
+    </div>
+
+    <div class="grid">
+
+      <div class="card">
+        <div class="cardPad">
+          <h2>Статус</h2>
+          <div class="kpi">
+            <div class="pill">Email: <span id="meEmail">—</span></div>
+            <div class="pill">Plan: <span id="mePlan">—</span></div>
+            <div class="pill">Role: <span id="meRole">—</span></div>
+            <div class="pill">До: <span id="meExp">—</span></div>
+          </div>
+
+          <div style="margin-top:14px" class="muted">
+            Истина одна: <b>GET /me</b>. Платёж (ЮKassa) — только сигнал, не архитектура.
+          </div>
+
+          <div style="margin-top:18px" class="actions">
+            <a class="miniBtn btnWide" href="/constructor/">Открыть конструктор</a>
+            <a class="miniBtn btnWide" href="/u/">Публичный профиль</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="adminCard" style="display:none">
+        <div class="cardPad">
+          <h2>Админ</h2>
+          <p class="help" style="margin-top:10px">Эта секция видна только роли <b>admin/team</b>.</p>
+          <div class="actions" style="margin-top:14px">
+            <a class="miniBtn btnWide" href="/crm/">Открыть CRM</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardPad">
+          <h2>Следующий шаг</h2>
+          <p class="help" style="margin-top:10px">Подключим оплату уже после того, как entitlement работает. Иначе ты перепишешь всё дважды.</p>
+          <div class="actions" style="margin-top:14px">
+            <a class="miniBtn btnWide" href="/tariffs/">Посмотреть тарифы</a>
+            <a class="miniBtn btnWide" href="/docs/offer.html">Документы</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <div>
+        <a href="/docs/offer.html">Оферта</a> •
+        <a href="/docs/privacy.html">Политика</a> •
+        <a href="/docs/terms.html">Условия</a> •
+        <a href="/docs/contacts.html">Контакты</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/assets/api.js?v=1"></script>
+  <script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/guard.js?v=1"></script>
+  <script>
+    // пускаем только при наличии доступа
+    ABQD.guard({ requireAuth:true, requireAccess:true, allowPlans:["trial","paid"] });
+  </script>
+  <script src="/assets/dashboard.js?v=1"></script>
+</body>
+</html>

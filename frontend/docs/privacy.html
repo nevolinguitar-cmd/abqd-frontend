@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="soft">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Документы • ABQD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css?v=1">
+</head>
+<body>
+  <div class="wrap">
+    <div class="navline">
+      <a class="brand" href="/">ABQD</a>
+      <div class="navActions">
+        <a class="miniBtn" href="/tariffs/">Тарифы</a>
+        <a class="miniBtn" href="/auth/">Войти</a>
+        <div class="seg" id="themeSeg">
+          <button type="button" data-theme="dark">Тёмная</button>
+          <button type="button" data-theme="soft" class="active">Белая</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardPad">
+        <h1>Документ: privacy</h1>
+        <p class="help">Здесь должна быть финальная версия документа. Сейчас это заглушка — заполни реквизиты и текст до отправки на модерацию.</p>
+        <div style="margin-top:14px;color:var(--muted);font-weight:700">
+          • ABQD • Домены: app.abqd.ru / abqd.ru<br/>
+          • Контакты/реквизиты: (вставить сюда)<br/>
+          • Дата редакции: (вставить сюда)
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>
+        <a href="/docs/offer.html">Оферта</a> •
+        <a href="/docs/privacy.html">Политика</a> •
+        <a href="/docs/terms.html">Условия</a> •
+        <a href="/docs/contacts.html">Контакты</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/theme.js?v=1"></script>
+  <script>ABQD.theme?.initThemeSeg();</script>
+</body>
+</html>
