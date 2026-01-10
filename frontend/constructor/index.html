@@ -1815,6 +1815,39 @@
       }, true);
     }
 
+
+    // LOGO
+    var lg = document.getElementById('logoFile');
+    if (lg){
+      lg.addEventListener('change', function(e){
+        var f = e.target.files && e.target.files[0]; if(!f) return;
+
+        // preview instantly
+        fileToCoverDataUrl(f,500,500,0.86).then(function(preview){
+          state.logoDataUrl = preview;
+          try{ renderPreview(); }catch(_e){}
+          // ABQD_NO_PERSIST_BASE64_PREVIEW_v1
+        }).catch(function(){});
+
+        var slug; try{ slug=requireSlug(); }catch(_e){ return; }
+        setSaveStatus('saving','Загрузка логотипа…');
+
+        uploadViaApi(slug,'logo',f).then(function(url){
+          state.logoDataUrl = url;
+          state.logoUrl = url;
+
+          try{ var li=document.getElementById('logoUrl'); if(li) li.value=url; }catch(_e2){}
+
+          persistNow(); renderPreview();
+          setSaveStatus('saved','Логотип загружен');
+          toast('Логотип загружен','Сохранить → опубликует профиль');
+        }).catch(function(err){
+          setSaveStatus('saved','Сохранено локально');
+          toast('Логотип не загружен', err && err.message ? err.message : 'upload failed');
+        });
+      }, true);
+    }
+
     // GALLERY
     document.body.addEventListener('change', function(e){
       var t=e.target;
