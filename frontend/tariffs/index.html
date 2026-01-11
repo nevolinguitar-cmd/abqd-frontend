@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/app.css?v=1">
+  <link rel="stylesheet" href="/assets/app.css?v=2">
 </head>
 <body>
   <div class="wrap">
@@ -29,27 +29,30 @@
 
     <div>
       <h1>Тарифы</h1>
-      <p class="help">Стартуй с Trial на 7 дней. Это честнее, чем заставлять платить до того, как продукт доказал пользу.</p>
+      <p class="help">
+        ABQD — онлайн-сервис для создания и публикации цифровой визитки (профиля). Оплата подписки — банковской картой через ЮKassa.
+        Для начала можно активировать Trial на 7 дней.
+      </p>
     </div>
 
     <div class="pricingGrid">
 
+      <!-- TRIAL -->
       <div class="card pricingCard">
         <div class="cardPad">
-          <div class="planName">Пробный доступ</div>
-          <p class="planDescription">7 дней бесплатно. Доступ к конструктору и публикации профиля.</p>
+          <div class="planName">Trial</div>
+          <p class="planDescription">7 дней бесплатного доступа. Подходит, чтобы проверить продукт.</p>
 
           <div class="priceSection">
             <p class="priceValue"><span class="currency">₽</span><span class="amount">0</span></p>
             <p class="period">7 дней</p>
-            <p class="priceNote">Без платежей на старте</p>
+            <p class="priceNote">Без оплаты, без привязки карты</p>
           </div>
 
           <div class="features">
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Конструктор визиток</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Конструктор визитки</p></div>
             <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Публикация профиля</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Загрузка изображений (лимит 5MB)</p></div>
-            <div class="feature"><div class="featureIcon" style="background:rgba(255,255,255,.08);color:var(--muted)">—</div><p class="featureText disabled">Оплата/продление (после модерации)</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Загрузка изображений (до 5 MB за файл)</p></div>
           </div>
 
           <div class="cta">
@@ -58,72 +61,75 @@
         </div>
       </div>
 
+      <!-- STARTER -->
       <div class="card pricingCard">
         <div class="cardPad">
-          <div class="planName">Стартер</div>
-          <p class="planDescription">Базовый план для одного профиля. Без лишнего.</p>
+          <div class="planName">Starter</div>
+          <p class="planDescription">Для одного профиля и базового использования сервиса.</p>
 
           <div class="priceSection">
-            <p class="priceValue"><span class="currency">₽</span><span class="amount">1</span></p>
+            <p class="priceValue"><span class="currency">₽</span><span class="amount">700</span></p>
             <p class="period">в месяц</p>
-            <p class="priceNote">Демо-цена (пока без оплаты)</p>
+            <p class="priceNote">Подписка, автопродление можно отключить</p>
           </div>
 
           <div class="features">
             <div class="feature"><div class="featureIcon">✓</div><p class="featureText">До 1 опубликованного профиля</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Базовые шаблоны</p></div>
-            <div class="feature"><div class="featureIcon" style="background:rgba(255,255,255,.08);color:var(--muted)">—</div><p class="featureText disabled">Аналитика</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Редактирование без ограничений</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Хостинг профиля на ABQD</p></div>
           </div>
 
           <div class="cta">
-            <button class="btnPrimary btnChoosePlan" data-plan="starter" type="button">Выбрать</button>
+            <button class="btnPrimary btnChoosePlan" data-plan="starter" type="button">Оформить Starter</button>
           </div>
         </div>
       </div>
 
+      <!-- PRO -->
       <div class="card pricingCard featured">
-        <div class="badge">Популярный</div>
+        <div class="badge">Рекомендуем</div>
         <div class="cardPad">
-          <div class="planName">Профессионал</div>
-          <p class="planDescription">Для нескольких профилей и базовой аналитики.</p>
+          <div class="planName">Pro</div>
+          <p class="planDescription">Для нескольких профилей и расширенного использования.</p>
 
           <div class="priceSection">
-            <p class="priceValue"><span class="currency">₽</span><span class="amount">2</span></p>
+            <p class="priceValue"><span class="currency">₽</span><span class="amount">1600</span></p>
             <p class="period">в месяц</p>
-            <p class="priceNote">Демо-цена (пока без оплаты)</p>
+            <p class="priceNote">Оплата картой через ЮKassa</p>
           </div>
 
           <div class="features">
             <div class="feature"><div class="featureIcon">✓</div><p class="featureText">До 5 опубликованных профилей</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Базовая аналитика</p></div>
-            <div class="feature"><div class="featureIcon" style="background:rgba(255,255,255,.08);color:var(--muted)">—</div><p class="featureText disabled">Интеграции/API</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Все шаблоны и дизайны</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Приоритетная поддержка</p></div>
           </div>
 
           <div class="cta">
-            <button class="btnPrimary btnChoosePlan" data-plan="pro" type="button">Выбрать</button>
+            <button class="btnPrimary btnChoosePlan" data-plan="pro" type="button">Оформить Pro</button>
           </div>
         </div>
       </div>
 
+      <!-- FULL -->
       <div class="card pricingCard">
         <div class="cardPad">
-          <div class="planName">Полный доступ</div>
-          <p class="planDescription">Максимум возможностей (подключим оплату после модерации).</p>
+          <div class="planName">Full</div>
+          <p class="planDescription">Максимальный доступ без ограничений по профилям.</p>
 
           <div class="priceSection">
-            <p class="priceValue"><span class="currency">₽</span><span class="amount">3</span></p>
+            <p class="priceValue"><span class="currency">₽</span><span class="amount">2800</span></p>
             <p class="period">в месяц</p>
-            <p class="priceNote">Демо-цена (пока без оплаты)</p>
+            <p class="priceNote">Оплата картой через ЮKassa</p>
           </div>
 
           <div class="features">
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Неограниченные профили</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Полная аналитика</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Интеграции/API</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Неограниченное число профилей</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Расширенные возможности сервиса</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Поддержка по приоритету</p></div>
           </div>
 
           <div class="cta">
-            <button class="btnPrimary btnChoosePlan" data-plan="full" type="button">Выбрать</button>
+            <button class="btnPrimary btnChoosePlan" data-plan="full" type="button">Оформить Full</button>
           </div>
         </div>
       </div>
@@ -134,23 +140,23 @@
       <h2>FAQ</h2>
       <div class="faqGrid" style="margin-top:16px;">
         <div class="faqItem">
-          <p class="faqQ">Можно ли изменить план позже?</p>
-          <p class="faqA">Да. План — это entitlement, он не должен ломать продукт. Апгрейд/даунгрейд делаются безопасно.</p>
+          <p class="faqQ">Как я получу доступ после оплаты?</p>
+          <p class="faqA">После успешной оплаты подписка активируется в личном кабинете. Доступ открывается к /dashboard/ и /constructor/ согласно тарифу.</p>
         </div>
 
         <div class="faqItem">
-          <p class="faqQ">Как работает Trial?</p>
-          <p class="faqA">После входа ты включаешь Trial один раз и получаешь доступ к /dashboard/ и /constructor/ на 7 дней.</p>
+          <p class="faqQ">Можно ли отключить автопродление?</p>
+          <p class="faqA">Да, автопродление можно отключить. Доступ сохранится до конца оплаченного периода.</p>
         </div>
 
         <div class="faqItem">
-          <p class="faqQ">Какие способы оплаты?</p>
-          <p class="faqA">Сейчас доступ запускается через Trial. Оплату подключим после модерации — появятся варианты оплаты в личном кабинете.</p>
+          <p class="faqQ">Где условия и реквизиты?</p>
+          <p class="faqA">Все документы размещены на этом домене: оферта, политика, условия, контакты и правила возвратов.</p>
         </div>
 
         <div class="faqItem">
-          <p class="faqQ">Где документы?</p>
-          <p class="faqA">На этом домене: /docs/ (оферта, политика, условия, контакты). Это нужно для доверия и модерации.</p>
+          <p class="faqQ">Как оформить возврат?</p>
+          <p class="faqA">Смотрите страницу «Оплата и возвраты». Запрос можно отправить в поддержку.</p>
         </div>
       </div>
     </div>
@@ -160,14 +166,15 @@
         <a href="/docs/offer.html">Оферта</a> •
         <a href="/docs/privacy.html">Политика</a> •
         <a href="/docs/terms.html">Условия</a> •
+        <a href="/docs/refunds.html">Оплата и возвраты</a> •
         <a href="/docs/contacts.html">Контакты</a>
       </div>
     </div>
 
   </div>
 
-  <script src="/assets/api.js?v=1"></script>
-  <script src="/assets/theme.js?v=1"></script>
-  <script src="/assets/tariffs.js?v=1"></script>
+  <script src="/assets/api.js?v=2"></script>
+  <script src="/assets/theme.js?v=2"></script>
+  <script src="/assets/tariffs.js?v=2"></script>
 </body>
 </html>

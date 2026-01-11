@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Документы • ABQD</title>
+  <title>Условия использования • ABQD</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/app.css?v=1">
+  <link rel="stylesheet" href="/assets/app.css?v=2">
 </head>
 <body>
   <div class="wrap">
@@ -15,7 +15,7 @@
       <a class="brand" href="/">ABQD</a>
       <div class="navActions">
         <a class="miniBtn" href="/tariffs/">Тарифы</a>
-        <a class="miniBtn" href="/auth/">Войти</a>
+        <a class="miniBtn" href="/docs/contacts.html">Контакты</a>
         <div class="seg" id="themeSeg">
           <button type="button" data-theme="dark">Тёмная</button>
           <button type="button" data-theme="soft" class="active">Белая</button>
@@ -23,29 +23,43 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="cardPad">
-        <h1>Документ: terms</h1>
-        <p class="help">Здесь должна быть финальная версия документа. Сейчас это заглушка — заполни реквизиты и текст до отправки на модерацию.</p>
-        <div style="margin-top:14px;color:var(--muted);font-weight:700">
-          • ABQD • Домены: app.abqd.ru / abqd.ru<br/>
-          • Контакты/реквизиты: (вставить сюда)<br/>
-          • Дата редакции: (вставить сюда)
+    <div class="card"><div class="cardPad">
+      <h1>Условия использования</h1>
+      <p class="help">Правила, которые помогают держать сервис стабильным и безопасным.</p>
+
+      <div style="margin-top:16px; font-weight:700; color:var(--text); line-height:1.85">
+        <h2 style="margin:0 0 8px">1. Аккаунт</h2>
+        <div>Пользователь отвечает за безопасность данных входа и действия, совершённые в аккаунте.</div>
+
+        <h2 style="margin:18px 0 8px">2. Контент</h2>
+        <div>Пользователь размещает контент на свой риск и подтверждает права на материалы. Запрещено размещать незаконный контент, нарушающий права третьих лиц.</div>
+
+        <h2 style="margin:18px 0 8px">3. Ограничения</h2>
+        <div>Запрещены попытки взлома, обход ограничений, массовые злоупотребления, а также действия, нарушающие работу сервиса.</div>
+
+        <h2 style="margin:18px 0 8px">4. Доступ и тарифы</h2>
+        <div>Функции и лимиты зависят от тарифа. Актуальные условия и цены: <b>/tariffs/</b>.</div>
+
+        <h2 style="margin:18px 0 8px">5. Контакты</h2>
+        <div>Поддержка: hello@abqd. Реквизиты: <b>/docs/contacts.html</b>.</div>
+
+        <div style="margin-top:18px; color:var(--muted); font-weight:700">
+          Дата публикации: 2026-01-11
         </div>
       </div>
-    </div>
+    </div></div>
 
     <div class="footer">
       <div>
         <a href="/docs/offer.html">Оферта</a> •
         <a href="/docs/privacy.html">Политика</a> •
-        <a href="/docs/terms.html">Условия</a> •
+        <a href="/docs/refunds.html">Оплата и возвраты</a> •
         <a href="/docs/contacts.html">Контакты</a>
       </div>
     </div>
   </div>
 
-  <script src="/assets/theme.js?v=1"></script>
-  <script>ABQD.theme?.initThemeSeg();</script>
+  <script src="/assets/theme.js?v=2"></script>
+  <script>window.ABQD && ABQD.theme && ABQD.theme.initThemeSeg && ABQD.theme.initThemeSeg();</script>
 </body>
 </html>

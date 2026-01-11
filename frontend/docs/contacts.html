@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Документы • ABQD</title>
+  <title>Контакты и реквизиты • ABQD</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/app.css?v=1">
+  <link rel="stylesheet" href="/assets/app.css?v=2">
 </head>
 <body>
   <div class="wrap">
@@ -15,7 +15,7 @@
       <a class="brand" href="/">ABQD</a>
       <div class="navActions">
         <a class="miniBtn" href="/tariffs/">Тарифы</a>
-        <a class="miniBtn" href="/auth/">Войти</a>
+        <a class="miniBtn" href="/dashboard/">Кабинет</a>
         <div class="seg" id="themeSeg">
           <button type="button" data-theme="dark">Тёмная</button>
           <button type="button" data-theme="soft" class="active">Белая</button>
@@ -23,29 +23,35 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="cardPad">
-        <h1>Документ: contacts</h1>
-        <p class="help">Здесь должна быть финальная версия документа. Сейчас это заглушка — заполни реквизиты и текст до отправки на модерацию.</p>
-        <div style="margin-top:14px;color:var(--muted);font-weight:700">
-          • ABQD • Домены: app.abqd.ru / abqd.ru<br/>
-          • Контакты/реквизиты: (вставить сюда)<br/>
-          • Дата редакции: (вставить сюда)
-        </div>
+    <div class="card"><div class="cardPad">
+      <h1>Контакты и реквизиты</h1>
+      <p class="help">Информация для связи, юридические реквизиты и адрес компании.</p>
+
+      <div style="margin-top:14px; font-weight:700; color:var(--text); line-height:1.8">
+        <div><b>Организация:</b> ООО «Катараксис Клуб»</div>
+        <div><b>ИНН:</b> 1007027885</div>
+        <div><b>ОГРН:</b> 1201000001641</div>
+        <div><b>Email поддержки:</b> hello@abqd</div>
+        <div><b>Телефон:</b> +7 (495) 792-85-89</div>
+        <div><b>Адрес:</b> 186757, Республика Карелия, город Сортавала, пгт Вяртсиля, ул. Металлургов, д. 2а, кв. 16</div>
       </div>
-    </div>
+
+      <div style="margin-top:18px; color:var(--muted); font-weight:700">
+        Время ответа поддержки: обычно в течение 1–2 рабочих дней.
+      </div>
+    </div></div>
 
     <div class="footer">
       <div>
         <a href="/docs/offer.html">Оферта</a> •
         <a href="/docs/privacy.html">Политика</a> •
         <a href="/docs/terms.html">Условия</a> •
-        <a href="/docs/contacts.html">Контакты</a>
+        <a href="/docs/refunds.html">Оплата и возвраты</a>
       </div>
     </div>
   </div>
 
-  <script src="/assets/theme.js?v=1"></script>
-  <script>ABQD.theme?.initThemeSeg();</script>
+  <script src="/assets/theme.js?v=2"></script>
+  <script>window.ABQD && ABQD.theme && ABQD.theme.initThemeSeg && ABQD.theme.initThemeSeg();</script>
 </body>
 </html>

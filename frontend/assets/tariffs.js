@@ -1,4 +1,4 @@
-// ABQD_TARIFFS_v1
+// ABQD_TARIFFS_v2 (YuKassa-ready wording)
 (function () {
   const $ = (s, root=document) => root.querySelector(s);
   const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
@@ -25,12 +25,12 @@
     t.textContent = msg;
     t.style.opacity = "1";
     clearTimeout(window.__abqdToastTimer);
-    window.__abqdToastTimer = setTimeout(() => (t.style.opacity="0"), 2400);
+    window.__abqdToastTimer = setTimeout(() => (t.style.opacity="0"), 2600);
   }
 
   function go(url){ if (location.pathname !== url) location.href = url; }
   function nextParam(){
-    const next = encodeURIComponent(location.pathname);
+    const next = encodeURIComponent(location.pathname + location.search);
     return `?next=${next}`;
   }
 
@@ -91,7 +91,7 @@
           go("/auth/" + nextParam());
           return;
         }
-        toast("Пробный доступ сейчас недоступен. Попробуйте позже.");
+        toast("Trial сейчас недоступен. Напишите в поддержку.");
         return;
       }
 
@@ -108,7 +108,8 @@
       go("/auth/" + nextParam());
       return;
     }
-    toast(`План "${planCode}" — оплата появится после модерации. Сейчас начни Trial.`);
+    toast(`Тариф "${planCode}" оформляется из личного кабинета. Оплата — картой через ЮKassa.`);
+    setTimeout(() => go("/dashboard/"), 650);
   }
 
   function initCtas(){

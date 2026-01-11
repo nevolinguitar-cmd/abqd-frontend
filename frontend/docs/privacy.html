@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Документы • ABQD</title>
+  <title>Политика конфиденциальности • ABQD</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/app.css?v=1">
+  <link rel="stylesheet" href="/assets/app.css?v=2">
 </head>
 <body>
   <div class="wrap">
@@ -15,7 +15,7 @@
       <a class="brand" href="/">ABQD</a>
       <div class="navActions">
         <a class="miniBtn" href="/tariffs/">Тарифы</a>
-        <a class="miniBtn" href="/auth/">Войти</a>
+        <a class="miniBtn" href="/docs/contacts.html">Контакты</a>
         <div class="seg" id="themeSeg">
           <button type="button" data-theme="dark">Тёмная</button>
           <button type="button" data-theme="soft" class="active">Белая</button>
@@ -23,29 +23,46 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="cardPad">
-        <h1>Документ: privacy</h1>
-        <p class="help">Здесь должна быть финальная версия документа. Сейчас это заглушка — заполни реквизиты и текст до отправки на модерацию.</p>
-        <div style="margin-top:14px;color:var(--muted);font-weight:700">
-          • ABQD • Домены: app.abqd.ru / abqd.ru<br/>
-          • Контакты/реквизиты: (вставить сюда)<br/>
-          • Дата редакции: (вставить сюда)
+    <div class="card"><div class="cardPad">
+      <h1>Политика конфиденциальности</h1>
+      <p class="help">Документ определяет порядок обработки и защиты персональных данных пользователей сервиса ABQD.</p>
+
+      <div style="margin-top:16px; font-weight:700; color:var(--text); line-height:1.85">
+        <h2 style="margin:0 0 8px">1. Оператор</h2>
+        <div>Оператор персональных данных: ООО «Катараксис Клуб», ИНН 1007027885, ОГРН 1201000001641.</div>
+
+        <h2 style="margin:18px 0 8px">2. Какие данные мы можем обрабатывать</h2>
+        <div>Данные учётной записи (например, email), а также данные, которые пользователь размещает в профиле (имя, ссылки, изображения и т.п.).</div>
+
+        <h2 style="margin:18px 0 8px">3. Цели обработки</h2>
+        <div>Регистрация и авторизация, предоставление доступа к функциям сервиса, техническая поддержка, обеспечение безопасности и предотвращение злоупотреблений.</div>
+
+        <h2 style="margin:18px 0 8px">4. Хранение и защита</h2>
+        <div>Мы применяем организационные и технические меры защиты. Доступ к данным ограничен.</div>
+
+        <h2 style="margin:18px 0 8px">5. Передача третьим лицам</h2>
+        <div>Передача возможна только в объёме, необходимом для работы сервиса (например, платёжный партнёр при оплате подписки) и в случаях, предусмотренных законом.</div>
+
+        <h2 style="margin:18px 0 8px">6. Контакты</h2>
+        <div>По вопросам обработки данных: hello@abqd. Реквизиты и адрес: <b>/docs/contacts.html</b>.</div>
+
+        <div style="margin-top:18px; color:var(--muted); font-weight:700">
+          Дата публикации: 2026-01-11
         </div>
       </div>
-    </div>
+    </div></div>
 
     <div class="footer">
       <div>
         <a href="/docs/offer.html">Оферта</a> •
-        <a href="/docs/privacy.html">Политика</a> •
         <a href="/docs/terms.html">Условия</a> •
+        <a href="/docs/refunds.html">Оплата и возвраты</a> •
         <a href="/docs/contacts.html">Контакты</a>
       </div>
     </div>
   </div>
 
-  <script src="/assets/theme.js?v=1"></script>
-  <script>ABQD.theme?.initThemeSeg();</script>
+  <script src="/assets/theme.js?v=2"></script>
+  <script>window.ABQD && ABQD.theme && ABQD.theme.initThemeSeg && ABQD.theme.initThemeSeg();</script>
 </body>
 </html>
