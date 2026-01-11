@@ -1,44 +1,43 @@
-// ABQD_API_v1
+// ABQD_API_v4 (auth email+password+otp)
 (function () {
   const API_BASE = "https://api.abqd.ru";
   const TOKEN_KEY = "abqd_token";
 
+  async function jfetch(path, opts = {}) {
+    const url = API_BASE + path;
+    const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+    const token = getToken();
+    if (token) headers["Authorization"] = "Bearer " + token;
+
+    const res = await fetch(url, { ...opts, headers });
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+    return { ok: res.ok, status: res.status, data };
+  }
+
   function getToken(){ return localStorage.getItem(TOKEN_KEY) || ""; }
-  function authHeaders(){
-    const t = getToken();
-    return t ? { Authorization: `Bearer ${t}` } : {};
-  }
+  function setToken(t){ localStorage.setItem(TOKEN_KEY, t); }
+  function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
 
-  async function apiFetch(path, opts = {}) {
-    const res = await fetch(`${API_BASE}${path}`, {
-      method: opts.method || "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders(),
-        ...(opts.headers || {}),
-      },
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
-      cache: "no-store",
-    });
-    return res;
-  }
+  // Auth
+  const registerRequest = (email, phone, password) =>
+    jfetch("/api/v1/auth/register/request", { method:"POST", body: JSON.stringify({ email, phone, password }) });
 
-  async function getMe(){
-    const res = await apiFetch("/api/v1/me");
-    if (res.status === 401) return { ok:false, status:401 };
-    if (!res.ok) return { ok:false, status:res.status };
-    const data = await res.json();
-    return { ok:true, data };
-  }
+  const loginRequest = (email, password) =>
+    jfetch("/api/v1/auth/login/request", { method:"POST", body: JSON.stringify({ email, password }) });
 
-  async function startTrial(){
-    const res = await apiFetch("/api/v1/subscription/start-trial", { method:"POST" });
-    if (res.status === 401) return { ok:false, status:401 };
-    if (!res.ok) return { ok:false, status:res.status, text: await res.text().catch(()=>"") };
-    const data = await res.json().catch(()=> ({}));
-    return { ok:true, data };
-  }
+  const verifyCode = (email, challenge_id, code) =>
+    jfetch("/api/v1/auth/verify", { method:"POST", body: JSON.stringify({ email, challenge_id, code }) });
+
+  const getMe = () => jfetch("/api/v1/auth/me", { method:"GET" });
+
+  const startTrial = () => jfetch("/api/v1/auth/start-trial", { method:"POST", body: JSON.stringify({}) });
 
   window.ABQD = window.ABQD || {};
-  window.ABQD.api = { API_BASE, TOKEN_KEY, getToken, apiFetch, getMe, startTrial };
+  window.ABQD.api = {
+    API_BASE, TOKEN_KEY,
+    getToken, setToken, clearToken,
+    registerRequest, loginRequest, verifyCode,
+    getMe, startTrial
+  };
 })();
