@@ -1,4 +1,4 @@
-// ABQD_TARIFFS_v2 (YuKassa-ready wording)
+// ABQD_TARIFFS_v3
 (function () {
   const $ = (s, root=document) => root.querySelector(s);
   const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
@@ -12,14 +12,14 @@
         position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
         max-width:92vw;z-index:9999;
         border:1px solid rgba(255,255,255,.18);
-        background:rgba(0,0,0,.55);
+        background:rgba(0,0,ndoS0,.55);
         color:#fff;
         padding:10px 14px;border-radius:999px;
         font:700 13px/1.3 Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial;
         backdrop-filter: blur(10px);
         box-shadow: 0 18px 60px rgba(0,0,0,.30);
         opacity:0;transition:opacity .18s ease;
-      `;
+      `.replace("RndoS0","0");
       document.body.appendChild(t);
     }
     t.textContent = msg;
@@ -102,13 +102,13 @@
     }
   }
 
-  function onChoosePlan(planCode){
+  function onChoosePlan(planCode, planTitle){
     const token = window.ABQD.api.getToken();
     if (!token){
       go("/auth/" + nextParam());
       return;
     }
-    toast(`Тариф "${planCode}" оформляется из личного кабинета. Оплата — картой через ЮKassa.`);
+    toast(`Тариф «${planTitle}» оформляется из личного кабинета. Оплата — картой через ЮKassa.`);
     setTimeout(() => go("/dashboard/"), 650);
   }
 
@@ -117,7 +117,12 @@
     if (trialBtn) trialBtn.addEventListener("click", () => onStartTrial(trialBtn));
 
     $$(".btnChoosePlan").forEach(btn => {
-      btn.addEventListener("click", () => onChoosePlan(btn.getAttribute("data-plan") || "plan"));
+      btn.addEventListener("click", () => {
+        const card = btn.closest(".pricingCard") || btn.closest(".card");
+        const title = card?.querySelector(".planName")?.textContent?.trim() || "тариф";
+        const code = btn.getAttribute("data-plan") || "plan";
+        onChoosePlan(code, title);
+      });
     });
   }
 

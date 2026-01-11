@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="soft">
+<html lang="ru" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -7,22 +7,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/app.css?v=2">
+  <link rel="stylesheet" href="/assets/app.css?v=3">
+
+  <!-- FIX: чтобы CTA-кнопки стояли строго на одном уровне -->
+  <style>
+    .pricingGrid{ align-items: stretch; }
+    .pricingCard{ height: 100%; }
+    .pricingCard .cardPad{ display:flex; flex-direction:column; height:100%; }
+    .pricingCard .features{ flex:1; }
+    .pricingCard .cta{ margin-top:auto; }
+  </style>
 </head>
 <body>
   <div class="wrap">
 
     <div class="navline">
       <a class="brand" href="/">ABQD</a>
-
       <div class="navActions">
         <a class="miniBtn" id="btnAuth" href="/auth/">Войти</a>
         <a class="miniBtn" id="btnDash" href="/dashboard/" style="display:none">Личный кабинет</a>
         <button class="miniBtn" id="btnLogout" type="button" style="display:none">Выйти</button>
 
         <div class="seg" id="themeSeg">
-          <button type="button" data-theme="dark">Тёмная</button>
-          <button type="button" data-theme="soft" class="active">Белая</button>
+          <button type="button" data-theme="dark" class="active">Тёмная</button>
+          <button type="button" data-theme="soft">Белая</button>
         </div>
       </div>
     </div>
@@ -30,8 +38,8 @@
     <div>
       <h1>Тарифы</h1>
       <p class="help">
-        ABQD — онлайн-сервис для создания и публикации цифровой визитки (профиля). Оплата подписки — банковской картой через ЮKassa.
-        Для начала можно активировать Trial на 7 дней.
+        ABQD — онлайн-сервис для создания и публикации цифровой визитки (профиля).
+        Оплата подписки — банковской картой через ЮKassa.
       </p>
     </div>
 
@@ -61,36 +69,37 @@
         </div>
       </div>
 
-      <!-- STARTER -->
+      <!-- НАЧАЛО (ex Starter) -->
       <div class="card pricingCard">
         <div class="cardPad">
-          <div class="planName">Starter</div>
-          <p class="planDescription">Для одного профиля и базового использования сервиса.</p>
+          <div class="planName">Начало</div>
+          <p class="planDescription">Базовый тариф: визитка + минимальный кабинет для работы с клиентами.</p>
 
           <div class="priceSection">
             <p class="priceValue"><span class="currency">₽</span><span class="amount">700</span></p>
             <p class="period">в месяц</p>
-            <p class="priceNote">Подписка, автопродление можно отключить</p>
+            <p class="priceNote">Оплата картой через ЮKassa</p>
           </div>
 
           <div class="features">
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">До 1 опубликованного профиля</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">1 опубликованный профиль</p></div>
             <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Редактирование без ограничений</p></div>
             <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Хостинг профиля на ABQD</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Мини-CRM: клиенты и таблицы</p></div>
           </div>
 
           <div class="cta">
-            <button class="btnPrimary btnChoosePlan" data-plan="starter" type="button">Оформить Starter</button>
+            <button class="btnPrimary btnChoosePlan" data-plan="starter" type="button">Оформить Начало</button>
           </div>
         </div>
       </div>
 
-      <!-- PRO -->
+      <!-- ПРОДВИНУТЫЙ (ex Pro) -->
       <div class="card pricingCard featured">
         <div class="badge">Рекомендуем</div>
         <div class="cardPad">
-          <div class="planName">Pro</div>
-          <p class="planDescription">Для нескольких профилей и расширенного использования.</p>
+          <div class="planName">Продвинутый</div>
+          <p class="planDescription">Для тех, кто растёт: CRM шире + поддержка + AI-модуль.</p>
 
           <div class="priceSection">
             <p class="priceValue"><span class="currency">₽</span><span class="amount">1600</span></p>
@@ -99,22 +108,23 @@
           </div>
 
           <div class="features">
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">До 5 опубликованных профилей</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Все шаблоны и дизайны</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">1 опубликованный профиль</p></div>
             <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Приоритетная поддержка</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Расширенная CRM: продажи, лиды, интеграции</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">AI-помощник</p></div>
           </div>
 
           <div class="cta">
-            <button class="btnPrimary btnChoosePlan" data-plan="pro" type="button">Оформить Pro</button>
+            <button class="btnPrimary btnChoosePlan" data-plan="pro" type="button">Оформить Продвинутый</button>
           </div>
         </div>
       </div>
 
-      <!-- FULL -->
+      <!-- ВСЁ ВКЛЮЧЕНО (ex Full) -->
       <div class="card pricingCard">
         <div class="cardPad">
-          <div class="planName">Full</div>
-          <p class="planDescription">Максимальный доступ без ограничений по профилям.</p>
+          <div class="planName">Всё включено</div>
+          <p class="planDescription">Максимум функций для системной работы и автоматизации.</p>
 
           <div class="priceSection">
             <p class="priceValue"><span class="currency">₽</span><span class="amount">2800</span></p>
@@ -123,13 +133,16 @@
           </div>
 
           <div class="features">
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Неограниченное число профилей</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Расширенные возможности сервиса</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Поддержка по приоритету</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">1 опубликованный профиль</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Приоритетная поддержка</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Полная CRM: продажи, лиды, интеграции</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Интеграции: почта, календарь</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">AI-помощник</p></div>
+            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Чат-бот в мессенджерах</p></div>
           </div>
 
           <div class="cta">
-            <button class="btnPrimary btnChoosePlan" data-plan="full" type="button">Оформить Full</button>
+            <button class="btnPrimary btnChoosePlan" data-plan="full" type="button">Оформить Всё включено</button>
           </div>
         </div>
       </div>
@@ -143,20 +156,13 @@
           <p class="faqQ">Как я получу доступ после оплаты?</p>
           <p class="faqA">После успешной оплаты подписка активируется в личном кабинете. Доступ открывается к /dashboard/ и /constructor/ согласно тарифу.</p>
         </div>
-
         <div class="faqItem">
           <p class="faqQ">Можно ли отключить автопродление?</p>
           <p class="faqA">Да, автопродление можно отключить. Доступ сохранится до конца оплаченного периода.</p>
         </div>
-
         <div class="faqItem">
           <p class="faqQ">Где условия и реквизиты?</p>
-          <p class="faqA">Все документы размещены на этом домене: оферта, политика, условия, контакты и правила возвратов.</p>
-        </div>
-
-        <div class="faqItem">
-          <p class="faqQ">Как оформить возврат?</p>
-          <p class="faqA">Смотрите страницу «Оплата и возвраты». Запрос можно отправить в поддержку.</p>
+          <p class="faqA">Документы на этом домене: оферта, политика, условия, оплата/возвраты и контакты.</p>
         </div>
       </div>
     </div>
@@ -173,8 +179,8 @@
 
   </div>
 
-  <script src="/assets/api.js?v=2"></script>
-  <script src="/assets/theme.js?v=2"></script>
-  <script src="/assets/tariffs.js?v=2"></script>
+  <script src="/assets/api.js?v=3"></script>
+  <script src="/assets/theme.js?v=3"></script>
+  <script src="/assets/tariffs.js?v=3"></script>
 </body>
 </html>
