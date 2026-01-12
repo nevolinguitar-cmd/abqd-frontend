@@ -2,221 +2,663 @@
 <html lang="ru" data-theme="dark">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ABQD — Вход / Регистрация</title>
 
+  <!-- Montserrat (brand font) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="/assets/app.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
       --font: "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       --txt: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.68);
-      --glass: rgba(18,18,22,.62);
-      --stroke: rgba(255,255,255,.16);
-      --accent: #6d5cff;
-      --accent2: #ff4d9d;
-      --danger: #ff5b5b;
-      --ok: #31d36b;
+      --muted: rgba(255,255,255,.66);
+      --accent: 46,124,255;
+      --panelR: 22px;
+      --shadow: 0 30px 110px rgba(0,0,0,.55);
+
+      --corridorImg: url("https://static.tildacdn.com/tild3361-3261-4562-a464-333532376265/ChatGPT_Image_21__20.png");
+
+      /* размеры как в “правильной” версии */
+      --shellMax: 620px;
+      --cardMax: 560px;
     }
-    html,body{height:100%}
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
       font-family: var(--font);
       color: var(--txt);
-      background: radial-gradient(1200px 900px at 10% 10%, rgba(109,92,255,.18), transparent 60%),
-                  radial-gradient(900px 700px at 90% 20%, rgba(255,77,157,.14), transparent 60%),
-                  radial-gradient(800px 600px at 30% 90%, rgba(49,211,107,.10), transparent 55%),
-                  #07070a;
+      background: #07090d;
       overflow-x:hidden;
     }
-    .wrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:28px 14px;}
-    .card{
-      width:min(960px, 100%);
-      display:grid;
-      grid-template-columns: 1.05fr .95fr;
-      gap:18px;
-      padding:18px;
-      border-radius:22px;
-      background: linear-gradient(180deg, var(--glass), rgba(12,12,16,.56));
-      border:1px solid var(--stroke);
-      box-shadow: 0 20px 60px rgba(0,0,0,.45);
-      backdrop-filter: blur(14px);
-    }
-    @media (max-width: 900px){ .card{grid-template-columns:1fr; padding:16px;} }
-    .left{
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)),
-        radial-gradient(700px 500px at 30% 20%, rgba(255,255,255,.08), transparent 60%),
-        rgba(0,0,0,.16);
-      padding:18px;
-      position:relative;
+
+    .stage{
+      position: relative;
+      min-height: 100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 34px 18px;
+      isolation:isolate;
       overflow:hidden;
     }
-    .brand{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
-    .logoDot{
-      width:10px; height:10px; border-radius:999px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      box-shadow: 0 0 20px rgba(109,92,255,.35);
+
+    .bgImage{
+      position:absolute; inset:0;
+      z-index:0;
+      pointer-events:none;
+      background-color:#000;
+      background-image:
+        radial-gradient(1200px 800px at 50% 44%, rgba(255,255,255,.035), rgba(0,0,0,0) 62%),
+        linear-gradient(180deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.30) 46%, rgba(0,0,0,.86) 100%),
+        var(--corridorImg);
+      background-repeat:no-repeat;
+      background-position: 50% 50%;
+      background-size: cover;
+      filter: saturate(1.03) contrast(1.04) brightness(.92);
+      transform: translateZ(0);
     }
-    .brandTitle{font-weight:700; letter-spacing:.08em}
-    .pitch{margin:10px 0 0; color:var(--muted); line-height:1.45}
-    .mini{margin-top:14px; display:grid; gap:10px;}
-    .miniItem{
-      padding:12px;
-      border-radius:14px;
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      color: var(--muted);
-      font-size: 13px;
-      line-height:1.35;
+
+    .mask{
+      position:absolute; inset:0;
+      z-index:1;
+      pointer-events:none;
+      background:
+        radial-gradient(520px 520px at 88% 88%, rgba(0,0,0,.92), transparent 72%),
+        radial-gradient(760px 420px at 50% 46%, rgba(0,0,0,.55), transparent 70%);
+      opacity:.70;
     }
-    .right{
-      padding:10px 10px 6px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.16);
+
+    .tint{
+      position:absolute; inset:0;
+      z-index:2;
+      pointer-events:none;
+      background:
+        radial-gradient(900px 620px at 18% 12%, rgba(var(--accent), .22), transparent 55%),
+        radial-gradient(900px 620px at 85% 20%, rgba(255,255,255,.08), transparent 60%),
+        radial-gradient(900px 720px at 50% 92%, rgba(var(--accent), .14), transparent 66%),
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,0) 32%, rgba(0,0,0,.24) 100%);
     }
-    .topline{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 6px 10px;}
-    .smallLink{color: rgba(255,255,255,.78); font-size:12.5px; text-decoration:none; border-bottom:1px dashed rgba(255,255,255,.22)}
-    .tabs{display:flex; gap:10px; margin:6px 6px 14px;}
+
+    .vignette{
+      position:absolute; inset:0;
+      z-index:3;
+      pointer-events:none;
+      background: radial-gradient(1300px 740px at 50% 52%, rgba(0,0,0,0) 30%, rgba(0,0,0,.62) 78%, rgba(0,0,0,.92) 100%);
+      opacity:.60;
+    }
+
+    .grain{
+      position:absolute; inset:0;
+      z-index:4;
+      pointer-events:none;
+      opacity:.03;
+      mix-blend-mode: overlay;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+    }
+    @media (max-width: 980px){ .grain{ display:none; } }
+
+    .shell{
+      width: min(var(--shellMax), 100%);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 12px;
+      z-index:10;
+    }
+
+    .shellLogo{
+      height: clamp(70px, 7.5vw, 110px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      filter: drop-shadow(0 18px 70px rgba(0,0,0,.78)) drop-shadow(0 0 34px rgba(var(--accent), .12));
+    }
+    .shellLogo img{ height:100%; width:auto; max-width: min(520px, 92vw); display:block; opacity:.96; }
+
+    .card{
+      position:relative;
+      width: min(var(--cardMax), 100%);
+      border-radius: var(--panelR);
+      padding: 26px;
+      border: 1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(1200px 700px at 20% 0%, rgba(255,255,255,.10), transparent 60%),
+        radial-gradient(900px 600px at 80% 30%, rgba(120,80,255,.26), transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,.06) 0%, rgba(15,18,32,.62) 50%, rgba(7,9,16,.86) 100%);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:1px;
+      border-radius: calc(var(--panelR) - 1px);
+      pointer-events:none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.22);
+    }
+
+    .tabsWrap{
+      position:relative;
+      z-index:1;
+      display:flex;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
     .tab{
-      flex:1; border-radius:14px; padding:10px 12px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-      color: var(--txt); font-weight:600; cursor:pointer; text-align:center; user-select:none;
+      flex:1;
+      border:0;
+      border-radius: 999px;
+      padding: 14px 16px;
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 18px;
+      color: rgba(255,255,255,.72);
+      background: transparent;
+      cursor:pointer;
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease, color .18s ease;
     }
-    .tab.isActive{
-      background: linear-gradient(90deg, rgba(109,92,255,.20), rgba(255,77,157,.12));
-      border-color: rgba(109,92,255,.35);
+
+    .tab.active{
+      color: rgba(255,255,255,.96);
+      background: linear-gradient(180deg, rgba(46,124,255,.55), rgba(46,124,255,.22));
+      box-shadow: 0 16px 60px rgba(0,0,0,.35);
+      border: 1px solid rgba(46,124,255,.35);
     }
-    form{padding: 0 6px 10px;}
-    .field{display:flex; flex-direction:column; gap:7px; margin:10px 0;}
-    label{font-size:13px; color:var(--muted)}
-    input{
-      height:44px; border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.05);
-      color: var(--txt);
-      padding: 0 12px;
+    .tab:active{ transform: scale(.99); }
+
+    .pane{ display:none; padding: 20px 6px 6px; position:relative; z-index:1; }
+    .pane.active{ display:block; }
+
+    label{ display:block; font-size: 16px; color: rgba(255,255,255,.70); margin: 14px 0 8px; }
+
+    .field{
+      width:100%;
+      padding: 18px 18px;
+      border-radius: 18px;
+      font-family: var(--font);
+      font-size: 18px;
+      color: rgba(255,255,255,.92);
       outline:none;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(0,0,0,.28), 0 18px 55px rgba(0,0,0,.18);
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
     }
-    input:focus{border-color: rgba(109,92,255,.55); box-shadow: 0 0 0 3px rgba(109,92,255,.18);}
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-    @media (max-width: 520px){ .row{grid-template-columns:1fr;} }
+    .field::placeholder{ color: rgba(255,255,255,.40); }
+    .field:focus{
+      border-color: rgba(46,124,255,.62);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.30), 0 0 0 5px rgba(46,124,255,.14), 0 22px 70px rgba(0,0,0,.26);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      transform: translateY(-1px);
+    }
+
     .btn{
-      width:100%; height:46px; border-radius:14px;
-      border:1px solid rgba(255,255,255,.16);
-      background: linear-gradient(90deg, rgba(109,92,255,.35), rgba(255,77,157,.20));
-      color: var(--txt); font-weight:700; cursor:pointer;
+      width:100%;
+      border:0;
+      border-radius: 20px;
+      padding: 18px 18px;
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 18px;
+      color: rgba(255,255,255,.95);
+      cursor:pointer;
+      background: linear-gradient(180deg, rgba(46,124,255,.60), rgba(46,124,255,.26));
+      border: 1px solid rgba(46,124,255,.38);
+      box-shadow: 0 18px 70px rgba(0,0,0,.32);
+      transition: transform .18s ease;
+      margin-top: 16px;
     }
-    .btn:disabled{opacity:.55; cursor:not-allowed;}
-    .note{margin-top:10px; color:var(--muted); font-size:12.5px; line-height:1.45;}
-    .note a{color: rgba(255,255,255,.85); text-decoration:none; border-bottom:1px dashed rgba(255,255,255,.25)}
-    .status{margin:10px 6px 0; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color:var(--muted); font-size:13px; line-height:1.35;}
-    .status.ok{border-color: rgba(49,211,107,.35); background: rgba(49,211,107,.10); color: rgba(255,255,255,.90);}
-    .status.err{border-color: rgba(255,91,91,.35); background: rgba(255,91,91,.10); color: rgba(255,255,255,.92);}
-    .hidden{display:none !important;}
-    .code{letter-spacing:.35em; text-align:center; font-weight:700; font-size:18px;}
+    .btn:active{ transform: translateY(1px); }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    .hint{ font-size: 13px; color: rgba(255,255,255,.56); line-height: 1.45; margin-top: 8px; }
+
+    .toast{
+      display:none;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.86);
+      font-size: 14px;
+      position:relative;
+      z-index:1;
+    }
+    .toast.show{ display:block; }
+    .toast.ok{ border-color: rgba(104,245,169, .35); }
+    .toast.err{ border-color: rgba(255, 86, 110, .40); }
+
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    @media (max-width: 980px){ .row{ grid-template-columns:1fr; } }
+
+    .linkRow{ margin-top: 10px; }
+    .link{
+      border:0;
+      background: transparent;
+      color: rgba(255,255,255,.78);
+      font-family: var(--font);
+      cursor:pointer;
+      padding: 0;
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .link:hover{ color: rgba(255,255,255,.90); }
+
+    @media (prefers-reduced-motion: reduce){
+      .bgImage{ animation:none !important; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="left">
-        <div class="brand">
-          <div class="logoDot"></div>
-          <div class="brandTitle">ABQD</div>
-        </div>
-<div class="mini">
-          <div class="miniItem">⚡ NFC профиль — передача контакта за 1 секунду</div>
-          <div class="miniItem">🧩 Конструктор + хостинг профиля</div>
-          <div class="miniItem">📈 CRM и интеграции — по тарифу</div>
-        </div>
+  <div class="stage">
+    <div class="bgImage" aria-hidden="true"></div>
+    <div class="mask" aria-hidden="true"></div>
+    <div class="tint" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <div class="shell" role="main">
+      <div class="shellLogo" aria-hidden="true">
+        <img src="/assets/abqd-logo.svg" alt="abqd" />
       </div>
 
-      <div class="right">
-        <div class="topline">
-          <div style="font-weight:700;">Личный кабинет</div>
-          <a class="smallLink" href="/tariffs/">Тарифы</a>
+      <section class="card" aria-label="Auth">
+        <div class="tabsWrap" role="tablist" aria-label="Режим">
+          <button class="tab active" id="tabLogin" role="tab" aria-selected="true" aria-controls="paneLogin">Вход</button>
+          <button class="tab" id="tabRegister" role="tab" aria-selected="false" aria-controls="paneRegister">Регистрация</button>
         </div>
 
-        <div class="tabs">
-          <div id="tabLogin" class="tab isActive">Вход</div>
-          <div id="tabRegister" class="tab">Регистрация</div>
+        <div id="toast" class="toast" aria-live="polite"></div>
+
+        <div class="pane active" id="paneLogin" role="tabpanel" aria-labelledby="tabLogin">
+          <form id="formLogin" autocomplete="on">
+            <div>
+              <label for="loginEmail">Email</label>
+              <input class="field" id="loginEmail" type="email" required placeholder="name@example.com" />
+            </div>
+            <div>
+              <label for="loginPass">Пароль</label>
+              <input class="field" id="loginPass" type="password" required placeholder="••••••••" />
+            </div>
+            <button class="btn" id="btnLogin" type="submit">Войти</button>
+
+            <div class="linkRow">
+              <button class="link" type="button" id="btnShowReset">Забыли пароль?</button>
+            </div>
+
+            <div id="resetBox" style="display:none; margin-top:10px;">
+              <label for="resetEmail">Email для восстановления</label>
+              <input class="field" id="resetEmail" type="email" placeholder="name@example.com" />
+              <button class="btn" id="btnReset" type="button" style="margin-top:10px;">Отправить</button>
+              <div class="hint">Если функция отключена на сервере — покажем ошибку (это нормально).</div>
+            </div>
+          </form>
         </div>
 
-        <!-- LOGIN -->
-        <form id="formLogin">
-          <div class="field">
-            <label>Email</label>
-            <input id="loginEmail" type="email" autocomplete="email" placeholder="name@example.com" required />
-          </div>
-          <div class="field">
-            <label>Пароль</label>
-            <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" required />
-          </div>
-          <button id="btnLogin" class="btn" type="submit">Войти</button>
-          <div class="note">
-            Это обычный вход. Код не требуется.
-          </div>
-        </form>
-
-        <!-- REGISTER -->
-        <form id="formRegister" class="hidden">
-          <div class="field">
-            <label>Email</label>
-            <input id="regEmail" type="email" autocomplete="email" placeholder="name@example.com" required />
-          </div>
-          <div class="field">
-            <label>Телефон (обязательно)</label>
-            <input id="regPhone" type="tel" autocomplete="tel" placeholder="+7 999 123-45-67" required />
-          </div>
-          <div class="row">
-            <div class="field">
-              <label>Пароль</label>
-              <input id="regPass" type="password" autocomplete="new-password" placeholder="минимум 8 символов" required />
+        <div class="pane" id="paneRegister" role="tabpanel" aria-labelledby="tabRegister">
+          <form id="formRegister" autocomplete="on">
+            <div class="row">
+              <div>
+                <label for="regName">Имя</label>
+                <input class="field" id="regName" type="text" required placeholder="Александр" />
+              </div>
+              <div>
+                <label for="regPhone">Телефон</label>
+                <input class="field" id="regPhone" type="tel" inputmode="tel" placeholder="+7 999 000-12-34" />
+                <div class="hint">Можно оставить пустым, если не требуется.</div>
+              </div>
             </div>
-            <div class="field">
-              <label>Повтор пароля</label>
-              <input id="regPass2" type="password" autocomplete="new-password" placeholder="повтори пароль" required />
+
+            <div>
+              <label for="regEmail">Email</label>
+              <input class="field" id="regEmail" type="email" required placeholder="name@example.com" />
             </div>
-          </div>
-          <button id="btnRegister" class="btn" type="submit">Зарегистрироваться и получить код</button>
-          <div class="note">
-            Нажимая кнопку, ты принимаешь
-            <a href="/docs/offer.html" target="_blank" rel="noopener">оферту</a> и
-            <a href="/docs/privacy.html" target="_blank" rel="noopener">политику</a>.
-          </div>
-        </form>
 
-        <!-- VERIFY (only after registration) -->
-        <form id="formVerify" class="hidden">
-          <div class="field">
-            <label>Код из письма (6 цифр)</label>
-            <input id="verCode" class="code" inputmode="numeric" maxlength="6" placeholder="______" required />
-          </div>
-          <button id="btnVerify" class="btn" type="submit">Подтвердить и войти</button>
-          <div class="note">
-            Код отправлен на <b id="verEmailText"></b>.<br/>
-            Этот шаг нужен только при первой регистрации.
-            <br/><br/>
-            <a href="#" id="linkBack">Назад</a>
-          </div>
-        </form>
+            <div class="row">
+              <div>
+                <label for="regPass">Пароль</label>
+                <input class="field" id="regPass" type="password" required placeholder="Минимум 8 символов" />
+              </div>
+              <div>
+                <label for="regPass2">Повтори пароль</label>
+                <input class="field" id="regPass2" type="password" required placeholder="Повтори" />
+              </div>
+            </div>
 
-        <div id="status" class="status hidden"></div>
-      </div>
+            <button class="btn" id="btnRegister" type="submit">Создать аккаунт</button>
+
+            <!-- Verify block (появится после register) -->
+            <div id="verifyBox" style="display:none; margin-top:14px;">
+              <label for="regCode">Код из письма</label>
+              <input class="field" id="regCode" inputmode="numeric" autocomplete="one-time-code" placeholder="6 цифр" maxlength="6" />
+              <button class="btn" id="btnVerify" type="button" style="margin-top:10px;">Подтвердить</button>
+              <div class="hint">Код нужен один раз — при создании аккаунта.</div>
+              <div class="linkRow" style="margin-top:8px;">
+                <button class="link" type="button" id="btnResend">Отправить код ещё раз</button>
+              </div>
+            </div>
+
+            <div class="hint" style="margin-top:10px;">Нажимая «Создать аккаунт», вы подтверждаете согласие на обработку данных.</div>
+          </form>
+        </div>
+      </section>
     </div>
   </div>
 
-  <script src="/assets/api.js"></script>
-  <script src="/assets/auth.js"></script>
+  <script>
+    // === API paths (same-origin preferred) ===
+    const API = {
+      login: "/api/v1/auth/login",
+      register: "/api/v1/auth/register",
+      verify: "/api/v1/auth/verify",
+      resetRequest: "/api/v1/auth/reset/request"
+    };
+
+    const AFTER_LOGIN = "/constructor/";
+    const TOKEN_KEY = "abqd_token";
+
+    function navigateTo(url){
+      try{
+        if(window.top && window.top !== window.self) window.top.location.href = url;
+        else window.location.href = url;
+      }catch(_e){
+        window.location.href = url;
+      }
+    }
+
+    const toast = document.getElementById("toast");
+    function safeMsg(x){
+      if(x == null) return "";
+      if(typeof x === "string") return x;
+      if(typeof x === "number" || typeof x === "boolean") return String(x);
+      try{ return JSON.stringify(x); }catch(_e){ return String(x); }
+    }
+    function showToast(msg, kind){
+      toast.className = "toast show " + (kind === "ok" ? "ok" : kind === "err" ? "err" : "");
+      toast.textContent = safeMsg(msg) || "Ошибка";
+    }
+    function clearToast(){ toast.className = "toast"; toast.textContent = ""; }
+
+    async function postJSON(url, data){
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const text = await r.text();
+      let json = null;
+      try{ json = text ? JSON.parse(text) : null; } catch(_e){ json = null; }
+      if(!r.ok){
+        let detail = "HTTP " + r.status;
+        if(json && (json.detail != null)) detail = json.detail;
+        else if(json && (json.error != null)) detail = json.error;
+        else if(text) detail = text;
+        throw new Error(safeMsg(detail));
+      }
+      return json;
+    }
+
+    async function getJSON(url, token){
+      const r = await fetch(url, {
+        method: "GET",
+        headers: token ? { "authorization": "Bearer " + token } : {}
+      });
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    }
+
+    function setBusy(btn, busy){
+      if(!btn) return;
+      btn.disabled = !!busy;
+      btn.dataset._t = btn.dataset._t || btn.textContent;
+      btn.textContent = busy ? "Подожди…" : btn.dataset._t;
+    }
+
+    // ===== Tabs =====
+    const tabLogin = document.getElementById("tabLogin");
+    const tabRegister = document.getElementById("tabRegister");
+    const paneLogin = document.getElementById("paneLogin");
+    const paneRegister = document.getElementById("paneRegister");
+
+    function readInitialTab(){
+      try{
+        var u = new URL(window.location.href);
+        var q = (u.searchParams.get("tab") || u.searchParams.get("mode") || "").toLowerCase();
+        var h = (u.hash || "").replace("#", "").toLowerCase();
+        var v = q || h;
+        if(v === "register" || v === "signup" || v === "reg") return "register";
+        return "login";
+      }catch(_e){
+        var hh = (window.location.hash || "").replace("#", "").toLowerCase();
+        if(hh === "register" || hh === "signup" || hh === "reg") return "register";
+        return "login";
+      }
+    }
+
+    function syncTabToUrl(which){
+      try{
+        var u2 = new URL(window.location.href);
+        u2.searchParams.set("tab", (which === "register") ? "register" : "login");
+        u2.hash = "";
+        window.history.replaceState({}, "", u2.toString());
+      }catch(_e){}
+    }
+
+    function setTab(which, fromUrl){
+      clearToast();
+      var isLogin = (which !== "register");
+      tabLogin.classList.toggle("active", isLogin);
+      tabRegister.classList.toggle("active", !isLogin);
+      tabLogin.setAttribute("aria-selected", String(isLogin));
+      tabRegister.setAttribute("aria-selected", String(!isLogin));
+      paneLogin.classList.toggle("active", isLogin);
+      paneRegister.classList.toggle("active", !isLogin);
+      if(!fromUrl) syncTabToUrl(isLogin ? "login" : "register");
+    }
+
+    tabLogin.addEventListener("click", ()=>setTab("login"));
+    tabRegister.addEventListener("click", ()=>setTab("register"));
+    setTab(readInitialTab(), true);
+    window.addEventListener("popstate", ()=>setTab(readInitialTab(), true));
+
+    // ===== Auto-login by saved token =====
+    (async function autoLogin(){
+      const t = localStorage.getItem(TOKEN_KEY);
+      if(!t) return;
+      try{
+        await getJSON("/api/v1/auth/me", t);
+        navigateTo(AFTER_LOGIN);
+      }catch(_e){
+        // токен невалиден — чистим
+        localStorage.removeItem(TOKEN_KEY);
+      }
+    })();
+
+    // ===== Login =====
+    const formLogin = document.getElementById("formLogin");
+    const btnLogin = document.getElementById("btnLogin");
+
+    formLogin.addEventListener("submit", async (ev)=>{
+      ev.preventDefault();
+      clearToast();
+      const email = (document.getElementById("loginEmail").value || "").trim();
+      const password = document.getElementById("loginPass").value || "";
+      if(!email || !password){ showToast("Заполни email и пароль.", "err"); return; }
+
+      setBusy(btnLogin, true);
+      try{
+        const res = await postJSON(API.login, { email, password });
+        const token = res && (res.access_token || res.token);
+        if(token) localStorage.setItem(TOKEN_KEY, token);
+        showToast("Вход выполнен. Перенаправляю…", "ok");
+        setTimeout(()=>{ navigateTo(AFTER_LOGIN); }, 350);
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }finally{
+        setBusy(btnLogin, false);
+      }
+    });
+
+    // ===== Reset password (optional) =====
+    const btnShowReset = document.getElementById("btnShowReset");
+    const resetBox = document.getElementById("resetBox");
+    const btnReset = document.getElementById("btnReset");
+
+    btnShowReset.addEventListener("click", ()=>{
+      clearToast();
+      resetBox.style.display = (resetBox.style.display === "none" || !resetBox.style.display) ? "block" : "none";
+    });
+
+    btnReset.addEventListener("click", async ()=>{
+      clearToast();
+      const email1 = (document.getElementById("resetEmail").value || "").trim();
+      const email2 = (document.getElementById("loginEmail").value || "").trim();
+      const email = email1 || email2;
+      if(!email){ showToast("Укажи email для восстановления.", "err"); return; }
+      setBusy(btnReset, true);
+      try{
+        await postJSON(API.resetRequest, { email });
+        showToast("Отправили письмо. Проверь входящие/спам.", "ok");
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }finally{
+        setBusy(btnReset, false);
+      }
+    });
+
+    // ===== Register + Verify =====
+    const formRegister = document.getElementById("formRegister");
+    const btnRegister = document.getElementById("btnRegister");
+
+    const verifyBox = document.getElementById("verifyBox");
+    const regCode = document.getElementById("regCode");
+    const btnVerify = document.getElementById("btnVerify");
+    const btnResend = document.getElementById("btnResend");
+
+    let pendingReg = null; // { email, password, name, phone }
+
+    function normalizePhone(p){
+      p = String(p||"").trim();
+      var out = "";
+      for(var i=0;i<p.length;i++){
+        var ch = p.charAt(i);
+        if(ch === " " || ch === "(" || ch === ")" || ch === "-") continue;
+        out += ch;
+      }
+      return out;
+    }
+
+    function openVerify(){
+      verifyBox.style.display = "block";
+      setTimeout(()=>{ try{ regCode.focus(); }catch(_e){} }, 50);
+    }
+
+    formRegister.addEventListener("submit", async (ev)=>{
+      ev.preventDefault();
+      clearToast();
+
+      const name = (document.getElementById("regName").value || "").trim();
+      const email = (document.getElementById("regEmail").value || "").trim();
+      const phone = normalizePhone(document.getElementById("regPhone").value || "");
+      const password = document.getElementById("regPass").value || "";
+      const password2 = document.getElementById("regPass2").value || "";
+
+      if(!name || !email || !password){ showToast("Имя, email и пароль обязательны.", "err"); return; }
+      if(password.length < 8){ showToast("Пароль слишком короткий (минимум 8).", "err"); return; }
+      if(password !== password2){ showToast("Пароли не совпадают.", "err"); return; }
+
+      pendingReg = { name, email, phone, password };
+
+      setBusy(btnRegister, true);
+      try{
+        // отправляем регистрацию
+        const payload = { name, email, password };
+        if(phone) payload.phone = phone;
+
+        const res = await postJSON(API.register, payload);
+
+        // если вдруг сервер сразу отдал токен — ок, заходим
+        const token = res && (res.access_token || res.token);
+        if(token){
+          localStorage.setItem(TOKEN_KEY, token);
+          showToast("Аккаунт создан. Перенаправляю…", "ok");
+          setTimeout(()=>{ navigateTo(AFTER_LOGIN); }, 350);
+          return;
+        }
+
+        // стандартный сценарий: код отправлен на email
+        showToast("Мы отправили код на email. Введите 6 цифр для активации.", "ok");
+        openVerify();
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }finally{
+        setBusy(btnRegister, false);
+      }
+    });
+
+    btnResend.addEventListener("click", async ()=>{
+      clearToast();
+      if(!pendingReg || !pendingReg.email){ showToast("Сначала заполни регистрацию.", "err"); return; }
+      try{
+        // повторяем register как “resend”
+        const payload = { name: pendingReg.name, email: pendingReg.email, password: pendingReg.password };
+        if(pendingReg.phone) payload.phone = pendingReg.phone;
+        await postJSON(API.register, payload);
+        showToast("Код отправлен ещё раз. Проверь почту.", "ok");
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }
+    });
+
+    btnVerify.addEventListener("click", async ()=>{
+      clearToast();
+      if(!pendingReg || !pendingReg.email){ showToast("Сначала заполни регистрацию.", "err"); return; }
+      const code = String(regCode.value || "").trim();
+      if(!code || code.length < 4){ showToast("Введи код из письма.", "err"); return; }
+
+      setBusy(btnVerify, true);
+      try{
+        // отправляем максимально “совместимо” — сервер возьмёт нужное поле
+        const res = await postJSON(API.verify, {
+          email: pendingReg.email,
+          code: code,
+          otp: code,
+          verification_code: code
+        });
+
+        const token = res && (res.access_token || res.token);
+        if(token){
+          localStorage.setItem(TOKEN_KEY, token);
+          showToast("Готово. Перенаправляю…", "ok");
+          setTimeout(()=>{ navigateTo(AFTER_LOGIN); }, 350);
+          return;
+        }
+
+        // если verify не выдаёт токен — логинимся
+        const res2 = await postJSON(API.login, { email: pendingReg.email, password: pendingReg.password });
+        const token2 = res2 && (res2.access_token || res2.token);
+        if(token2) localStorage.setItem(TOKEN_KEY, token2);
+
+        showToast("Аккаунт активирован. Перенаправляю…", "ok");
+        setTimeout(()=>{ navigateTo(AFTER_LOGIN); }, 350);
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }finally{
+        setBusy(btnVerify, false);
+      }
+    });
+  </script>
 </body>
 </html>
