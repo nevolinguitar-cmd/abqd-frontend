@@ -1,158 +1,169 @@
-// ABQD_AUTH_UI_v2
-(function(){
-  const $ = (s, r=document) => r.querySelector(s);
-  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+(() => {
+  const $ = (id) => document.getElementById(id);
 
-  function qs(name){
-    const p = new URLSearchParams(location.search);
-    return p.get(name) || "";
+  const TOKEN_KEY = "abqd_token";
+  const PENDING_KEY = "abqd_pending_reg_v1";
+
+  const apiBase = (() => {
+    try {
+      if (typeof window.apiOrigin === "function") return window.apiOrigin();
+    } catch(_) {}
+    // fallback
+    return "https://api.abqd.ru";
+  })();
+
+  const statusEl = $("status");
+  function setStatus(kind, msg) {
+    statusEl.classList.remove("hidden", "ok", "err");
+    statusEl.classList.add(kind === "ok" ? "ok" : "err");
+    statusEl.textContent = msg;
+  }
+  function clearStatus(){ statusEl.classList.add("hidden"); statusEl.textContent=""; statusEl.classList.remove("ok","err"); }
+
+  function show(which){
+    $("formLogin").classList.toggle("hidden", which !== "login");
+    $("formRegister").classList.toggle("hidden", which !== "register");
+    $("formVerify").classList.toggle("hidden", which !== "verify");
+
+    $("tabLogin").classList.toggle("isActive", which === "login");
+    $("tabRegister").classList.toggle("isActive", which === "register");
   }
 
-  function toast(msg){
-    let t = $("#abqdToast");
-    if (!t){
-      t = document.createElement("div");
-      t.id = "abqdToast";
-      t.style.cssText = `
-        position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
-        max-width:92vw;z-index:9999;
-        border:1px solid rgba(255,255,255,.18);
-        background:rgba(0,0,0,.55);
-        color:#fff;
-        padding:10px 14px;border-radius:999px;
-        font:700 13px/1.3 Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 18px 60px rgba(0,0,0,.30);
-        opacity:0;transition:opacity .18s ease;
-      `;
-      document.body.appendChild(t);
+  async function req(method, path, body, token) {
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
+    const res = await fetch(apiBase + path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch(_) {}
+
+    if (!res.ok) {
+      const msg = (data && (data.detail || data.message)) ? (data.detail || data.message) : (text || ("HTTP " + res.status));
+      throw new Error(msg);
     }
-    t.textContent = msg;
-    t.style.opacity = "1";
-    clearTimeout(window.__abqdToastTimer);
-    window.__abqdToastTimer = setTimeout(() => (t.style.opacity="0"), 2600);
+    return data;
   }
 
-  function lock(btn, v){
-    btn.disabled = !!v;
-    btn.style.opacity = v ? ".72" : "1";
-    btn.style.cursor = v ? "not-allowed" : "pointer";
+  function extractToken(data){
+    if (!data) return null;
+    return data.token || data.access_token || data.accessToken || data.jwt || null;
   }
 
-  function show(el, v){ el.style.display = v ? "" : "none"; }
-
-  function setMode(mode){
-    $("#mode").value = mode;
-    $$(".modeBtn").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
-    show($("#phoneRow"), mode === "register");
-    $("#submitBtn").textContent = (mode === "register") ? "Получить код" : "Получить код";
-    $("#title").textContent = (mode === "register") ? "Регистрация" : "Вход";
-    $("#hint").textContent = (mode === "register")
-      ? "Регистрация по email + пароль. Телефон обязателен — он попадёт в CRM."
-      : "Вход по email + пароль. Затем подтвердите вход кодом из письма.";
+  function normalizePhone(s){
+    return String(s||"").trim();
   }
 
-  function showStep(step){
-    show($("#step1"), step === 1);
-    show($("#step2"), step === 2);
-  }
+  // Tabs
+  $("tabLogin").addEventListener("click", () => { clearStatus(); show("login"); });
+  $("tabRegister").addEventListener("click", () => { clearStatus(); show("register"); });
 
-  function cleanPhone(raw){
-    return (raw || "").replace(/[^\d+]/g, "");
-  }
+  // Login: ONLY email+password (no OTP)
+  $("formLogin").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearStatus();
 
-  async function goNextAfterAuth(){
-    const next = qs("next");
-    if (next) { location.href = next; return; }
-    // дальше решает guard: если нет доступа -> /tariffs/, если есть -> /dashboard/
-    location.href = "/tariffs/";
-  }
+    const email = $("loginEmail").value.trim();
+    const password = $("loginPass").value;
 
-  async function tryAuto(){
-    const token = window.ABQD.api.getToken();
-    if (!token) return;
-    const r = await window.ABQD.api.getMe();
-    if (r.ok) await goNextAfterAuth();
-  }
+    if (!email || !password) return setStatus("err", "Укажи email и пароль.");
 
-  window.addEventListener("DOMContentLoaded", async () => {
-    const mode = qs("mode") || "login";
-    setMode(mode);
-    showStep(1);
+    $("btnLogin").disabled = true;
+    try {
+      const data = await req("POST", "/api/v1/auth/login", { email, password });
+      const token = extractToken(data);
+      if (!token) throw new Error("API не вернул токен (login).");
 
-    $$(".modeBtn").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
-
-    $("#phone").addEventListener("input", (e)=> e.target.value = cleanPhone(e.target.value));
-
-    $("#form1").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const mode = $("#mode").value;
-      const email = $("#email").value.trim();
-      const password = $("#password").value;
-
-      let phone = "";
-      if (mode === "register"){
-        phone = $("#phone").value.trim();
-        if (!phone) { toast("Укажите телефон"); return; }
-      }
-
-      lock($("#submitBtn"), true);
-      try{
-        const r = (mode === "register")
-          ? await window.ABQD.api.registerRequest(email, phone, password)
-          : await window.ABQD.api.loginRequest(email, password);
-
-        if (!r.ok){
-          const d = r.data?.detail || "ошибка";
-          if (d === "email_already_registered") toast("Email уже зарегистрирован. Войдите.");
-          else if (d === "user_not_found") toast("Пользователь не найден. Зарегистрируйтесь.");
-          else if (d === "wrong_password") toast("Неверный пароль.");
-          else if (d === "user_not_verified") toast("Аккаунт не подтверждён. Завершите регистрацию.");
-          else if (d === "password_too_short") toast("Пароль должен быть минимум 8 символов.");
-          else if (d === "phone_invalid") toast("Телефон введён неверно.");
-          else toast("Не удалось отправить код. Проверьте данные.");
-          return;
-        }
-
-        const challenge_id = r.data.challenge_id;
-        $("#challenge").value = challenge_id;
-        $("#codeEmail").textContent = email;
-        $("#code").value = "";
-        showStep(2);
-        toast("Код отправлен на почту");
-      } finally {
-        lock($("#submitBtn"), false);
-      }
-    });
-
-    $("#form2").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = $("#email").value.trim();
-      const challenge_id = $("#challenge").value.trim();
-      const code = $("#code").value.trim();
-
-      lock($("#verifyBtn"), true);
-      try{
-        const r = await window.ABQD.api.verifyCode(email, challenge_id, code);
-        if (!r.ok){
-          const d = r.data?.detail || "ошибка";
-          if (d === "wrong_code") toast("Неверный код");
-          else if (d === "code_expired") toast("Код истёк. Запросите новый.");
-          else if (d === "too_many_attempts") toast("Слишком много попыток. Запросите новый код.");
-          else toast("Не удалось подтвердить код");
-          return;
-        }
-        const token = r.data.token;
-        window.ABQD.api.setToken(token);
-        toast("Готово. Входим…");
-        setTimeout(goNextAfterAuth, 350);
-      } finally {
-        lock($("#verifyBtn"), false);
-      }
-    });
-
-    $("#backBtn").addEventListener("click", () => showStep(1));
-
-    await tryAuto();
+      localStorage.setItem(TOKEN_KEY, token);
+      setStatus("ok", "Вход выполнен.");
+      location.href = "/dashboard/";
+    } catch (err) {
+      setStatus("err", err.message || "Ошибка входа.");
+    } finally {
+      $("btnLogin").disabled = false;
+    }
   });
+
+  // Register: send OTP code once
+  $("formRegister").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearStatus();
+
+    const email = $("regEmail").value.trim();
+    const phone = normalizePhone($("regPhone").value);
+    const password = $("regPass").value;
+    const password2 = $("regPass2").value;
+
+    if (!email) return setStatus("err", "Укажи email.");
+    if (!phone) return setStatus("err", "Телефон обязателен.");
+    if (!password || password.length < 8) return setStatus("err", "Пароль минимум 8 символов.");
+    if (password !== password2) return setStatus("err", "Пароли не совпадают.");
+
+    $("btnRegister").disabled = true;
+    try {
+      await req("POST", "/api/v1/auth/register", { email, password, phone });
+
+      sessionStorage.setItem(PENDING_KEY, JSON.stringify({ email, password }));
+      $("verEmailText").textContent = email;
+      show("verify");
+      setStatus("ok", "Код отправлен на почту. Введи 6 цифр для активации.");
+      $("verCode").focus();
+    } catch (err) {
+      setStatus("err", err.message || "Ошибка регистрации.");
+    } finally {
+      $("btnRegister").disabled = false;
+    }
+  });
+
+  // Verify: confirm code and then login once (store token)
+  $("formVerify").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearStatus();
+
+    const code = $("verCode").value.replace(/\D/g,"").slice(0,6);
+    if (code.length !== 6) return setStatus("err", "Нужны 6 цифр кода.");
+
+    const pendingRaw = sessionStorage.getItem(PENDING_KEY);
+    if (!pendingRaw) return setStatus("err", "Нет данных регистрации. Вернись назад и повтори.");
+    const pending = JSON.parse(pendingRaw);
+    const email = String(pending.email || "").trim();
+    const password = String(pending.password || "");
+
+    $("btnVerify").disabled = true;
+    try {
+      const data = await req("POST", "/api/v1/auth/verify", { email, code });
+
+      // если verify уже возвращает токен — ок
+      let token = extractToken(data);
+
+      // если verify токен не вернул — делаем обычный login (один раз)
+      if (!token) {
+        const login = await req("POST", "/api/v1/auth/login", { email, password });
+        token = extractToken(login);
+      }
+      if (!token) throw new Error("API не вернул токен (verify/login).");
+
+      localStorage.setItem(TOKEN_KEY, token);
+      sessionStorage.removeItem(PENDING_KEY);
+
+      setStatus("ok", "Аккаунт активирован. Заходим в кабинет…");
+      location.href = "/dashboard/";
+    } catch (err) {
+      setStatus("err", err.message || "Ошибка подтверждения кода.");
+    } finally {
+      $("btnVerify").disabled = false;
+    }
+  });
+
+  $("linkBack").addEventListener("click", (e) => {
+    e.preventDefault();
+    clearStatus();
+    show("register");
+  });
+
+  // Default view
+  show("login");
 })();
