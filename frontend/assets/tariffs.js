@@ -1,136 +1,66 @@
-// ABQD_TARIFFS_v3
-(function () {
-  const $ = (s, root=document) => root.querySelector(s);
-  const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
+(() => {
+  const API = "https://api.abqd.ru/api/v1";
+  const TOKEN_KEY = "abqd_token";
 
-  function toast(msg){
-    let t = document.getElementById("abqdToast");
-    if (!t){
-      t = document.createElement("div");
-      t.id = "abqdToast";
-      t.style.cssText = `
-        position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
-        max-width:92vw;z-index:9999;
-        border:1px solid rgba(255,255,255,.18);
-        background:rgba(0,0,ndoS0,.55);
-        color:#fff;
-        padding:10px 14px;border-radius:999px;
-        font:700 13px/1.3 Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 18px 60px rgba(0,0,0,.30);
-        opacity:0;transition:opacity .18s ease;
-      `.replace("RndoS0","0");
-      document.body.appendChild(t);
-    }
-    t.textContent = msg;
-    t.style.opacity = "1";
-    clearTimeout(window.__abqdToastTimer);
-    window.__abqdToastTimer = setTimeout(() => (t.style.opacity="0"), 2600);
-  }
+  const mapPlan = (p) => {
+    p = (p || "").toLowerCase();
+    if (p === "starter") return "probn";     // если в HTML осталось starter — это Пробный
+    if (p === "probn" || p === "pro" || p === "full" || p === "trial") return p;
+    return p;
+  };
 
-  function go(url){ if (location.pathname !== url) location.href = url; }
-  function nextParam(){
-    const next = encodeURIComponent(location.pathname + location.search);
-    return `?next=${next}`;
-  }
+  const token = () => localStorage.getItem(TOKEN_KEY) || "";
+  const authed = () => !!token();
 
-  function initFaq(){
-    $$(".faqItem").forEach(item => item.addEventListener("click", () => item.classList.toggle("active")));
-  }
+  const goAuth = (plan) => {
+    const next = `/tariffs/?plan=${encodeURIComponent(plan)}`;
+    location.href = `/auth/?mode=register&next=${encodeURIComponent(next)}`;
+  };
 
-  function setTopButtonsState(){
-    const token = window.ABQD.api.getToken();
-    const authBtn = $("#btnAuth");
-    const dashBtn = $("#btnDash");
-    const logoutBtn = $("#btnLogout");
-    if (!authBtn || !dashBtn || !logoutBtn) return;
-
-    if (token){
-      authBtn.style.display="none";
-      dashBtn.style.display="inline-flex";
-      logoutBtn.style.display="inline-flex";
-    } else {
-      authBtn.style.display="inline-flex";
-      dashBtn.style.display="none";
-      logoutBtn.style.display="none";
-    }
-
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem(window.ABQD.api.TOKEN_KEY);
-      toast("Вы вышли из аккаунта");
-      setTimeout(() => go("/auth/"), 350);
+  async function createPayment(plan){
+    const return_url = `${location.origin}/tariffs/?plan=${encodeURIComponent(plan)}&paid=1`;
+    const res = await fetch(`${API}/payments/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan, return_url })
     });
+    const text = await res.text();
+    let j; try { j = JSON.parse(text); } catch { throw new Error(text.slice(0,200)); }
+    if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
+    return j;
   }
 
-  function lockButton(btn, locked){
-    btn.disabled = !!locked;
-    btn.style.opacity = locked ? ".72" : "1";
-    btn.style.cursor = locked ? "not-allowed" : "pointer";
-  }
+  async function pay(plan){
+    plan = mapPlan(plan);
 
-  async function redirectIfAlreadyHasAccess(){
-    const r = await window.ABQD.api.getMe();
-    if (!r.ok) return;
-    const me = r.data;
-    const hasAccess = (me.plan === "trial" || me.plan === "paid");
-    if (hasAccess) go("/dashboard/");
-  }
-
-  async function onStartTrial(btn){
-    lockButton(btn, true);
-    try{
-      const token = window.ABQD.api.getToken();
-      if (!token){
-        go("/auth/" + nextParam());
-        return;
-      }
-
-      const r = await window.ABQD.api.startTrial();
-      if (!r.ok){
-        if (r.status === 401){
-          go("/auth/" + nextParam());
-          return;
-        }
-        toast("Trial сейчас недоступен. Напишите в поддержку.");
-        return;
-      }
-
-      toast("Trial активирован");
-      setTimeout(() => go("/dashboard/"), 400);
-    } finally {
-      lockButton(btn, false);
-    }
-  }
-
-  function onChoosePlan(planCode, planTitle){
-    const token = window.ABQD.api.getToken();
-    if (!token){
-      go("/auth/" + nextParam());
+    // Trial = 0₽ => без ЮKassa (ЮKassa не принимает 0₽)
+    if (plan === "trial"){
+      if (!authed()) return goAuth("trial");
+      location.href = "/constructor/";
       return;
     }
-    toast(`Тариф «${planTitle}» оформляется из личного кабинета. Оплата — картой через ЮKassa.`);
-    setTimeout(() => go("/dashboard/"), 650);
+
+    if (!authed()) return goAuth(plan);
+
+    try{
+      const btn = document.activeElement;
+      if (btn && btn.tagName === "BUTTON") { btn.disabled = true; btn.dataset._txt = btn.textContent; btn.textContent = "Переходим к оплате…"; }
+
+      const j = await createPayment(plan);
+      if (!j.confirmation_url) throw new Error("Нет confirmation_url от ЮKassa");
+      location.href = j.confirmation_url;
+
+    }catch(e){
+      alert("Ошибка оплаты: " + (e?.message || e));
+      const btn = document.activeElement;
+      if (btn && btn.tagName === "BUTTON" && btn.dataset._txt){ btn.disabled = false; btn.textContent = btn.dataset._txt; }
+    }
   }
 
-  function initCtas(){
-    const trialBtn = $("#btnStartTrial");
-    if (trialBtn) trialBtn.addEventListener("click", () => onStartTrial(trialBtn));
+  const btnTrial = document.getElementById("btnStartTrial");
+  if (btnTrial) btnTrial.addEventListener("click", () => pay("trial"));
 
-    $$(".btnChoosePlan").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const card = btn.closest(".pricingCard") || btn.closest(".card");
-        const title = card?.querySelector(".planName")?.textContent?.trim() || "тариф";
-        const code = btn.getAttribute("data-plan") || "plan";
-        onChoosePlan(code, title);
-      });
-    });
-  }
-
-  window.addEventListener("DOMContentLoaded", async () => {
-    window.ABQD.theme?.initThemeSeg();
-    initFaq();
-    initCtas();
-    setTopButtonsState();
-    await redirectIfAlreadyHasAccess();
+  document.querySelectorAll(".btnChoosePlan").forEach(b => {
+    b.addEventListener("click", () => pay(b.dataset.plan));
   });
 })();
