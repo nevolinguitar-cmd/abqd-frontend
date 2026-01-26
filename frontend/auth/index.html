@@ -259,7 +259,10 @@
     @media (prefers-reduced-motion: reduce){
       .bgImage{ animation:none !important; }
     }
-  </style>
+  
+    .showRow{display:flex;gap:10px;align-items:center;margin-top:10px;color:rgba(255,255,255,.66);font-size:14px;font-weight:800;}
+    .showRow input{width:18px;height:18px;accent-color: rgb(46,124,255);}
+</style>
 </head>
 <body>
   <div class="stage">
@@ -334,7 +337,8 @@
               <div>
                 <label for="regPass2">Повтори пароль</label>
                 <input class="field" id="regPass2" type="password" required placeholder="Повтори" />
-              </div>
+              <div class="showRow"><input type="checkbox" id="showRegPass"><label for="showRegPass">Показать пароль</label></div>
+</div>
             </div>
 
             <button class="btn" id="btnRegister" type="submit">Создать аккаунт</button>
@@ -659,6 +663,18 @@
         setBusy(btnVerify, false);
       }
     });
+  
+    // ===== Show password (register) =====
+    (function bindShowRegPass(){
+      var b = document.getElementById("showRegPass");
+      if(!b) return;
+      b.addEventListener("change", function(){
+        ["regPass","regPass2"].forEach(function(id){
+          var el = document.getElementById(id);
+          if(el) el.type = b.checked ? "text" : "password";
+        });
+      });
+    })();
   </script>
 </body>
 </html>
