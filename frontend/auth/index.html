@@ -571,8 +571,7 @@
 
       const name = (document.getElementById("regName").value || "").trim();
       const email = (document.getElementById("regEmail").value || "").trim();
-      const phoneEl = document.getElementById("regPhone");
-      const phone = phoneEl ? normalizePhone(phoneEl.value || "") : "";
+      const phone = "";
       const password = document.getElementById("regPass").value || "";
       const password2 = document.getElementById("regPass2").value || "";
 
@@ -586,8 +585,6 @@
       try{
         // отправляем регистрацию
         const payload = { name, email, password };
-        if(phone) payload.phone = phone;
-
         const res = await postJSON(API.register, payload);
 
         // если вдруг сервер сразу отдал токен — ок, заходим
