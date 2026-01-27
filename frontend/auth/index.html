@@ -312,16 +312,12 @@
 
         <div class="pane" id="paneRegister" role="tabpanel" aria-labelledby="tabRegister">
           <form id="formRegister" autocomplete="on">
-            <div class="row">
+            <div>
               <div>
                 <label for="regName">Имя</label>
                 <input class="field" id="regName" type="text" required placeholder="Александр" />
               </div>
-              <div>
-                <label for="regPhone">Телефон</label>
-                <input class="field" id="regPhone" type="tel" inputmode="tel" placeholder="+7 999 000-12-34" />
-                <div class="hint">Можно оставить пустым, если не требуется.</div>
-              </div>
+</div>
             </div>
 
             <div>
@@ -329,7 +325,7 @@
               <input class="field" id="regEmail" type="email" required placeholder="name@example.com" />
             </div>
 
-            <div class="row">
+            <div>
               <div>
                 <label for="regPass">Пароль</label>
                 <input class="field" id="regPass" type="password" required placeholder="Минимум 8 символов" />
@@ -575,7 +571,8 @@
 
       const name = (document.getElementById("regName").value || "").trim();
       const email = (document.getElementById("regEmail").value || "").trim();
-      const phone = normalizePhone(document.getElementById("regPhone").value || "");
+      const phoneEl = document.getElementById("regPhone");
+      const phone = phoneEl ? normalizePhone(phoneEl.value || "") : "";
       const password = document.getElementById("regPass").value || "";
       const password2 = document.getElementById("regPass2").value || "";
 
@@ -583,7 +580,7 @@
       if(password.length < 8){ showToast("Пароль слишком короткий (минимум 8).", "err"); return; }
       if(password !== password2){ showToast("Пароли не совпадают.", "err"); return; }
 
-      pendingReg = { name, email, phone, password };
+      pendingReg = { name, email, password };
 
       setBusy(btnRegister, true);
       try{
@@ -618,7 +615,7 @@
       try{
         // повторяем register как “resend”
         const payload = { name: pendingReg.name, email: pendingReg.email, password: pendingReg.password };
-        if(pendingReg.phone) payload.phone = pendingReg.phone;
+
         await postJSON(API.register, payload);
         showToast("Код отправлен ещё раз. Проверь почту.", "ok");
       }catch(e){
