@@ -300,12 +300,6 @@
             <div class="linkRow">
               <button class="link" type="button" id="btnShowReset">Забыли пароль?</button>
             </div>
-
-            <div id="resetBox" style="display:none; margin-top:10px;">
-              <label for="resetEmail">Email для восстановления</label>
-              <input class="field" id="resetEmail" type="email" placeholder="name@example.com" />
-              <button class="btn" id="btnReset" type="button" style="margin-top:10px;">Отправить</button>
-              <div class="hint">Если функция отключена на сервере — покажем ошибку (это нормально).</div>
             </div>
           </form>
         </div>
@@ -363,7 +357,8 @@
       login: "/api/v1/auth/login",
       register: "/api/v1/auth/register",
       verify: "/api/v1/auth/verify",
-      resetRequest: "/api/v1/auth/reset/request"
+      resetRequest: "/api/v1/auth/reset/request",
+      resetConfirm: "/api/v1/auth/reset/confirm"
     };
 
     const AFTER_LOGIN = "/constructor/";
@@ -511,32 +506,42 @@
       }
     });
 
-    // ===== Reset password (optional) =====
+    // ===== Reset password (no extra UI blocks) =====
     const btnShowReset = document.getElementById("btnShowReset");
-    const resetBox = document.getElementById("resetBox");
-    const btnReset = document.getElementById("btnReset");
 
-    btnShowReset.addEventListener("click", ()=>{
+    async function resetFlow(){
       clearToast();
-      resetBox.style.display = (resetBox.style.display === "none" || !resetBox.style.display) ? "block" : "none";
-    });
 
-    btnReset.addEventListener("click", async ()=>{
-      clearToast();
-      const email1 = (document.getElementById("resetEmail").value || "").trim();
-      const email2 = (document.getElementById("loginEmail").value || "").trim();
-      const email = email1 || email2;
-      if(!email){ showToast("Укажи email для восстановления.", "err"); return; }
-      setBusy(btnReset, true);
+      const email0 = prompt("Email для восстановления:");
+      const email = (email0 || "").trim();
+      if(!email) return;
+
       try{
         await postJSON(API.resetRequest, { email });
-        showToast("Отправили письмо. Проверь входящие/спам.", "ok");
       }catch(e){
         showToast(e && e.message ? e.message : e, "err");
-      }finally{
-        setBusy(btnReset, false);
+        return;
       }
-    });
+
+      const code0 = prompt("Введи 6-значный код из письма (действует 10 минут):");
+      const code = (code0 || "").trim();
+      if(!code) return;
+
+      const p1 = prompt("Новый пароль (минимум 8 символов):") || "";
+      const p2 = prompt("Повтори новый пароль:") || "";
+      if(p1.length < 8){ showToast("Пароль слишком короткий (минимум 8).", "err"); return; }
+      if(p1 !== p2){ showToast("Пароли не совпадают.", "err"); return; }
+
+      try{
+        await postJSON(API.resetConfirm, { email, code, password: p1 });
+        showToast("Пароль обновлён. Теперь войдите.", "ok");
+        try{ document.getElementById("loginEmail").value = email; }catch(_e){}
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }
+    }
+
+    btnShowReset.addEventListener("click", resetFlow);
 
     // ===== Register + Verify =====
     const formRegister = document.getElementById("formRegister");
