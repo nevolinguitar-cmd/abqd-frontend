@@ -20,7 +20,35 @@
     location.href = `${CABINET_ORIGIN}/auth/?mode=register&next=${encodeURIComponent(next)}`;
   };
 
-  async function createPayment(plan){
+  
+  // --- ABQD_TRIAL_ACTIVATE_V2 ---
+  async function ensureTrial(){
+    // 1) если уже активен — сразу в конструктор
+    const stRes = await fetch(`${API}/access/status`, {
+      method: "GET",
+      headers: { "authorization": `Bearer ${token()}` }
+    });
+    const stText = await stRes.text();
+    let st; 
+    try { st = JSON.parse(stText); } catch { st = null; }
+    if (stRes.ok and st and st.get("trial_active")) return st;
+
+    // 2) иначе активируем
+    const res = await fetch(`${API}/trial/activate`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${token()}`
+      },
+      body: "{}"
+    });
+    const text = await res.text();
+    let j; 
+    try { j = JSON.parse(text); } catch { j = {"detail": text[:200]}; }
+    if (!res.ok) throw new Error(j.get("detail") or f"HTTP {res.status}");
+    return j;
+  }
+async function createPayment(plan){
     const return_url = `${CABINET_ORIGIN}/tariffs/?plan=${encodeURIComponent(plan)}&paid=1`;
     const headers = { "Content-Type": "application/json" };
     const t = token();
@@ -163,6 +191,23 @@
       pay("trial");
     }
   }catch(e){}
+
+  // --- ABQD_TRIAL_AUTOSTART_GUARD_V1 ---
+  try{
+    const qp = new URLSearchParams(location.search);
+    const planQ = (qp.get("plan")||"").toLowerCase();
+    const auto = qp.get("autostart")==="1";
+    if (auto && planQ==="trial"){
+      if (authed()){
+        // уберём autostart из URL, чтобы не циклило
+        qp.delete("autostart");
+        const clean = `${location.pathname}?${qp.toString()}`.replace(/\?$/,"");
+        history.replaceState({}, "", clean);
+        setTimeout(()=>pay("trial"), 50);
+      }
+    }
+  }catch(e){}
+
 
   const btnTrial = document.getElementById("btnStartTrial");
   if (btnTrial) btnTrial.addEventListener("click", (e) => { e.preventDefault(); pay("trial"); });
