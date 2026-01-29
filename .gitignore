@@ -2,3 +2,13 @@
 # ABQD local backups
 *.bak.*
 *.repo.bak.*
+# Build / deps
+node_modules/
+dist/
+apps/crm/node_modules/
+apps/crm/dist/
+static/
+# No backup artifacts
+frontend/assets/*.bak*
+frontend/assets/*.repo.bak*
+*.bak*
