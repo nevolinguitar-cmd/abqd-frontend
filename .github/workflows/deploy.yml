@@ -43,6 +43,7 @@ jobs:
           set -euo pipefail
 
           rsync -rltDz --delete \
+            --delete-excluded \
             --exclude='*.bak*' \
             --exclude='*.repo.bak*' \
             --no-owner --no-group --no-perms --omit-dir-times \
