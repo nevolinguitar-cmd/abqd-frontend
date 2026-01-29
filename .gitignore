@@ -6,3 +6,9 @@
 *.bak*
 frontend/assets/*.bak*
 frontend/assets/*.repo.bak*
+# Build / deps
+node_modules/
+dist/
+apps/crm/node_modules/
+apps/crm/dist/
+static/
