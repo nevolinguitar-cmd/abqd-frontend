@@ -1,84 +1,41 @@
 (() => {
   const API = "https://api.abqd.ru/api/v1";
-  const APP_ORIGIN = "https://app.abqd.ru";
-  const CABINET_ORIGIN = "https://app.abqd.ru"; // фиксируем один домен для localStorage
   const TOKEN_KEY = "abqd_token";
-
-  const mapPlan = (p) => {
-    p = (p || "").toLowerCase();
-    if (p === "starter") return "probn";
-    if (["probn","pro","full","trial"].includes(p)) return p;
-    return p;
-  };
 
   const token = () => localStorage.getItem(TOKEN_KEY) || "";
   const authed = () => !!token();
-  const qs = () => new URLSearchParams(location.search);
 
-  const goAuth = (plan) => {
-    const next = `${CABINET_ORIGIN}/tariffs/?plan=${encodeURIComponent(plan)}&autostart=1`;
-    location.href = `${CABINET_ORIGIN}/auth/?mode=register&next=${encodeURIComponent(next)}`;
+  const mapPlan = (p) => {
+    p = (p || "").toLowerCase();
+    if (p === "starter") return "probn"; // совместимость со старым HTML
+    if (p === "probn" || p === "pro" || p === "full" || p === "trial") return p;
+    return p;
   };
 
-  
-  // --- ABQD_TRIAL_ACTIVATE_V2 ---
-  async function ensureTrial(){
-    // 1) если уже активен — сразу в конструктор
-    const stRes = await fetch(`${API}/access/status`, {
-      method: "GET",
-      headers: { "authorization": `Bearer ${token()}` }
-    });
-    const stText = await stRes.text();
-    let st; 
-    try { st = JSON.parse(stText); } catch { st = null; }
-    if (stRes.ok and st and st.get("trial_active")) return st;
+  const goAuth = (plan) => {
+    // safeNext() в auth принимает только относительный путь вида "/..."
+    const next = `/tariffs/?plan=${encodeURIComponent(plan)}${plan === "trial" ? "&autostart=1" : ""}`;
+    location.href = `/auth/?mode=register&next=${encodeURIComponent(next)}`;
+  };
 
-    // 2) иначе активируем
-    const res = await fetch(`${API}/trial/activate`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "authorization": `Bearer ${token()}`
-      },
-      body: "{}"
-    });
+  async function fetchJson(url, opts){
+    const res = await fetch(url, opts);
     const text = await res.text();
-    let j; 
-    try { j = JSON.parse(text); } catch { j = {"detail": text[:200]}; }
-    if (!res.ok) throw new Error(j.get("detail") or f"HTTP {res.status}");
-    return j;
-  }
-async function createPayment(plan){
-    const return_url = `${CABINET_ORIGIN}/tariffs/?plan=${encodeURIComponent(plan)}&paid=1`;
-    const headers = { "Content-Type": "application/json" };
-    const t = token();
-    if (t) headers["Authorization"] = `Bearer ${t}`; // если токен есть — прикладываем
-    const res = await fetch(`${API}/payments/create`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ plan, return_url })
-    });
-    const text = await res.text();
-    let j; try { j = JSON.parse(text); } catch { throw new Error(text.slice(0,200)); }
+    let j;
+    try { j = JSON.parse(text); } catch { j = { detail: text.slice(0, 200) }; }
     if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
     return j;
   }
 
-  // --- ABQD_TRIAL_ACTIVATE_V1 ---
   async function accessStatus(){
-    const res = await fetch(`${API}/access/status`, {
+    return fetchJson(`${API}/access/status`, {
       method: "GET",
       headers: { "authorization": `Bearer ${token()}` }
     });
-    const text = await res.text();
-    let j; 
-    try { j = JSON.parse(text); } catch { j = {"detail": text.slice(0,200)}; }
-    if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
-    return j;
   }
 
   async function activateTrial(){
-    const res = await fetch(`${API}/trial/activate`, {
+    return fetchJson(`${API}/trial/activate`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -86,69 +43,48 @@ async function createPayment(plan){
       },
       body: "{}"
     });
-    const text = await res.text();
-    let j; 
-    try { j = JSON.parse(text); } catch { j = {"detail": text.slice(0,200)}; }
-    if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
-    return j;
   }
 
-  async function ensureTrialAccess(){
-    // если trial уже активен — не дергаем activate
+  async function ensureTrial(){
+    // если уже есть доступ — просто пропускаем
     try{
       const st = await accessStatus();
-      if (st && st.trial_active) return st;
+      if (st && (st.trial_active || st.paid_active)) return st;
     }catch(e){}
-    return await activateTrial();
+    // иначе активируем trial
+    return activateTrial();
   }
 
-  async function activateTrial(){
-    const t = token();
-    if (!t) throw new Error("Нет токена");
-    const res = await fetch(`${API}/trial/activate`, {
+  async function createPayment(plan){
+    const return_url = `${location.origin}/tariffs/?plan=${encodeURIComponent(plan)}&paid=1`;
+    return fetchJson(`${API}/payments/create`, {
       method: "POST",
-      headers: { "Authorization": `Bearer ${t}`, "Content-Type": "application/json" },
-      body: "{}"
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan, return_url })
     });
-    const text = await res.text();
-    let j; try { j = JSON.parse(text); } catch { j = { detail: text.slice(0,200) }; }
-    if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
-    return j;
   }
 
   async function pay(plan){
     plan = mapPlan(plan);
 
-    // TRIAL: нужен аккаунт → активируем trial → constructor
+    // ---- TRIAL: активируем на API и только потом в конструктор ----
     if (plan === "trial"){
       if (!authed()) return goAuth("trial");
+      if (window.__abqdTrialInFlight) return;
+      window.__abqdTrialInFlight = true;
+
+      const btn = document.activeElement;
       try{
-        const btn = document.activeElement;
-        if (btn && btn.tagName === "BUTTON") {
+        if (btn && btn.tagName === "BUTTON"){
           btn.disabled = true;
           btn.dataset._txt = btn.textContent;
           btn.textContent = "Активируем Trial…";
         }
-
-  // --- ABQD_TRIAL_AUTOSTART_V1 ---
-  (function(){
-    try{
-      const q = new URLSearchParams(location.search);
-      const planQ = (q.get("plan") || "").toLowerCase();
-      const auto = (q.get("autostart") || "") === "1";
-      if (planQ === "trial" && auto){
-        // запускаем один раз, чтобы "назад" не крутило
-        q.delete("autostart");
-        history.replaceState({}, "", location.pathname + (q.toString() ? ("?"+q.toString()) : ""));
-        setTimeout(()=>pay("trial"), 50);
-      }
-    }catch(e){}
-  })();
-        await activateTrial();
-        location.href = `${CABINET_ORIGIN}/constructor/`;
+        await ensureTrial();
+        location.href = "/constructor/";
       }catch(e){
-        alert("Ошибка Trial: " + (e?.message || e));
-        const btn = document.activeElement;
+        window.__abqdTrialInFlight = false;
+        alert("Trial не активировался: " + (e?.message || e));
         if (btn && btn.tagName === "BUTTON" && btn.dataset._txt){
           btn.disabled = false;
           btn.textContent = btn.dataset._txt;
@@ -157,7 +93,9 @@ async function createPayment(plan){
       return;
     }
 
-    // PAID: сразу в ЮKassa (без обязательного логина)
+    // ---- PAID: ЮKassa ----
+    if (!authed()) return goAuth(plan);
+
     try{
       const btn = document.activeElement;
       if (btn && btn.tagName === "BUTTON") {
@@ -182,36 +120,21 @@ async function createPayment(plan){
 
   // Авто-старт Trial после логина: /tariffs/?plan=trial&autostart=1
   try{
-    const p = mapPlan(qs().get("plan"));
-    const autostart = qs().get("autostart") === "1";
-    if (autostart && p === "trial" && authed()){
-      const u = new URL(location.href);
-      u.searchParams.delete("autostart");
-      history.replaceState(null, "", u.toString());
-      pay("trial");
-    }
-  }catch(e){}
-
-  // --- ABQD_TRIAL_AUTOSTART_GUARD_V1 ---
-  try{
     const qp = new URLSearchParams(location.search);
-    const planQ = (qp.get("plan")||"").toLowerCase();
-    const auto = qp.get("autostart")==="1";
-    if (auto && planQ==="trial"){
-      if (authed()){
-        // уберём autostart из URL, чтобы не циклило
-        qp.delete("autostart");
-        const clean = `${location.pathname}?${qp.toString()}`.replace(/\?$/,"");
-        history.replaceState({}, "", clean);
-        setTimeout(()=>pay("trial"), 50);
-      }
+    const planQ = (qp.get("plan") || "").toLowerCase();
+    const auto = qp.get("autostart") === "1";
+    if (auto && planQ === "trial" && authed()){
+      qp.delete("autostart");
+      const clean = `${location.pathname}${qp.toString() ? "?" + qp.toString() : ""}`;
+      history.replaceState({}, "", clean);
+      setTimeout(()=>pay("trial"), 50);
     }
   }catch(e){}
-
 
   const btnTrial = document.getElementById("btnStartTrial");
   if (btnTrial) btnTrial.addEventListener("click", (e) => { e.preventDefault(); pay("trial"); });
-document.querySelectorAll(".btnChoosePlan").forEach(b => {
+
+  document.querySelectorAll(".btnChoosePlan").forEach(b => {
     b.addEventListener("click", (e) => { e.preventDefault(); pay(b.dataset.plan); });
-});
+  });
 })();
