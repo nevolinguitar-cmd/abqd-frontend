@@ -1,8 +1,20 @@
 (() => {
-  const API = "https://api.abqd.ru/api/v1";
-  const TOKEN_KEY = "abqd_token";
+  const CABINET_ORIGIN = "https://app.abqd.ru";
+  if (location.origin !== CABINET_ORIGIN) {
+    location.href = CABINET_ORIGIN + location.pathname + location.search + location.hash;
+    return;
+  }
 
-  const token = () => localStorage.getItem(TOKEN_KEY) || "";
+  const API = "https://api.abqd.ru/api/v1";
+  const TOKEN_KEYS = ["abqd_token","token","access_token"];
+
+  const token = () => {
+    for (const k of TOKEN_KEYS) {
+      const v = localStorage.getItem(k) || sessionStorage.getItem(k);
+      if (v) return v;
+    }
+    return "";
+  };
   const authed = () => !!token();
 
   const mapPlan = (p) => {
