@@ -2,3 +2,7 @@
 # ABQD local backups
 *.bak.*
 *.repo.bak.*
+# No backup artifacts in repo
+*.bak*
+frontend/assets/*.bak*
+frontend/assets/*.repo.bak*
