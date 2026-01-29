@@ -36,7 +36,7 @@
     // Trial = 0₽ => без ЮKassa (ЮKassa не принимает 0₽)
     if (plan === "trial"){
       if (!authed()) return goAuth("trial");
-      location.href = "/constructor/";
+      location.href = "/dashboard/";
       return;
     }
 
