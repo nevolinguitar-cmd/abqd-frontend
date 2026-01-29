@@ -2,3 +2,10 @@
 # ABQD local backups
 *.bak.*
 *.repo.bak.*
+apps/crm/node_modules/
+apps/crm/dist/
+node_modules/
+dist/
+static/
+_trash/
+.DS_Store
