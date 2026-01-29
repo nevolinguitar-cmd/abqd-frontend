@@ -1,5 +1,6 @@
 (() => {
   const API = "https://api.abqd.ru/api/v1";
+  const APP_ORIGIN = "https://app.abqd.ru";
   const CABINET_ORIGIN = "https://app.abqd.ru"; // фиксируем один домен для localStorage
   const TOKEN_KEY = "abqd_token";
 
@@ -111,9 +112,8 @@
   }catch(e){}
 
   const btnTrial = document.getElementById("btnStartTrial");
-  if (btnTrial) btnTrial.addEventListener("click", () => pay("trial"));
-
-  document.querySelectorAll(".btnChoosePlan").forEach(b => {
-    b.addEventListener("click", () => pay(b.dataset.plan));
-  });
+  if (btnTrial) btnTrial.addEventListener("click", (e) => { e.preventDefault(); pay("trial"); });
+document.querySelectorAll(".btnChoosePlan").forEach(b => {
+    b.addEventListener("click", (e) => { e.preventDefault(); pay(b.dataset.plan); });
+});
 })();
