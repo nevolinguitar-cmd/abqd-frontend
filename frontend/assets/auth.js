@@ -1,169 +1,301 @@
-(() => {
-  const $ = (id) => document.getElementById(id);
+// === API paths (same-origin preferred) ===
+    const API = {
+      login: "/api/v1/auth/login",
+      register: "/api/v1/auth/register",
+      verify: "/api/v1/auth/verify",
+      resetRequest: "/api/v1/auth/reset/request"
+    };
 
-  const TOKEN_KEY = "abqd_token";
-  const PENDING_KEY = "abqd_pending_reg_v1";
+    const AFTER_LOGIN = "/tariffs/";
+    const TOKEN_KEY = "abqd_token";
 
-  const apiBase = (() => {
-    try {
-      if (typeof window.apiOrigin === "function") return window.apiOrigin();
-    } catch(_) {}
-    // fallback
-    return "https://api.abqd.ru";
-  })();
-
-  const statusEl = $("status");
-  function setStatus(kind, msg) {
-    statusEl.classList.remove("hidden", "ok", "err");
-    statusEl.classList.add(kind === "ok" ? "ok" : "err");
-    statusEl.textContent = msg;
-  }
-  function clearStatus(){ statusEl.classList.add("hidden"); statusEl.textContent=""; statusEl.classList.remove("ok","err"); }
-
-  function show(which){
-    $("formLogin").classList.toggle("hidden", which !== "login");
-    $("formRegister").classList.toggle("hidden", which !== "register");
-    $("formVerify").classList.toggle("hidden", which !== "verify");
-
-    $("tabLogin").classList.toggle("isActive", which === "login");
-    $("tabRegister").classList.toggle("isActive", which === "register");
-  }
-
-  async function req(method, path, body, token) {
-    const headers = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = "Bearer " + token;
-    const res = await fetch(apiBase + path, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined
-    });
-    const text = await res.text();
-    let data = null;
-    try { data = text ? JSON.parse(text) : null; } catch(_) {}
-
-    if (!res.ok) {
-      const msg = (data && (data.detail || data.message)) ? (data.detail || data.message) : (text || ("HTTP " + res.status));
-      throw new Error(msg);
-    }
-    return data;
-  }
-
-  function extractToken(data){
-    if (!data) return null;
-    return data.token || data.access_token || data.accessToken || data.jwt || null;
-  }
-
-  function normalizePhone(s){
-    return String(s||"").trim();
-  }
-
-  // Tabs
-  $("tabLogin").addEventListener("click", () => { clearStatus(); show("login"); });
-  $("tabRegister").addEventListener("click", () => { clearStatus(); show("register"); });
-
-  // Login: ONLY email+password (no OTP)
-  $("formLogin").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearStatus();
-
-    const email = $("loginEmail").value.trim();
-    const password = $("loginPass").value;
-
-    if (!email || !password) return setStatus("err", "Укажи email и пароль.");
-
-    $("btnLogin").disabled = true;
-    try {
-      const data = await req("POST", "/api/v1/auth/login", { email, password });
-      const token = extractToken(data);
-      if (!token) throw new Error("API не вернул токен (login).");
-
-      localStorage.setItem(TOKEN_KEY, token);
-      setStatus("ok", "Вход выполнен.");
-      location.href = (safeNext() || "/tariffs/");
-    } catch (err) {
-      setStatus("err", err.message || "Ошибка входа.");
-    } finally {
-      $("btnLogin").disabled = false;
-    }
-  });
-
-  // Register: send OTP code once
-  $("formRegister").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearStatus();
-
-    const email = $("regEmail").value.trim();
-    const phone = normalizePhone($("regPhone").value);
-    const password = $("regPass").value;
-    const password2 = $("regPass2").value;
-
-    if (!email) return setStatus("err", "Укажи email.");
-    if (!phone) return setStatus("err", "Телефон обязателен.");
-    if (!password || password.length < 8) return setStatus("err", "Пароль минимум 8 символов.");
-    if (password !== password2) return setStatus("err", "Пароли не совпадают.");
-
-    $("btnRegister").disabled = true;
-    try {
-      await req("POST", "/api/v1/auth/register", { email, password, phone });
-
-      sessionStorage.setItem(PENDING_KEY, JSON.stringify({ email, password }));
-      $("verEmailText").textContent = email;
-      show("verify");
-      setStatus("ok", "Код отправлен на почту. Введи 6 цифр для активации.");
-      $("verCode").focus();
-    } catch (err) {
-      setStatus("err", err.message || "Ошибка регистрации.");
-    } finally {
-      $("btnRegister").disabled = false;
-    }
-  });
-
-  // Verify: confirm code and then login once (store token)
-  $("formVerify").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearStatus();
-
-    const code = $("verCode").value.replace(/\D/g,"").slice(0,6);
-    if (code.length !== 6) return setStatus("err", "Нужны 6 цифр кода.");
-
-    const pendingRaw = sessionStorage.getItem(PENDING_KEY);
-    if (!pendingRaw) return setStatus("err", "Нет данных регистрации. Вернись назад и повтори.");
-    const pending = JSON.parse(pendingRaw);
-    const email = String(pending.email || "").trim();
-    const password = String(pending.password || "");
-
-    $("btnVerify").disabled = true;
-    try {
-      const data = await req("POST", "/api/v1/auth/verify", { email, code });
-
-      // если verify уже возвращает токен — ок
-      let token = extractToken(data);
-
-      // если verify токен не вернул — делаем обычный login (один раз)
-      if (!token) {
-        const login = await req("POST", "/api/v1/auth/login", { email, password });
-        token = extractToken(login);
+    function navigateTo(url){
+      try{
+        if(window.top && window.top !== window.self) window.top.location.href = url;
+        else window.location.href = url;
+      }catch(_e){
+        window.location.href = url;
       }
-      if (!token) throw new Error("API не вернул токен (verify/login).");
-
-      localStorage.setItem(TOKEN_KEY, token);
-      sessionStorage.removeItem(PENDING_KEY);
-
-      setStatus("ok", "Аккаунт активирован. Заходим в кабинет…");
-      location.href = (safeNext() || "/tariffs/");
-    } catch (err) {
-      setStatus("err", err.message || "Ошибка подтверждения кода.");
-    } finally {
-      $("btnVerify").disabled = false;
     }
-  });
 
-  $("linkBack").addEventListener("click", (e) => {
-    e.preventDefault();
-    clearStatus();
-    show("register");
-  });
+    const toast = document.getElementById("toast");
+    function safeMsg(x){
+      if(x == null) return "";
+      if(typeof x === "string") return x;
+      if(typeof x === "number" || typeof x === "boolean") return String(x);
+      try{ return JSON.stringify(x); }catch(_e){ return String(x); }
+    }
+    function showToast(msg, kind){
+      toast.className = "toast show " + (kind === "ok" ? "ok" : kind === "err" ? "err" : "");
+      toast.textContent = safeMsg(msg) || "Ошибка";
+    }
+    function clearToast(){ toast.className = "toast"; toast.textContent = ""; }
 
-  // Default view
-  show("login");
-})();
+    async function postJSON(url, data){
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const text = await r.text();
+      let json = null;
+      try{ json = text ? JSON.parse(text) : null; } catch(_e){ json = null; }
+      if(!r.ok){
+        let detail = "HTTP " + r.status;
+        if(json && (json.detail != null)) detail = json.detail;
+        else if(json && (json.error != null)) detail = json.error;
+        else if(text) detail = text;
+        throw new Error(safeMsg(detail));
+      }
+      return json;
+    }
+
+    async function getJSON(url, token){
+      const r = await fetch(url, {
+        method: "GET",
+        headers: token ? { "authorization": "Bearer " + token } : {}
+      });
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    }
+
+    function setBusy(btn, busy){
+      if(!btn) return;
+      btn.disabled = !!busy;
+      btn.dataset._t = btn.dataset._t || btn.textContent;
+      btn.textContent = busy ? "Подожди…" : btn.dataset._t;
+    }
+
+    // ===== Tabs =====
+    const tabLogin = document.getElementById("tabLogin");
+    const tabRegister = document.getElementById("tabRegister");
+    const paneLogin = document.getElementById("paneLogin");
+    const paneRegister = document.getElementById("paneRegister");
+
+    function readInitialTab(){
+      try{
+        var u = new URL(window.location.href);
+        var q = (u.searchParams.get("tab") || u.searchParams.get("mode") || "").toLowerCase();
+        var h = (u.hash || "").replace("#", "").toLowerCase();
+        var v = q || h;
+        if(v === "register" || v === "signup" || v === "reg") return "register";
+        return "login";
+      }catch(_e){
+        var hh = (window.location.hash || "").replace("#", "").toLowerCase();
+        if(hh === "register" || hh === "signup" || hh === "reg") return "register";
+        return "login";
+      }
+    }
+
+    function syncTabToUrl(which){
+      try{
+        var u2 = new URL(window.location.href);
+        u2.searchParams.set("tab", (which === "register") ? "register" : "login");
+        u2.hash = "";
+        window.history.replaceState({}, "", u2.toString());
+      }catch(_e){}
+    }
+
+    function setTab(which, fromUrl){
+      clearToast();
+      var isLogin = (which !== "register");
+      tabLogin.classList.toggle("active", isLogin);
+      tabRegister.classList.toggle("active", !isLogin);
+      tabLogin.setAttribute("aria-selected", String(isLogin));
+      tabRegister.setAttribute("aria-selected", String(!isLogin));
+      paneLogin.classList.toggle("active", isLogin);
+      paneRegister.classList.toggle("active", !isLogin);
+      if(!fromUrl) syncTabToUrl(isLogin ? "login" : "register");
+    }
+
+    tabLogin.addEventListener("click", ()=>setTab("login"));
+    tabRegister.addEventListener("click", ()=>setTab("register"));
+    setTab(readInitialTab(), true);
+    window.addEventListener("popstate", ()=>setTab(readInitialTab(), true));
+
+    // ===== Auto-login by saved token =====
+    (async function autoLogin(){
+      const t = localStorage.getItem(TOKEN_KEY);
+      if(!t) return;
+      try{
+        await getJSON("/api/v1/auth/me", t);
+        navigateTo(AFTER_LOGIN);
+      }catch(_e){
+        // токен невалиден — чистим
+        localStorage.removeItem(TOKEN_KEY);
+      }
+    })();
+
+    // ===== Login =====
+    const formLogin = document.getElementById("formLogin");
+    const btnLogin = document.getElementById("btnLogin");
+
+    formLogin.addEventListener("submit", async (ev)=>{
+      ev.preventDefault();
+      clearToast();
+      const email = (document.getElementById("loginEmail").value || "").trim();
+      const password = document.getElementById("loginPass").value || "";
+      if(!email || !password){ showToast("Заполни email и пароль.", "err"); return; }
+
+      setBusy(btnLogin, true);
+      try{
+        const res = await postJSON(API.login, { email, password });
+        const token = res && (res.access_token || res.token);
+        if(token) localStorage.setItem(TOKEN_KEY, token);
+        showToast("Вход выполнен. Перенаправляю…", "ok");
+        setTimeout(()=>{ navigateTo(AFTER_LOGIN); }, 350);
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }finally{
+        setBusy(btnLogin, false);
+      }
+    });
+
+    // ===== Reset password (optional) =====
+    const btnShowReset = document.getElementById("btnShowReset");
+    const resetBox = document.getElementById("resetBox");
+    const btnReset = document.getElementById("btnReset");
+
+    btnShowReset.addEventListener("click", ()=>{
+      clearToast();
+      resetBox.style.display = (resetBox.style.display === "none" || !resetBox.style.display) ? "block" : "none";
+    });
+
+    btnReset.addEventListener("click", async ()=>{
+      clearToast();
+      const email1 = (document.getElementById("resetEmail").value || "").trim();
+      const email2 = (document.getElementById("loginEmail").value || "").trim();
+      const email = email1 || email2;
+      if(!email){ showToast("Укажи email для восстановления.", "err"); return; }
+      setBusy(btnReset, true);
+      try{
+        await postJSON(API.resetRequest, { email });
+        showToast("Отправили письмо. Проверь входящие/спам.", "ok");
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }finally{
+        setBusy(btnReset, false);
+      }
+    });
+
+    // ===== Register + Verify =====
+    const formRegister = document.getElementById("formRegister");
+    const btnRegister = document.getElementById("btnRegister");
+
+    const verifyBox = document.getElementById("verifyBox");
+    const regCode = document.getElementById("regCode");
+    const btnVerify = document.getElementById("btnVerify");
+    const btnResend = document.getElementById("btnResend");
+
+    let pendingReg = null; // { email, password, name, phone }
+
+    function normalizePhone(p){
+      p = String(p||"").trim();
+      var out = "";
+      for(var i=0;i<p.length;i++){
+        var ch = p.charAt(i);
+        if(ch === " " || ch === "(" || ch === ")" || ch === "-") continue;
+        out += ch;
+      }
+      return out;
+    }
+
+    function openVerify(){
+      verifyBox.style.display = "block";
+      setTimeout(()=>{ try{ regCode.focus(); }catch(_e){} }, 50);
+    }
+
+    formRegister.addEventListener("submit", async (ev)=>{
+      ev.preventDefault();
+      clearToast();
+
+      const name = (document.getElementById("regName").value || "").trim();
+      const email = (document.getElementById("regEmail").value || "").trim();
+      const phone = normalizePhone(document.getElementById("regPhone").value || "");
+      const password = document.getElementById("regPass").value || "";
+      const password2 = document.getElementById("regPass2").value || "";
+
+      if(!name || !email || !password){ showToast("Имя, email и пароль обязательны.", "err"); return; }
+      if(password.length < 8){ showToast("Пароль слишком короткий (минимум 8).", "err"); return; }
+      if(password !== password2){ showToast("Пароли не совпадают.", "err"); return; }
+
+      pendingReg = { name, email, phone, password };
+
+      setBusy(btnRegister, true);
+      try{
+        // отправляем регистрацию
+        const payload = { name, email, password };
+        if(phone) payload.phone = phone;
+
+        const res = await postJSON(API.register, payload);
+
+        // если вдруг сервер сразу отдал токен — ок, заходим
+        const token = res && (res.access_token || res.token);
+        if(token){
+          localStorage.setItem(TOKEN_KEY, token);
+          showToast("Аккаунт создан. Перенаправляю…", "ok");
+          setTimeout(()=>{ navigateTo(AFTER_LOGIN); }, 350);
+          return;
+        }
+
+        // стандартный сценарий: код отправлен на email
+        showToast("Мы отправили код на email. Введите 6 цифр для активации.", "ok");
+        openVerify();
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }finally{
+        setBusy(btnRegister, false);
+      }
+    });
+
+    btnResend.addEventListener("click", async ()=>{
+      clearToast();
+      if(!pendingReg || !pendingReg.email){ showToast("Сначала заполни регистрацию.", "err"); return; }
+      try{
+        // повторяем register как “resend”
+        const payload = { name: pendingReg.name, email: pendingReg.email, password: pendingReg.password };
+        if(pendingReg.phone) payload.phone = pendingReg.phone;
+        await postJSON(API.register, payload);
+        showToast("Код отправлен ещё раз. Проверь почту.", "ok");
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }
+    });
+
+    btnVerify.addEventListener("click", async ()=>{
+      clearToast();
+      if(!pendingReg || !pendingReg.email){ showToast("Сначала заполни регистрацию.", "err"); return; }
+      const code = String(regCode.value || "").trim();
+      if(!code || code.length < 4){ showToast("Введи код из письма.", "err"); return; }
+
+      setBusy(btnVerify, true);
+      try{
+        // отправляем максимально “совместимо” — сервер возьмёт нужное поле
+        const res = await postJSON(API.verify, {
+          email: pendingReg.email,
+          code: code,
+          otp: code,
+          verification_code: code
+        });
+
+        const token = res && (res.access_token || res.token);
+        if(token){
+          localStorage.setItem(TOKEN_KEY, token);
+          showToast("Готово. Перенаправляю…", "ok");
+          setTimeout(()=>{ navigateTo(AFTER_LOGIN); }, 350);
+          return;
+        }
+
+        // если verify не выдаёт токен — логинимся
+        const res2 = await postJSON(API.login, { email: pendingReg.email, password: pendingReg.password });
+        const token2 = res2 && (res2.access_token || res2.token);
+        if(token2) localStorage.setItem(TOKEN_KEY, token2);
+
+        showToast("Аккаунт активирован. Перенаправляю…", "ok");
+        setTimeout(()=>{ navigateTo(AFTER_LOGIN); }, 350);
+      }catch(e){
+        showToast(e && e.message ? e.message : e, "err");
+      }finally{
+        setBusy(btnVerify, false);
+      }
+    });

@@ -1,17 +1,25 @@
 # Frontend scripts map
-Истина для прода: `frontend/` → деплой на `app.abqd.ru`.
-## Страницы → подключаемые скрипты
-### /auth/  (`frontend/auth/index.html`)
-**External:** _нет (всё inline)_
 
-**Inline `<script>` blocks:** `1`
+Истина для прода: `frontend/` → деплой на `app.abqd.ru`.
+
+## Страницы → подключаемые скрипты
+
+### /auth/  (`frontend/auth/index.html`)
+
+**External:**
+- `/assets/auth.js?v=1`
+
+**Inline `<script>` blocks:** `0`
 
 ### /constructor/  (`frontend/constructor/index.html`)
-**External:** _нет (всё inline)_
 
-**Inline `<script>` blocks:** `1`
+**External:**
+- `/assets/constructor.js?v=1`
+
+**Inline `<script>` blocks:** `0`
 
 ### /dashboard/  (`frontend/dashboard/index.html`)
+
 **External:**
 - `/assets/api.js?v=1`
 - `/assets/theme.js?v=1`
@@ -21,6 +29,7 @@
 **Inline `<script>` blocks:** `1`
 
 ### /tariffs/  (`frontend/tariffs/index.html`)
+
 **External:**
 - `/assets/api.js?v=3`
 - `/assets/theme.js?v=3`
@@ -29,8 +38,10 @@
 **Inline `<script>` blocks:** `0`
 
 ### /u/  (`frontend/u/index.html`)
+
 **External:**
 - `/assets/profile-render.js`
+- `/assets/u-inline.js?v=1`
 
-**Inline `<script>` blocks:** `1`
+**Inline `<script>` blocks:** `0`
 
