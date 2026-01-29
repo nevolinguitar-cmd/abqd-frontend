@@ -63,6 +63,21 @@
           btn.dataset._txt = btn.textContent;
           btn.textContent = "Активируем Trial…";
         }
+
+  // --- ABQD_TRIAL_AUTOSTART_V1 ---
+  (function(){
+    try{
+      const q = new URLSearchParams(location.search);
+      const planQ = (q.get("plan") || "").toLowerCase();
+      const auto = (q.get("autostart") || "") === "1";
+      if (planQ === "trial" && auto){
+        // запускаем один раз, чтобы "назад" не крутило
+        q.delete("autostart");
+        history.replaceState({}, "", location.pathname + (q.toString() ? ("?"+q.toString()) : ""));
+        setTimeout(()=>pay("trial"), 50);
+      }
+    }catch(e){}
+  })();
         await activateTrial();
         location.href = `${CABINET_ORIGIN}/constructor/`;
       }catch(e){
