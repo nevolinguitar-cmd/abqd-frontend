@@ -32,6 +32,17 @@ jobs:
           mkdir -p "$TARGET_DIR"
 
       - name: Ensure frontend folder exists in repo
+      - name: Ensure repo structure is clean (no root Vite duplicates)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Root Vite duplicates must not exist; CRM lives only in apps/crm
+          test ! -d "./src" || { echo "ERROR: ./src exists in repo root (duplicate Vite)"; exit 1; }
+          test ! -d "./public" || { echo "ERROR: ./public exists in repo root (duplicate Vite)"; exit 1; }
+          test ! -f "./vite.config.js" || { echo "ERROR: ./vite.config.js exists in repo root"; exit 1; }
+          test ! -f "./package.json" || { echo "ERROR: ./package.json exists in repo root"; exit 1; }
+          echo "OK: repo structure clean"
+
         shell: bash
         run: |
           set -euo pipefail
