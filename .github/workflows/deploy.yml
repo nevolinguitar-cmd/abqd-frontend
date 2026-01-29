@@ -48,6 +48,29 @@ jobs:
           set -euo pipefail
           test -d "./frontend" || { echo "ERROR: ./frontend not found in repo root"; exit 1; }
 
+
+      - name: Build CRM (Vite) -> frontend/crm
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d "./apps/crm" || { echo "ERROR: ./apps/crm not found"; exit 1; }
+          node -v
+          npm -v
+
+          cd apps/crm
+          npm ci
+          npm run build
+          cd ../..
+
+          test -d "./apps/crm/dist" || { echo "ERROR: apps/crm/dist not found after build"; exit 1; }
+
+          rm -rf ./frontend/crm
+          mkdir -p ./frontend/crm
+          rsync -rltDz --delete ./apps/crm/dist/ ./frontend/crm/
+
+          test -f ./frontend/crm/index.html || { echo "ERROR: CRM index.html not found in frontend/crm"; exit 1; }
+          echo "OK: CRM built into ./frontend/crm"
+
       - name: Deploy (rsync without owner/group/perms)
         shell: bash
         run: |
