@@ -79,7 +79,7 @@
 
       localStorage.setItem(TOKEN_KEY, token);
       setStatus("ok", "Вход выполнен.");
-      location.href = "/dashboard/";
+      location.href = (safeNext() || "/tariffs/");
     } catch (err) {
       setStatus("err", err.message || "Ошибка входа.");
     } finally {
@@ -150,7 +150,7 @@
       sessionStorage.removeItem(PENDING_KEY);
 
       setStatus("ok", "Аккаунт активирован. Заходим в кабинет…");
-      location.href = "/dashboard/";
+      location.href = (safeNext() || "/tariffs/");
     } catch (err) {
       setStatus("err", err.message || "Ошибка подтверждения кода.");
     } finally {
