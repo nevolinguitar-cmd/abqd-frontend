@@ -12,3 +12,5 @@ dist/
 apps/crm/node_modules/
 apps/crm/dist/
 static/
+# CRM build artifacts (do not commit)
+frontend/crm/
