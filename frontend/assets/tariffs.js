@@ -36,6 +36,44 @@
     return j;
   }
 
+  // --- ABQD_TRIAL_ACTIVATE_V1 ---
+  async function accessStatus(){
+    const res = await fetch(`${API}/access/status`, {
+      method: "GET",
+      headers: { "authorization": `Bearer ${token()}` }
+    });
+    const text = await res.text();
+    let j; 
+    try { j = JSON.parse(text); } catch { j = {"detail": text.slice(0,200)}; }
+    if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
+    return j;
+  }
+
+  async function activateTrial(){
+    const res = await fetch(`${API}/trial/activate`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${token()}`
+      },
+      body: "{}"
+    });
+    const text = await res.text();
+    let j; 
+    try { j = JSON.parse(text); } catch { j = {"detail": text.slice(0,200)}; }
+    if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
+    return j;
+  }
+
+  async function ensureTrialAccess(){
+    // если trial уже активен — не дергаем activate
+    try{
+      const st = await accessStatus();
+      if (st && st.trial_active) return st;
+    }catch(e){}
+    return await activateTrial();
+  }
+
   async function activateTrial(){
     const t = token();
     if (!t) throw new Error("Нет токена");
