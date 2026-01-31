@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { HashRouter, Routes, Route } from "react-router-dom";
-import CrmApp from "./pages/CrmApp.jsx";
+import CrmApp from "./pages/CrmApp";
 import "./App.css";
 
 export default function App() {
