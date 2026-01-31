@@ -24,3 +24,13 @@ _bk_*/
 *.before_restore
 *.swp
 .DS_Store
+
+# ABQD: local backups / temp
+_bk_*/
+**/_bk_*/
+*.bak*
+*.repo.bak*
+*.before_restore.*
+*.before_restore
+*.swp
+.DS_Store
