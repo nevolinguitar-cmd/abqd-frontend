@@ -1,42 +1,88 @@
+/* ABQD CRM — fullscreen reset */
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  /* если хочешь фон тёмный сразу:
+  background: #0b0b0d;
+  color: #fff;
+  */
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  max-width: none !important;
+  padding: 0 !important;
+  text-align: left;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* На случай если внутри есть “контейнер”, который сжимает ширину */
+.abqd-shell, .abqd-app, .abqd-wrap, .container {
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+
+/* --- ABQD_BOTTOM_PANELS_v1 --- */
+/* Перенос “правых панелей” вниз под таблицу и раскладка блоками */
+@media (min-width: 900px) {
+  .abqd-tableWrap { grid-column: 1 / -1 !important; }
+
+  .abqd-tableWrap ~ aside,
+  .abqd-tableWrap ~ .abqd-rightRail,
+  .abqd-tableWrap ~ .abqd-dashboardRight,
+  .abqd-tableWrap ~ .abqd-side {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    align-items: stretch !important;
   }
-  to {
-    transform: rotate(360deg);
+
+  .abqd-tableWrap ~ aside > *,
+  .abqd-tableWrap ~ .abqd-rightRail > *,
+  .abqd-tableWrap ~ .abqd-dashboardRight > *,
+  .abqd-tableWrap ~ .abqd-side > * {
+    flex: 1 1 320px;
+    min-width: 260px;
   }
 }
+/* --- end ABQD_BOTTOM_PANELS_v1 --- */
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+/* --- ABQD_BOTTOM_PANELS_v2 --- */
+/* Цель: правый rail (AI Coach / Анализ / Качество / Скорость) уходит ВНИЗ и становится блоками-строками */
+@media (min-width: 900px){
+  /* если главный контейнер сеткой в 2 колонки — схлопываем в 1 */
+  .abqd-shell, .abqd-app, .abqd-wrap, .abqd-layout, .abqd-mainRow, .abqd-dashboard {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* правый rail делаем нижним рядом (работает и для grid, и не мешает если не grid) */
+  .abqd-rightRail, .abqd-dashboardRight, .abqd-side, aside.abqd-side {
+    grid-column: 1 / -1 !important;
+    grid-row: 999 !important;
+    width: 100% !important;
+    margin-top: 12px !important;
+  }
+
+  /* сами карточки — в несколько “строчек” (wrap) */
+  .abqd-rightRail, .abqd-dashboardRight, .abqd-side, aside.abqd-side {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+  }
+
+  .abqd-rightRail > *, .abqd-dashboardRight > *, .abqd-side > *, aside.abqd-side > * {
+    flex: 1 1 320px !important;
+    min-width: 260px !important;
   }
 }
+/* --- end ABQD_BOTTOM_PANELS_v2 --- */
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
