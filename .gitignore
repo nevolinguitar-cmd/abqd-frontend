@@ -14,3 +14,13 @@ apps/crm/dist/
 static/
 # CRM build artifacts (do not commit)
 frontend/crm/
+
+# ABQD: local backups / temp
+_bk_*/
+**/_bk_*/
+*.bak*
+*.repo.bak*
+*.before_restore.*
+*.before_restore
+*.swp
+.DS_Store
