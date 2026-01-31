@@ -770,7 +770,7 @@ const css = `
 .abqd-foot{margin-top:10px;font-size:12px;color:var(--muted2);padding:0 4px;}
 
 .abqd-metal{position:relative;background:radial-gradient(140% 120% at 20% 0%, rgba(255,255,255,.22), rgba(255,255,255,0) 55%),linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.06));}
-[data-theme='light'] .abqd-metal{background:radial-gradient(140% 120% at 20% 0%, rgba(255,255,255,.95), rgba(255,255,255,0) 55%),linear-gradient(135deg, rgba(255,255,255,.92), rgba(232,235,240,.78));}
+[data-theme='light'] .abqd-metal{background:radial-gradient(140% 120% at 20% 0%, rgba(255,255,255,.95), rgba(255,255,255,0) 55%),linear-gradient(135deg, rgba(255,255,255,.95), rgba(232,235,240,.78));}
 .abqd-metal::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 40%),linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,0) 35%, rgba(255,255,255,.08) 70%, rgba(255,255,255,0));opacity:.85;}
 [data-theme='light'] .abqd-metal::before{opacity:.70;}
 
