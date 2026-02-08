@@ -1,529 +1,127 @@
-<!DOCTYPE html>
-<html lang="ru" data-theme="soft">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Тарифы • ABQD</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      --r1:16px;
-      --r2:22px;
-      --bg:#0b0c10;
-      --panel:#0f1117;
-      --panel2:#11131b;
-      --text:#eef1f6;
-      --muted:rgba(238,241,246,.66);
-      --line:rgba(255,255,255,.13);
-      --shadow:0 18px 60px rgba(0,0,0,.30);
-      --accent:#ff4d9d;
-      --accent2:#6d5cff;
-      --primary1:#ff4d9d;
-      --primary2:#6d5cff;
-      --ok:#39d98a;
-      --ok2:#1bbf63;
-    }
-
-    html[data-theme="soft"]{
-      --bg:#f4f6fb;
-      --panel:rgba(255,255,255,.62);
-      --panel2:rgba(255,255,255,.78);
-      --text:#10131a;
-      --muted:rgba(16,19,26,.56);
-      --line:rgba(16,19,26,.14);
-      --shadow:0 18px 60px rgba(18,24,40,.12);
-      --accent:#2563eb;
-      --accent2:#7c3aed;
-      --primary1:#2563eb;
-      --primary2:#7c3aed;
-      --ok:#39d98a;
-    }
-
-    *{box-sizing:border-box}
-    body{margin:0;font-family:var(--font);color:var(--text);font-size:15.5px;line-height:1.62;
-      background:
-        radial-gradient(1100px 700px at 15% 10%, rgba(109,92,255,.16), transparent 55%),
-        radial-gradient(1100px 700px at 85% 15%, rgba(255,77,157,.14), transparent 55%),
-        var(--bg);
-    }
-
-    body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-      opacity:.055;mix-blend-mode:overlay;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
-      transform:translateZ(0)}
-
-    .wrap{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:18px 14px 44px;}
-
-    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:6px 0 14px;}
-    h1{margin:0;font-size:38px;letter-spacing:-.045em;line-height:1.04;font-weight:800}
-
-    .seg{display:inline-flex;border:1px solid var(--line);background:rgba(0,0,0,.08);border-radius:999px;overflow:hidden;backdrop-filter:blur(10px)}
-    html[data-theme="soft"] .seg{background:rgba(255,255,255,.35)}
-    .seg button{border:0;background:transparent;cursor:pointer;padding:9px 12px;font-size:12px;color:var(--muted);font-weight:800}
-    .seg button.active{color:var(--text);background:linear-gradient(90deg,rgba(255,255,255,.16),rgba(255,255,255,.06))}
-
-    .help{margin:6px 0 0;color:var(--muted);font-size:13.5px;line-height:1.55;font-weight:600;max-width:860px}
-
-    .pricingGrid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
-      gap:16px;
-      margin:32px 0 0;
-    }
-
-    @media (max-width: 1024px){
-      .pricingGrid{grid-template-columns:repeat(2, 1fr)}
-    }
-    @media (max-width: 640px){
-      .pricingGrid{grid-template-columns:1fr}
-    }
-
-    .pricingCard{
-      position:relative;
-      border:1px solid var(--line);
-      background:
-        radial-gradient(120% 140% at 10% 0%, rgba(255,255,255,.10), transparent 55%),
-        linear-gradient(180deg,var(--panel),rgba(255,255,255,.04));
-      border-radius:var(--r2);
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(12px);
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-      transition:transform .24s ease, box-shadow .24s ease;
-      padding:28px 24px;
-    }
-
-    .pricingCard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-      background:linear-gradient(135deg, rgba(255,255,255,.22), transparent 42%, rgba(255,255,255,.10));
-      opacity:.18;mix-blend-mode:overlay}
-    html[data-theme="soft"] .pricingCard::before{opacity:.10;mix-blend-mode:normal}
-
-    .pricingCard:hover{transform:translateY(-4px);box-shadow:0 28px 80px rgba(0,0,0,.40)}
-    html[data-theme="soft"] .pricingCard:hover{box-shadow:0 28px 80px rgba(18,24,40,.16)}
-
-    .pricingCard.featured{
-      border-color:rgba(255,77,157,.35);
-      background:
-        radial-gradient(120% 140% at 10% 0%, rgba(255,77,157,.08), transparent 55%),
-        linear-gradient(180deg,var(--panel),rgba(255,77,157,.04));
-    }
-    html[data-theme="soft"] .pricingCard.featured{
-      border-color:rgba(37,99,235,.25);
-      background:
-        radial-gradient(120% 140% at 10% 0%, rgba(37,99,235,.06), transparent 55%),
-        linear-gradient(180deg,var(--panel2),rgba(37,99,235,.03));
-    }
-
-    .badge{
-      display:inline-block;
-      position:absolute;
-      top:12px;
-      right:12px;
-      background:linear-gradient(90deg,var(--primary1),var(--primary2));
-      color:white;
-      padding:6px 12px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:800;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      box-shadow:0 10px 26px rgba(0,0,0,.16);
-    }
-
-    .planName{
-      margin:0 0 8px;
-      font-size:24px;
-      font-weight:800;
-      letter-spacing:-.02em;
-      line-height:1.1;
-    }
-
-    .planDescription{
-      margin:0 0 20px;
-      color:var(--muted);
-      font-size:13.5px;
-      line-height:1.6;
-      font-weight:600;
-    }
-
-    .priceSection{
-      margin:0 0 24px;
-      padding:20px 0;
-      border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-    }
-
-    .priceValue{
-      display:flex;
-      align-items:baseline;
-      gap:8px;
-      margin:0;
-    }
-
-    .currency{
-      font-size:18px;
-      font-weight:700;
-      color:var(--muted);
-    }
-
-    .amount{
-      font-size:42px;
-      font-weight:800;
-      letter-spacing:-.03em;
-      color:var(--text);
-    }
-
-    .period{
-      font-size:13px;
-      color:var(--muted);
-      font-weight:700;
-    }
-
-    .priceNote{
-      margin:8px 0 0;
-      font-size:12px;
-      color:var(--muted);
-      font-weight:600;
-    }
-
-    .features{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      margin:0 0 24px;
-      flex:1;
-    }
-
-    .feature{
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-    }
-
-    .featureIcon{
-      width:20px;
-      height:20px;
-      border-radius:999px;
-      background:rgba(57,217,138,.12);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:var(--ok);
-      font-weight:900;
-      font-size:12px;
-      flex:0 0 auto;
-      margin-top:2px;
-    }
-
-    .featureText{
-      margin:0;
-      font-size:13.5px;
-      line-height:1.55;
-      color:var(--text);
-      font-weight:600;
-    }
-
-    .featureText.disabled{
-      color:var(--muted);
-      opacity:.55;
-    }
-
-    .cta{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:auto;
-    }
-
-    .btnPrimary{
-      border:0;
-      border-radius:999px;
-      padding:12px 20px;
-      font-weight:800;
-      font-size:13px;
-      cursor:pointer;
-      overflow:hidden;
-      position:relative;
-      isolation:isolate;
-      transform:translateZ(0);
-      transition:transform .14s ease, filter .14s ease;
-      width:100%;
-      text-align:center;
-      color:white;
-      box-shadow:0 10px 26px rgba(0,0,0,.14);
-    }
-
-    .btnPrimary::before{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      background:linear-gradient(90deg,var(--primary1),var(--primary2));
-      border-radius:inherit;
-      z-index:-1;
-      transform:translateZ(0);
-    }
-
-    .btnPrimary:active{transform:translateY(1px)}
-    .btnPrimary:hover{filter:brightness(1.08)}
-
-    html[data-theme="soft"] .btnPrimary{
-      color:var(--text);
-      text-shadow:none;
-      border:1px solid rgba(16,19,26,.16);
-      box-shadow:0 16px 36px rgba(18,24,40,.14),0 1px 0 rgba(255,255,255,.70) inset,0 -1px 0 rgba(0,0,0,.06) inset;
-      letter-spacing:.01em;
-    }
-    html[data-theme="soft"] .btnPrimary::before{
-      background:linear-gradient(180deg, rgba(226,229,235,.98) 0%, rgba(196,203,214,.96) 48%, rgba(168,177,191,.95) 100%);
-    }
-
-    .faqSection{
-      margin:48px 0 0;
-      padding:32px 0 0;
-      border-top:1px solid var(--line);
-    }
-
-    .faqTitle{
-      margin:0 0 24px;
-      font-size:28px;
-      font-weight:800;
-      letter-spacing:-.02em;
-    }
-
-    .faqGrid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));
-      gap:16px;
-    }
-
-    .faqItem{
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.05);
-      border-radius:var(--r1);
-      padding:16px;
-      cursor:pointer;
-      transition:all .18s ease;
-    }
-    html[data-theme="soft"] .faqItem{background:rgba(255,255,255,.45)}
-    .faqItem:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.16)}
-    html[data-theme="soft"] .faqItem:hover{box-shadow:0 10px 30px rgba(18,24,40,.10)}
-
-    .faqQ{
-      margin:0;
-      font-weight:800;
-      font-size:14px;
-      color:var(--text);
-    }
-
-    .faqA{
-      margin:10px 0 0;
-      color:var(--muted);
-      font-size:13.5px;
-      line-height:1.6;
-      display:none;
-    }
-
-    .faqItem.active .faqA{display:block}
-
-    .footer{
-      margin-top:48px;
-      padding-top:24px;
-      border-top:1px solid var(--line);
-      text-align:center;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:800;
-      letter-spacing:.04em;
-    }
-
-    @media (max-width: 560px){
-      h1{font-size:28px}
-      .pricingCard{padding:20px 16px}
-      .planName{font-size:20px}
-      .amount{font-size:36px}
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="top">
-      <div>
-        <h1>Тарифы</h1>
-        <p class="help">Выбери план, который подходит именно тебе. Первые 7 дней абсолютно бесплатно с полным доступом к конструктору визиток.</p>
-      </div>
-      <div class="seg" id="themeSeg">
-        <button type="button" data-theme="dark">Тёмная</button>
-        <button type="button" data-theme="soft">Белая</button>
-      </div>
-    </div>
-
-    <div class="pricingGrid">
-      <!-- TRIAL -->
-      <div class="pricingCard">
-        <div class="planName">Бесплатно</div>
-        <p class="planDescription">7 дней абсолютно бесплатно. Полный доступ к конструктору визиток.</p>
-
-        <div class="priceSection">
-          <p class="priceValue"><span class="currency">₽</span><span class="amount">0</span></p>
-          <p class="period">7 дней бесплатного доступа</p>
-          <p class="priceNote">Без оплаты, без привязки карты</p>
-        </div>
-
-        <div class="features">
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Конструктор визиток</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Неограниченные редактирования</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Публикация профиля</p></div>
-          <div class="feature"><div class="featureIcon" style="background:rgba(255,255,255,.08);color:var(--muted)">—</div><p class="featureText disabled">Расширенные функции</p></div>
-          <div class="feature"><div class="featureIcon" style="background:rgba(255,255,255,.08);color:var(--muted)">—</div><p class="featureText disabled">Полная экосистема</p></div>
-        </div>
-
-        <div class="cta">
-          <!-- ВАЖНО: id для tariffs.js -->
-          <button class="btnPrimary" id="btnStartTrial" type="button">Начать бесплатно</button>
-        </div>
-      </div>
-
-      <!-- STARTER (в API это starter -> probn через mapPlan) -->
-      <div class="pricingCard">
-        <div class="planName">Стартер</div>
-        <p class="planDescription">Базовый функционал для начинающих. Урезанная версия.</p>
-
-        <div class="priceSection">
-          <p class="priceValue"><span class="currency">₽</span><span class="amount">1</span></p>
-          <p class="period">в месяц</p>
-          <p class="priceNote">Оплата картой через ЮKassa</p>
-        </div>
-
-        <div class="features">
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Конструктор визиток</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">До 1 опубликованного профиля</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Базовые шаблоны</p></div>
-          <div class="feature"><div class="featureIcon" style="background:rgba(255,255,255,.08);color:var(--muted)">—</div><p class="featureText disabled">Аналитика и статистика</p></div>
-          <div class="feature"><div class="featureIcon" style="background:rgba(255,255,255,.08);color:var(--muted)">—</div><p class="featureText disabled">Интеграции и API</p></div>
-        </div>
-
-        <div class="cta">
-          <!-- ВАЖНО: класс + data-plan для tariffs.js -->
-          <button class="btnPrimary btnChoosePlan" data-plan="starter" type="button">Выбрать план</button>
-        </div>
-      </div>
-
-      <!-- PRO -->
-      <div class="pricingCard featured">
-        <div class="badge">Популярный</div>
-        <div class="planName">Профессионал</div>
-        <p class="planDescription">Расширенный функционал для растущего бизнеса. Рекомендуемый выбор.</p>
-
-        <div class="priceSection">
-          <p class="priceValue"><span class="currency">₽</span><span class="amount">2</span></p>
-          <p class="period">в месяц</p>
-          <p class="priceNote">Оплата картой через ЮKassa</p>
-        </div>
-
-        <div class="features">
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Конструктор визиток</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">До 5 опубликованных профилей</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Все шаблоны и дизайны</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Базовая аналитика</p></div>
-          <div class="feature"><div class="featureIcon" style="background:rgba(255,255,255,.08);color:var(--muted)">—</div><p class="featureText disabled">Интеграции и API</p></div>
-        </div>
-
-        <div class="cta">
-          <button class="btnPrimary btnChoosePlan" data-plan="pro" type="button">Выбрать план</button>
-        </div>
-      </div>
-
-      <!-- FULL -->
-      <div class="pricingCard">
-        <div class="planName">Полный доступ</div>
-        <p class="planDescription">Полная экосистема со всеми возможностями. Без ограничений.</p>
-
-        <div class="priceSection">
-          <p class="priceValue"><span class="currency">₽</span><span class="amount">3</span></p>
-          <p class="period">в месяц</p>
-          <p class="priceNote">Оплата картой через ЮKassa</p>
-        </div>
-
-        <div class="features">
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Конструктор визиток</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Неограниченные профили</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Все шаблоны и кастомизация</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Полная аналитика и отчёты</p></div>
-          <div class="feature"><div class="featureIcon">✓</div><p class="featureText">API и интеграции</p></div>
-        </div>
-
-        <div class="cta">
-          <button class="btnPrimary btnChoosePlan" data-plan="full" type="button">Выбрать план</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="faqSection">
-      <h2 class="faqTitle">Часто задаваемые вопросы</h2>
-      <div class="faqGrid">
-        <div class="faqItem">
-          <p class="faqQ">Можно ли изменить план позже?</p>
-          <p class="faqA">Да, в любое время. Можно перейти на более высокий или более низкий план. Изменения вступят в силу со следующего платёжного периода.</p>
-        </div>
-
-        <div class="faqItem">
-          <p class="faqQ">Как работает пробный период?</p>
-          <p class="faqA">После регистрации у тебя есть 7 дней доступа к конструктору. Платёж не требуется. Для продолжения выбери платный план.</p>
-        </div>
-
-        <div class="faqItem">
-          <p class="faqQ">Есть ли скидки на годовой тариф?</p>
-          <p class="faqA">Пока помесячная подписка. Годовые тарифы добавим позже.</p>
-        </div>
-
-        <div class="faqItem">
-          <p class="faqQ">Можно ли отменить подписку?</p>
-          <p class="faqA">Да. После отмены доступ сохраняется до конца оплаченного периода.</p>
-        </div>
-
-        <div class="faqItem">
-          <p class="faqQ">Какие способы оплаты?</p>
-          <p class="faqA">Банковские карты через ЮKassa.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="footer">
-      <p>© 2025 ABQD • Конструктор NFC визиток. Все права защищены.</p>
-    </div>
-  </div>
-
-  <script>
-    // Theme switch + restore
-    (() => {
-      const seg = document.getElementById("themeSeg");
-      if (!seg) return;
-      const buttons = Array.from(seg.querySelectorAll("button[data-theme]"));
-
-      function apply(theme) {
-        document.documentElement.setAttribute("data-theme", theme);
-        buttons.forEach(b => b.classList.toggle("active", b.getAttribute("data-theme") === theme));
-        localStorage.setItem("theme", theme);
-      }
-
-      buttons.forEach(btn => btn.addEventListener("click", () => apply(btn.getAttribute("data-theme"))));
-
-      const saved = localStorage.getItem("theme") || document.documentElement.getAttribute("data-theme") || "soft";
-      apply(saved);
-    })();
-
-    // FAQ accordion
-    document.querySelectorAll('.faqItem').forEach(item => {
-      item.addEventListener('click', () => item.classList.toggle('active'));
+(() => {
+  const API = "https://api.abqd.ru/api/v1";
+  const CABINET_ORIGIN = "https://app.abqd.ru";
+  const TOKEN_KEY = "abqd_token";
+
+  const mapPlan = (p) => {
+    p = (p || "").toLowerCase();
+    if (p === "starter") return "probn";
+    if (["probn", "pro", "full", "trial"].includes(p)) return p;
+    return p;
+  };
+
+  const token = () => localStorage.getItem(TOKEN_KEY) || "";
+  const authed = () => !!token();
+  const qs = () => new URLSearchParams(location.search);
+
+  const goAuth = (nextUrl, mode = "login") => {
+    location.href = `${CABINET_ORIGIN}/auth/?mode=${encodeURIComponent(mode)}&next=${encodeURIComponent(nextUrl)}`;
+  };
+
+  function setBtnBusy(btn, txt) {
+    if (!btn || btn.tagName !== "BUTTON") return;
+    btn.disabled = true;
+    btn.dataset._txt = btn.textContent;
+    btn.textContent = txt;
+  }
+
+  function setBtnRestore(btn) {
+    if (!btn || btn.tagName !== "BUTTON") return;
+    if (btn.dataset._txt) btn.textContent = btn.dataset._txt;
+    btn.disabled = false;
+  }
+
+  async function createPayment(plan) {
+    // Возврат после оплаты на /tariffs/ — там уже перекинем в CRM
+    const return_url = `${CABINET_ORIGIN}/tariffs/?paid=1&plan=${encodeURIComponent(plan)}`;
+
+    const headers = { "Content-Type": "application/json" };
+    const t = token();
+    if (t) headers["Authorization"] = `Bearer ${t}`;
+
+    const res = await fetch(`${API}/payments/create`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ plan, return_url }),
     });
-  </script>
 
-  <!-- ВАЖНО: здесь подключается логика оплаты/Trial -->
-  <!-- Если меняешь tariffs.js — увеличивай v=... чтобы не ловить кэш -->
-  <script src="/assets/tariffs.js?v=10"></script>
-</body>
-</html>
+    const text = await res.text();
+    let j;
+    try { j = JSON.parse(text); } catch { j = { detail: text.slice(0, 200) }; }
+
+    if (!res.ok) {
+      const err = new Error(j.detail || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.data = j;
+      throw err;
+    }
+    return j;
+  }
+
+  function afterPaidRedirect(plan) {
+    const nextCrm = `${CABINET_ORIGIN}/dashboard/crm?paid=1&plan=${encodeURIComponent(plan)}`;
+    if (authed()) {
+      location.replace(nextCrm);
+    } else {
+      // нет токена — логин, потом CRM
+      goAuth(nextCrm, "login");
+    }
+  }
+
+  async function pay(plan) {
+    plan = mapPlan(plan);
+    const btn = document.activeElement;
+
+    // ===== TRIAL: сразу в конструктор (без активации) =====
+    if (plan === "trial") {
+      location.href = `${CABINET_ORIGIN}/constructor/`;
+      return;
+    }
+
+    // ===== PAID: сразу в оплату (без активаций) =====
+    try {
+      setBtnBusy(btn, "Переходим к оплате…");
+      const j = await createPayment(plan);
+      if (!j.confirmation_url) throw new Error("Нет confirmation_url от ЮKassa");
+      location.href = j.confirmation_url;
+    } catch (e) {
+      // если createPayment вдруг требует авторизацию
+      if (e && (e.status === 401 || e.status === 403)) {
+        const back = `${CABINET_ORIGIN}/tariffs/?plan=${encodeURIComponent(plan)}&autostart=1`;
+        return goAuth(back, "register");
+      }
+      alert("Ошибка оплаты: " + (e?.message || e));
+      setBtnRestore(btn);
+    }
+  }
+
+  // ===== После оплаты: /tariffs/?paid=1&plan=... -> CRM =====
+  try {
+    const paid = qs().get("paid") === "1";
+    const plan = mapPlan(qs().get("plan"));
+    if (paid && plan && plan !== "trial") {
+      afterPaidRedirect(plan);
+      return;
+    }
+  } catch (e) {}
+
+  // ===== Авто-старт после логина/регистрации =====
+  try {
+    const p = mapPlan(qs().get("plan"));
+    const autostart = qs().get("autostart") === "1";
+    if (autostart && p) {
+      const u = new URL(location.href);
+      u.searchParams.delete("autostart");
+      history.replaceState(null, "", u.toString());
+      pay(p);
+    }
+  } catch (e) {}
+
+  // ===== Кнопки =====
+  const btnTrial = document.getElementById("btnStartTrial");
+  if (btnTrial) btnTrial.addEventListener("click", () => pay("trial"));
+
+  document.querySelectorAll(".btnChoosePlan").forEach((b) => {
+    b.addEventListener("click", () => pay(b.dataset.plan));
+  });
+})();
