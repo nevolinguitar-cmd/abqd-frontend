@@ -32,7 +32,6 @@
   }
 
   async function createPayment(plan) {
-    // Возврат после оплаты на /tariffs/ — там уже перекинем в CRM
     const return_url = `${CABINET_ORIGIN}/tariffs/?paid=1&plan=${encodeURIComponent(plan)}`;
 
     const headers = { "Content-Type": "application/json" };
@@ -60,32 +59,28 @@
 
   function afterPaidRedirect(plan) {
     const nextCrm = `${CABINET_ORIGIN}/dashboard/crm?paid=1&plan=${encodeURIComponent(plan)}`;
-    if (authed()) {
-      location.replace(nextCrm);
-    } else {
-      // нет токена — логин, потом CRM
-      goAuth(nextCrm, "login");
-    }
+    if (authed()) location.replace(nextCrm);
+    else goAuth(nextCrm, "login");
   }
 
   async function pay(plan) {
     plan = mapPlan(plan);
     const btn = document.activeElement;
 
-    // ===== TRIAL: сразу в конструктор (без активации) =====
+    // TRIAL -> constructor (no activation)
     if (plan === "trial") {
       location.href = `${CABINET_ORIGIN}/constructor/`;
       return;
     }
 
-    // ===== PAID: сразу в оплату (без активаций) =====
+    // PAID -> YooKassa
     try {
       setBtnBusy(btn, "Переходим к оплате…");
       const j = await createPayment(plan);
       if (!j.confirmation_url) throw new Error("Нет confirmation_url от ЮKassa");
       location.href = j.confirmation_url;
     } catch (e) {
-      // если createPayment вдруг требует авторизацию
+      // if backend requires auth, bounce to register and then autostart payment
       if (e && (e.status === 401 || e.status === 403)) {
         const back = `${CABINET_ORIGIN}/tariffs/?plan=${encodeURIComponent(plan)}&autostart=1`;
         return goAuth(back, "register");
@@ -95,7 +90,7 @@
     }
   }
 
-  // ===== После оплаты: /tariffs/?paid=1&plan=... -> CRM =====
+  // After payment: /tariffs/?paid=1&plan=...
   try {
     const paid = qs().get("paid") === "1";
     const plan = mapPlan(qs().get("plan"));
@@ -105,7 +100,7 @@
     }
   } catch (e) {}
 
-  // ===== Авто-старт после логина/регистрации =====
+  // Autostart after auth: /tariffs/?plan=pro&autostart=1 etc.
   try {
     const p = mapPlan(qs().get("plan"));
     const autostart = qs().get("autostart") === "1";
@@ -117,7 +112,6 @@
     }
   } catch (e) {}
 
-  // ===== Кнопки =====
   const btnTrial = document.getElementById("btnStartTrial");
   if (btnTrial) btnTrial.addEventListener("click", () => pay("trial"));
 
