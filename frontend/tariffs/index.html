@@ -1,186 +1,156 @@
-<!DOCTYPE html>
-<html lang="ru" data-theme="dark">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Тарифы • ABQD</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/app.css?v=3">
+(() => {
+  const API = "https://api.abqd.ru/api/v1";
+  const TOKEN_KEY = "abqd_token";
 
-  <!-- FIX: чтобы CTA-кнопки стояли строго на одном уровне -->
-  <style>
-    .pricingGrid{ align-items: stretch; }
-    .pricingCard{ height: 100%; }
-    .pricingCard .cardPad{ display:flex; flex-direction:column; height:100%; }
-    .pricingCard .features{ flex:1; }
-    .pricingCard .cta{ margin-top:auto; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
+  const mapPlan = (p) => {
+    p = (p || "").toLowerCase();
+    if (p === "starter") return "probn";
+    if (["probn", "pro", "full", "trial"].includes(p)) return p;
+    return p;
+  };
 
-    <div class="navline">
-      <a class="brand" href="/">ABQD</a>
-      <div class="navActions">
-        <a class="miniBtn" id="btnAuth" href="/auth/">Войти</a>
-        <a class="miniBtn" id="btnDash" href="/dashboard/" style="display:none">Личный кабинет</a>
-        <button class="miniBtn" id="btnLogout" type="button" style="display:none">Выйти</button>
+  const token = () => localStorage.getItem(TOKEN_KEY) || "";
+  const authed = () => !!token();
+  const qs = () => new URLSearchParams(location.search);
 
-        <div class="seg" id="themeSeg">
-          <button type="button" data-theme="dark" class="active">Тёмная</button>
-          <button type="button" data-theme="soft">Белая</button>
-        </div>
-      </div>
-    </div>
+  const goRegisterForPlan = (plan) => {
+    // Возвращаемся обратно на tariffs и автозапускаем нужный план
+    const next = `/tariffs/?plan=${encodeURIComponent(plan)}&autostart=1`;
+    location.href = `/auth/?mode=register&next=${encodeURIComponent(next)}`;
+  };
 
-    <div>
-      <h1>Тарифы</h1>
-      <p class="help">
-        ABQD — онлайн-сервис для создания и публикации цифровой визитки (профиля).
-        Оплата подписки — банковской картой через ЮKassa.
-      </p>
-    </div>
+  async function parseJsonSafe(res) {
+    const text = await res.text();
+    if (!text) return null;
+    try { return JSON.parse(text); } catch { return { raw: text }; }
+  }
 
-    <div class="pricingGrid">
+  async function createPayment(plan) {
+    // после успешной оплаты возвращаем прямо в CRM-модуль
+    const return_url = `/dashboard/crm?paid=1&plan=${encodeURIComponent(plan)}`;
 
-      <!-- TRIAL -->
-      <div class="card pricingCard">
-        <div class="cardPad">
-          <div class="planName">Trial</div>
-          <p class="planDescription">7 дней бесплатного доступа. Подходит, чтобы проверить продукт.</p>
+    const headers = { "Content-Type": "application/json" };
+    const t = token();
+    if (t) headers["Authorization"] = `Bearer ${t}`;
 
-          <div class="priceSection">
-            <p class="priceValue"><span class="currency">₽</span><span class="amount">0</span></p>
-            <p class="period">7 дней</p>
-            <p class="priceNote">Без оплаты, без привязки карты</p>
-          </div>
+    const res = await fetch(`${API}/payments/create`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ plan, return_url }),
+    });
 
-          <div class="features">
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Конструктор визитки</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Публикация профиля</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Загрузка изображений (до 5 MB за файл)</p></div>
-          </div>
+    const data = await parseJsonSafe(res);
+    if (!res.ok) {
+      const err = new Error(data?.detail || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
 
-          <div class="cta">
-            <button class="btnPrimary" id="btnStartTrial" type="button">Начать Trial</button>
-          </div>
-        </div>
-      </div>
+  async function activateTrial() {
+    const t = token();
+    if (!t) {
+      const err = new Error("Нет токена");
+      err.status = 401;
+      throw err;
+    }
 
-      <!-- ПРОБНЫЙ (plan=probn) -->
-      <div class="card pricingCard">
-        <div class="cardPad">
-          <div class="planName">Пробный</div>
-          <p class="planDescription">Базовый тариф: визитка + минимальный кабинет для работы с клиентами.</p>
+    const res = await fetch(`${API}/trial/activate`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${t}`,
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    });
 
-          <div class="priceSection">
-            <p class="priceValue"><span class="currency">₽</span><span class="amount">1</span></p>
-            <p class="period">в месяц</p>
-            <p class="priceNote">Оплата картой через ЮKassa</p>
-          </div>
+    const data = await parseJsonSafe(res);
+    if (!res.ok) {
+      const err = new Error(data?.detail || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
 
-          <div class="features">
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">1 опубликованный профиль</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Редактирование без ограничений</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Хостинг профиля на ABQD</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Мини-CRM: клиенты и таблицы</p></div>
-          </div>
+  function lockBtn(btn, txt) {
+    if (!btn || btn.tagName !== "BUTTON") return;
+    btn.disabled = true;
+    btn.dataset._txt = btn.textContent;
+    btn.textContent = txt;
+  }
 
-          <div class="cta">
-            <button class="btnPrimary btnChoosePlan" data-plan="probn" type="button">Оформить Пробный</button>
-          </div>
-        </div>
-      </div>
+  function unlockBtn(btn) {
+    if (!btn || btn.tagName !== "BUTTON") return;
+    if (btn.dataset._txt) btn.textContent = btn.dataset._txt;
+    btn.disabled = false;
+  }
 
-      <!-- ПРОДВИНУТЫЙ (plan=pro) -->
-      <div class="card pricingCard featured">
-        <div class="badge">Рекомендуем</div>
-        <div class="cardPad">
-          <div class="planName">Продвинутый</div>
-          <p class="planDescription">Для тех, кто растёт: CRM шире + поддержка + AI-модуль.</p>
+  async function pay(plan) {
+    plan = mapPlan(plan);
 
-          <div class="priceSection">
-            <p class="priceValue"><span class="currency">₽</span><span class="amount">2</span></p>
-            <p class="period">в месяц</p>
-            <p class="priceNote">Оплата картой через ЮKassa</p>
-          </div>
+    // --- TRIAL ---
+    if (plan === "trial") {
+      if (!authed()) {
+        return goRegisterForPlan("trial");
+      }
 
-          <div class="features">
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">1 опубликованный профиль</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Приоритетная поддержка</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Расширенная CRM: продажи, лиды, интеграции</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">AI-помощник</p></div>
-          </div>
+      const btn = document.activeElement;
+      try {
+        lockBtn(btn, "Активируем Trial…");
+        await activateTrial();
+      } catch (e) {
+        // Важно: если trial уже активирован — всё равно пускаем в конструктор
+        const msg = String(e?.message || "");
+        const st = Number(e?.status || 0);
+        const looksLikeAlready =
+          st === 409 || st === 400 ||
+          /already|уже|актив|trial/i.test(msg);
 
-          <div class="cta">
-            <button class="btnPrimary btnChoosePlan" data-plan="pro" type="button">Оформить Продвинутый</button>
-          </div>
-        </div>
-      </div>
+        if (!looksLikeAlready) {
+          alert("Ошибка Trial: " + msg);
+          unlockBtn(btn);
+          return;
+        }
+      }
 
-      <!-- ВСЁ ВКЛЮЧЕНО (plan=full) -->
-      <div class="card pricingCard">
-        <div class="cardPad">
-          <div class="planName">Всё включено</div>
-          <p class="planDescription">Максимум функций для системной работы и автоматизации.</p>
+      // Всегда уходим в конструктор
+      location.href = "/constructor/";
+      return;
+    }
 
-          <div class="priceSection">
-            <p class="priceValue"><span class="currency">₽</span><span class="amount">3</span></p>
-            <p class="period">в месяц</p>
-            <p class="priceNote">Оплата картой через ЮKassa</p>
-          </div>
+    // --- PAID ---
+    const btn = document.activeElement;
+    try {
+      lockBtn(btn, "Переходим к оплате…");
+      const j = await createPayment(plan);
+      if (!j?.confirmation_url) throw new Error("Нет confirmation_url от ЮKassa");
+      location.href = j.confirmation_url;
+    } catch (e) {
+      alert("Ошибка оплаты: " + (e?.message || e));
+      unlockBtn(btn);
+    }
+  }
 
-          <div class="features">
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">1 опубликованный профиль</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Приоритетная поддержка</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Полная CRM: продажи, лиды, интеграции</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Интеграции: почта, календарь</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">AI-помощник</p></div>
-            <div class="feature"><div class="featureIcon">✓</div><p class="featureText">Чат-бот в мессенджерах</p></div>
-          </div>
+  // Авто-старт Trial после регистрации/логина: /tariffs/?plan=trial&autostart=1
+  try {
+    const p = mapPlan(qs().get("plan"));
+    const autostart = qs().get("autostart") === "1";
+    if (autostart && p === "trial" && authed()) {
+      const u = new URL(location.href);
+      u.searchParams.delete("autostart");
+      history.replaceState(null, "", u.toString());
+      pay("trial");
+    }
+  } catch (_) {}
 
-          <div class="cta">
-            <button class="btnPrimary btnChoosePlan" data-plan="full" type="button">Оформить Всё включено</button>
-          </div>
-        </div>
-      </div>
+  const btnTrial = document.getElementById("btnStartTrial");
+  if (btnTrial) btnTrial.addEventListener("click", () => pay("trial"));
 
-    </div>
-
-    <div class="faqSection">
-      <h2>FAQ</h2>
-      <div class="faqGrid" style="margin-top:16px;">
-        <div class="faqItem">
-          <p class="faqQ">Как я получу доступ после оплаты?</p>
-          <p class="faqA">После успешной оплаты вы будете перенаправлены в личный кабинет (CRM) — раздел /dashboard/.</p>
-        </div>
-        <div class="faqItem">
-          <p class="faqQ">Можно ли отключить автопродление?</p>
-          <p class="faqA">Да, автопродление можно отключить. Доступ сохранится до конца оплаченного периода.</p>
-        </div>
-        <div class="faqItem">
-          <p class="faqQ">Где условия и реквизиты?</p>
-          <p class="faqA">Документы на этом домене: оферта, политика, условия, оплата/возвраты и контакты.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="footer">
-      <div>
-        <a href="/docs/offer.html">Оферта</a> •
-        <a href="/docs/privacy.html">Политика</a> •
-        <a href="/docs/terms.html">Условия</a> •
-        <a href="/docs/refunds.html">Оплата и возвраты</a> •
-        <a href="/docs/contacts.html">Контакты</a>
-      </div>
-    </div>
-
-  </div>
-
-  <script src="/assets/api.js?v=3"></script>
-  <script src="/assets/theme.js?v=3"></script>
-  <script src="/assets/tariffs.js?v=9"></script>
-</body>
-</html>
+  document.querySelectorAll(".btnChoosePlan").forEach((b) => {
+    b.addEventListener("click", () => pay(b.dataset.plan));
+  });
+})();
