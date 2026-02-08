@@ -1,5 +1,6 @@
 (() => {
   const API = "https://api.abqd.ru/api/v1";
+  const CABINET_ORIGIN = "https://app.abqd.ru"; // фиксируем один домен для localStorage
   const TOKEN_KEY = "abqd_token";
 
   const mapPlan = (p) => {
@@ -13,25 +14,20 @@
   const authed = () => !!token();
   const qs = () => new URLSearchParams(location.search);
 
-  const goRegisterForPlan = (plan) => {
-    // Возвращаемся обратно на tariffs и автозапускаем нужный план
-    const next = `/tariffs/?plan=${encodeURIComponent(plan)}&autostart=1`;
-    location.href = `/auth/?mode=register&next=${encodeURIComponent(next)}`;
+  // login/register → вернуться обратно на tariffs с автозапуском нужного плана
+  const goAuth = (plan, mode = "register") => {
+    const next = `${CABINET_ORIGIN}/tariffs/?plan=${encodeURIComponent(plan)}&autostart=1`;
+    location.href = `${CABINET_ORIGIN}/auth/?mode=${encodeURIComponent(mode)}&next=${encodeURIComponent(next)}`;
   };
 
-  async function parseJsonSafe(res) {
-    const text = await res.text();
-    if (!text) return null;
-    try { return JSON.parse(text); } catch { return { raw: text }; }
-  }
-
   async function createPayment(plan) {
-    // после успешной оплаты возвращаем прямо в CRM-модуль
-    const return_url = `/dashboard/crm?paid=1&plan=${encodeURIComponent(plan)}`;
+    // ВАЖНО: максимально надёжно возвращать на /tariffs/ после оплаты
+    // (там уже можем показать "оплачено" / вести дальше)
+    const return_url = `${CABINET_ORIGIN}/tariffs/?plan=${encodeURIComponent(plan)}&paid=1`;
 
     const headers = { "Content-Type": "application/json" };
     const t = token();
-    if (t) headers["Authorization"] = `Bearer ${t}`;
+    if (t) headers["Authorization"] = `Bearer ${t}`; // если токен есть — прикладываем
 
     const res = await fetch(`${API}/payments/create`, {
       method: "POST",
@@ -39,114 +35,99 @@
       body: JSON.stringify({ plan, return_url }),
     });
 
-    const data = await parseJsonSafe(res);
-    if (!res.ok) {
-      const err = new Error(data?.detail || `HTTP ${res.status}`);
-      err.status = res.status;
-      err.data = data;
-      throw err;
+    const text = await res.text();
+    let j;
+    try {
+      j = JSON.parse(text);
+    } catch {
+      throw new Error(text.slice(0, 200));
     }
-    return data;
+    if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
+    return j;
   }
 
   async function activateTrial() {
     const t = token();
-    if (!t) {
-      const err = new Error("Нет токена");
-      err.status = 401;
-      throw err;
-    }
+    if (!t) throw new Error("Нет токена");
 
     const res = await fetch(`${API}/trial/activate`, {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${t}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${t}`, "Content-Type": "application/json" },
       body: "{}",
     });
 
-    const data = await parseJsonSafe(res);
-    if (!res.ok) {
-      const err = new Error(data?.detail || `HTTP ${res.status}`);
-      err.status = res.status;
-      err.data = data;
-      throw err;
+    const text = await res.text();
+    let j;
+    try {
+      j = JSON.parse(text);
+    } catch {
+      j = { detail: text.slice(0, 200) };
     }
-    return data;
-  }
-
-  function lockBtn(btn, txt) {
-    if (!btn || btn.tagName !== "BUTTON") return;
-    btn.disabled = true;
-    btn.dataset._txt = btn.textContent;
-    btn.textContent = txt;
-  }
-
-  function unlockBtn(btn) {
-    if (!btn || btn.tagName !== "BUTTON") return;
-    if (btn.dataset._txt) btn.textContent = btn.dataset._txt;
-    btn.disabled = false;
+    if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
+    return j;
   }
 
   async function pay(plan) {
     plan = mapPlan(plan);
 
-    // --- TRIAL ---
+    // ===== TRIAL =====
     if (plan === "trial") {
-      if (!authed()) {
-        return goRegisterForPlan("trial");
-      }
+      if (!authed()) return goAuth("trial", "register");
 
       const btn = document.activeElement;
-      try {
-        lockBtn(btn, "Активируем Trial…");
-        await activateTrial();
-      } catch (e) {
-        // Важно: если trial уже активирован — всё равно пускаем в конструктор
-        const msg = String(e?.message || "");
-        const st = Number(e?.status || 0);
-        const looksLikeAlready =
-          st === 409 || st === 400 ||
-          /already|уже|актив|trial/i.test(msg);
-
-        if (!looksLikeAlready) {
-          alert("Ошибка Trial: " + msg);
-          unlockBtn(btn);
-          return;
-        }
+      if (btn && btn.tagName === "BUTTON") {
+        btn.disabled = true;
+        btn.dataset._txt = btn.textContent;
+        btn.textContent = "Открываем конструктор…";
       }
 
-      // Всегда уходим в конструктор
-      location.href = "/constructor/";
+      // Пытаемся активировать, но НЕ блокируем переход в конструктор
+      try {
+        await activateTrial();
+      } catch (e) {
+        console.warn("Trial activate failed, continue to constructor:", e);
+      }
+
+      location.href = `${CABINET_ORIGIN}/constructor/`;
       return;
     }
 
-    // --- PAID ---
-    const btn = document.activeElement;
+    // ===== PAID =====
     try {
-      lockBtn(btn, "Переходим к оплате…");
+      const btn = document.activeElement;
+      if (btn && btn.tagName === "BUTTON") {
+        btn.disabled = true;
+        btn.dataset._txt = btn.textContent;
+        btn.textContent = "Переходим к оплате…";
+      }
+
       const j = await createPayment(plan);
-      if (!j?.confirmation_url) throw new Error("Нет confirmation_url от ЮKassa");
+      if (!j.confirmation_url) throw new Error("Нет confirmation_url от ЮKassa");
       location.href = j.confirmation_url;
     } catch (e) {
       alert("Ошибка оплаты: " + (e?.message || e));
-      unlockBtn(btn);
+      const btn = document.activeElement;
+      if (btn && btn.tagName === "BUTTON" && btn.dataset._txt) {
+        btn.disabled = false;
+        btn.textContent = btn.dataset._txt;
+      }
     }
   }
 
-  // Авто-старт Trial после регистрации/логина: /tariffs/?plan=trial&autostart=1
+  // ===== Авто-старт после логина/регистрации =====
+  // /tariffs/?plan=trial&autostart=1
   try {
     const p = mapPlan(qs().get("plan"));
     const autostart = qs().get("autostart") === "1";
-    if (autostart && p === "trial" && authed()) {
+    if (autostart && p && authed()) {
       const u = new URL(location.href);
       u.searchParams.delete("autostart");
       history.replaceState(null, "", u.toString());
-      pay("trial");
+      pay(p);
     }
-  } catch (_) {}
+  } catch (e) {}
 
+  // ===== Кнопки =====
   const btnTrial = document.getElementById("btnStartTrial");
   if (btnTrial) btnTrial.addEventListener("click", () => pay("trial"));
 
