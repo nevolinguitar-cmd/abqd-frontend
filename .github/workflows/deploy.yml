@@ -36,16 +36,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Root Vite duplicates must not exist; CRM lives only in apps/crm
           test ! -d "./src" || { echo "ERROR: ./src exists in repo root (duplicate Vite)"; exit 1; }
           test ! -d "./public" || { echo "ERROR: ./public exists in repo root (duplicate Vite)"; exit 1; }
           test ! -f "./vite.config.js" || { echo "ERROR: ./vite.config.js exists in repo root"; exit 1; }
           test ! -f "./package.json" || { echo "ERROR: ./package.json exists in repo root"; exit 1; }
 
-          # Static frontend folder must exist
           test -d "./frontend" || { echo "ERROR: ./frontend not found in repo root"; exit 1; }
-
-          # CRM app must exist
           test -d "./apps/crm" || { echo "ERROR: ./apps/crm not found"; exit 1; }
 
           echo "OK: repo structure clean"
