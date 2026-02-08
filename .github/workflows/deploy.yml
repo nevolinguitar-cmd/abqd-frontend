@@ -96,5 +96,5 @@ jobs:
             curl -kfsSI https://127.0.0.1/dashboard/ -H "Host: app.abqd.ru" | head -n 20
             curl -kfsSI https://127.0.0.1/tariffs/   -H "Host: app.abqd.ru" | head -n 20
           else
-            echo "Skip host healthcheck for non-main branch (stage host not configured here)."
+            echo "Skip host healthcheck for non-main branch."
           fi
