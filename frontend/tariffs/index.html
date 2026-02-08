@@ -1,7 +1,16 @@
 (() => {
   const API = "https://api.abqd.ru/api/v1";
-  const CABINET_ORIGIN = "https://app.abqd.ru"; // фиксируем один домен для localStorage
+  const CABINET_ORIGIN = "https://app.abqd.ru";
   const TOKEN_KEY = "abqd_token";
+
+  const TXT = {
+    noToken: "\u041d\u0435\u0442 \u0442\u043e\u043a\u0435\u043d\u0430",
+    openConstructor: "\u041e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u043c \u043a\u043e\u043d\u0441\u0442\u0440\u0443\u043a\u0442\u043e\u0440\u2026",
+    goPay: "\u041f\u0435\u0440\u0435\u0445\u043e\u0434\u0438\u043c \u043a \u043e\u043f\u043b\u0430\u0442\u0435\u2026",
+    payErr: "\u041e\u0448\u0438\u0431\u043a\u0430 \u043e\u043f\u043b\u0430\u0442\u044b: ",
+    trialErr: "\u041e\u0448\u0438\u0431\u043a\u0430 Trial: ",
+    noConfirm: "\u041d\u0435\u0442 confirmation_url \u043e\u0442 \u042eKassa",
+  };
 
   const mapPlan = (p) => {
     p = (p || "").toLowerCase();
@@ -14,15 +23,33 @@
   const authed = () => !!token();
   const qs = () => new URLSearchParams(location.search);
 
-  // login/register → вернуться обратно на tariffs с автозапуском нужного плана
-  const goAuth = (plan, mode = "register") => {
+  const setBusyBtn = (txt) => {
+    const btn = document.activeElement;
+    if (btn && btn.tagName === "BUTTON") {
+      btn.disabled = true;
+      btn.dataset._txt = btn.textContent;
+      btn.textContent = txt;
+      return btn;
+    }
+    return null;
+  };
+
+  const restoreBtn = (btn) => {
+    if (btn && btn.dataset && btn.dataset._txt) {
+      btn.disabled = false;
+      btn.textContent = btn.dataset._txt;
+      delete btn.dataset._txt;
+    }
+  };
+
+  // auth -> back to tariffs with autostart
+  const goAuth = (plan, mode) => {
     const next = `${CABINET_ORIGIN}/tariffs/?plan=${encodeURIComponent(plan)}&autostart=1`;
     location.href = `${CABINET_ORIGIN}/auth/?mode=${encodeURIComponent(mode)}&next=${encodeURIComponent(next)}`;
   };
 
   async function createPayment(plan) {
-    // После успешной оплаты возвращаем в CRM-модуль
-    // (чтобы работало — к оплате нужно идти уже с токеном)
+    // after payment -> CRM module
     const return_url = `${CABINET_ORIGIN}/dashboard/crm?paid=1&plan=${encodeURIComponent(plan)}`;
 
     const headers = { "Content-Type": "application/json" };
@@ -44,7 +71,7 @@
 
   async function activateTrial() {
     const t = token();
-    if (!t) throw new Error("Нет токена");
+    if (!t) throw new Error(TXT.noToken);
 
     const res = await fetch(`${API}/trial/activate`, {
       method: "POST",
@@ -62,64 +89,61 @@
   async function pay(plan) {
     plan = mapPlan(plan);
 
-    // ===== TRIAL =====
+    // TRIAL -> constructor always
     if (plan === "trial") {
       if (!authed()) return goAuth("trial", "register");
 
-      const btn = document.activeElement;
-      if (btn && btn.tagName === "BUTTON") {
-        btn.disabled = true;
-        btn.dataset._txt = btn.textContent;
-        btn.textContent = "Открываем конструктор…";
-      }
+      setBusyBtn(TXT.openConstructor);
 
-      // Пытаемся активировать trial, но даже при ошибке ведём в конструктор
-      try { await activateTrial(); }
-      catch (e) { console.warn("Trial activate failed, continue to constructor:", e); }
+      try { await activateTrial(); } catch (e) { /* ignore, still go */ }
 
       location.href = `${CABINET_ORIGIN}/constructor/`;
       return;
     }
 
-    // ===== PAID =====
-    // Ключевая правка: без токена НЕ идём в оплату, иначе после оплаты не гарантирован вход в CRM
-    if (!authed()) return goAuth(plan, "register");
+    // PAID -> must be authed to guarantee CRM after payment
+    if (!authed()) return goAuth(plan, "login");
 
+    const btn = setBusyBtn(TXT.goPay);
     try {
-      const btn = document.activeElement;
-      if (btn && btn.tagName === "BUTTON") {
-        btn.disabled = true;
-        btn.dataset._txt = btn.textContent;
-        btn.textContent = "Переходим к оплате…";
-      }
-
       const j = await createPayment(plan);
-      if (!j.confirmation_url) throw new Error("Нет confirmation_url от ЮKassa");
+      if (!j.confirmation_url) throw new Error(TXT.noConfirm);
       location.href = j.confirmation_url;
     } catch (e) {
-      alert("Ошибка оплаты: " + (e?.message || e));
-      const btn = document.activeElement;
-      if (btn && btn.tagName === "BUTTON" && btn.dataset._txt) {
-        btn.disabled = false;
-        btn.textContent = btn.dataset._txt;
-      }
+      alert(TXT.payErr + (e && e.message ? e.message : e));
+      restoreBtn(btn);
     }
   }
 
-  // ===== Авто-старт после логина/регистрации =====
-  // /tariffs/?plan=trial&autostart=1  или /tariffs/?plan=pro&autostart=1
+  // fallback: if we ever land on tariffs with paid=1 -> go CRM
+  try {
+    const paid = qs().get("paid") === "1";
+    const p = mapPlan(qs().get("plan"));
+    if (paid && p && location.pathname.indexOf("/tariffs") === 0) {
+      location.replace(`${CABINET_ORIGIN}/dashboard/crm?paid=1&plan=${encodeURIComponent(p)}`);
+      return;
+    }
+  } catch (e) {}
+
+  // autostart after auth
   try {
     const p = mapPlan(qs().get("plan"));
     const autostart = qs().get("autostart") === "1";
-    if (autostart && p && authed()) {
+
+    if (autostart && p) {
+      if (!authed()) {
+        return goAuth(p, p === "trial" ? "register" : "login");
+      }
+
       const u = new URL(location.href);
       u.searchParams.delete("autostart");
       history.replaceState(null, "", u.toString());
+
       pay(p);
     }
   } catch (e) {}
 
-  // ===== Кнопки =====
+  // buttons
   const btnTrial = document.getElementById("btnStartTrial");
   if (btnTrial) btnTrial.addEventListener("click", () => pay("trial"));
 
