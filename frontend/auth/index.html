@@ -119,6 +119,9 @@
       pointer-events:none;
       filter: drop-shadow(0 18px 70px rgba(0,0,0,.78)) drop-shadow(0 0 34px rgba(var(--accent), .12));
     }
+
+    /* FIX: поддержка picture + нормальная геометрия */
+    .shellLogo picture{ display:block; height:100%; }
     .shellLogo img{ height:100%; width:auto; max-width: min(520px, 92vw); display:block; opacity:.96; }
 
     .card{
@@ -271,7 +274,11 @@
 
     <div class="shell" role="main">
       <div class="shellLogo" aria-hidden="true">
-        <img src="/assets/abqd-logo.svg" alt="abqd" />
+        <!-- Desktop: SVG, Mobile: PNG -->
+        <picture>
+          <source media="(max-width: 640px)" srcset="https://static.tildacdn.com/tild6464-3131-4736-b938-656238643465/_abqd.png">
+          <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" alt="abqd" />
+        </picture>
       </div>
 
       <section class="card" aria-label="Auth">
