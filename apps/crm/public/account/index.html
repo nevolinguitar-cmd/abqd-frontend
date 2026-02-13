@@ -9,114 +9,128 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
-      --font: "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      --bg:#0b0c10; --panel:#0f1117; --text:rgba(255,255,255,.92); --muted:rgba(255,255,255,.62);
-      --line:rgba(255,255,255,.12); --r:18px; --shadow:0 28px 90px rgba(0,0,0,.55);
-      --accent: 46,124,255;
+      --font: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      --bg:#0b0d12;
+      --panel:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.12);
+      --txt:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.62);
+      --accent:#2e7cff;
+      --radius:18px;
+      --shadow:0 24px 90px rgba(0,0,0,.45);
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:var(--font);color:var(--text);background:radial-gradient(1100px 700px at 20% 10%, rgba(var(--accent),.18), transparent 55%), var(--bg);}
-    a{color:rgba(255,255,255,.86);text-decoration:none}
-    .wrap{max-width:980px;margin:0 auto;padding:22px 14px 50px;}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand b{letter-spacing:-.02em}
-    .btnMini{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);padding:10px 12px;border-radius:999px;font-weight:800;cursor:pointer}
-    .card{border:1px solid var(--line);background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(15,17,23,.72));border-radius:22px;box-shadow:var(--shadow);padding:18px;backdrop-filter:blur(16px)}
-    h1{margin:8px 0 6px;font-size:30px;letter-spacing:-.04em}
-    .help{margin:0 0 14px;color:var(--muted);font-weight:600;line-height:1.55}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    @media (max-width:860px){.grid{grid-template-columns:1fr}}
-    label{display:block;margin:12px 0 8px;color:rgba(255,255,255,.72);font-weight:800}
-    .field{width:100%;padding:14px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);color:var(--text);outline:none;font-size:15px}
-    .field:focus{border-color:rgba(var(--accent),.65);box-shadow:0 0 0 4px rgba(var(--accent),.14)}
-    textarea.field{min-height:120px;resize:vertical}
-    .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
-    .btn{border:1px solid rgba(var(--accent),.35);background:linear-gradient(180deg, rgba(var(--accent),.60), rgba(var(--accent),.22));
-      color:rgba(255,255,255,.95);padding:14px 16px;border-radius:16px;font-weight:900;cursor:pointer}
-    .btn[disabled]{opacity:.55;cursor:not-allowed}
-    .ghost{border:1px solid var(--line);background:rgba(255,255,255,.06)}
-    .toast{display:none;margin-top:12px;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:rgba(255,255,255,.88)}
+    body{
+      margin:0;font-family:var(--font);color:var(--txt);
+      background:
+        radial-gradient(900px 600px at 20% 10%, rgba(46,124,255,.18), transparent 58%),
+        radial-gradient(900px 600px at 85% 20%, rgba(140,90,255,.14), transparent 60%),
+        var(--bg);
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:22px 14px 46px;}
+    .top{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      padding:12px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(0,0,0,.22);
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--txt);font-weight:900;letter-spacing:.02em}
+    .brand img{height:24px;width:auto;display:block;opacity:.95}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{
+      border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);
+      padding:10px 14px;border-radius:999px;cursor:pointer;font-weight:800;
+      text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+    }
+    .btn.primary{border-color:rgba(46,124,255,.35);background:rgba(46,124,255,.18)}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px;}
+    .card{
+      border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
+      box-shadow:var(--shadow);padding:18px;backdrop-filter: blur(14px);
+    }
+    h1{margin:0 0 6px;font-size:28px;letter-spacing:-.03em}
+    .hint{color:var(--muted);font-size:13.5px;line-height:1.5}
+    label{display:block;margin:14px 0 7px;color:var(--muted);font-weight:700}
+    input,textarea{
+      width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      color:var(--txt);padding:14px 14px;font-size:15px;outline:none;
+    }
+    textarea{min-height:120px;resize:vertical}
+    input:focus,textarea:focus{border-color:rgba(46,124,255,.55);box-shadow:0 0 0 4px rgba(46,124,255,.14)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:760px){.row{grid-template-columns:1fr}}
+    .toast{display:none;margin-top:12px;padding:12px 12px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.22)}
     .toast.show{display:block}
-    .toast.ok{border-color:rgba(104,245,169,.35)}
-    .toast.err{border-color:rgba(255,86,110,.40)}
-    .kv{color:var(--muted);font-weight:700;font-size:13px;margin-top:8px}
-    code{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .toast.ok{border-color:rgba(60,210,140,.35)}
+    .toast.err{border-color:rgba(255,90,120,.40)}
+    .mini{font-size:12.5px;color:var(--muted);margin-top:8px}
+    .sep{height:1px;background:var(--line);margin:14px 0}
+    pre{margin:0;white-space:pre-wrap;word-break:break-word;color:rgba(255,255,255,.82);font-size:12.5px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="top">
-      <div class="brand">
-        <b>ABQD</b>
-        <span class="kv">/dashboard/account</span>
-      </div>
-      <div class="row">
-        <a class="btnMini" href="/dashboard/">← В кабинет</a>
-        <a class="btnMini" href="/constructor/">Конструктор</a>
-        <button class="btnMini" id="btnLogout" type="button">Выйти</button>
+      <a class="brand" href="/dashboard/">
+        <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" alt="abqd">
+        <span>Личный кабинет</span>
+      </a>
+      <div class="actions">
+        <a class="btn" href="/constructor/">Конструктор</a>
+        <a class="btn" href="/dashboard/">CRM</a>
+        <button class="btn primary" id="btnSave" type="button">Сохранить</button>
+        <button class="btn" id="btnLogout" type="button">Выйти</button>
       </div>
     </div>
 
-    <section class="card">
-      <h1>Личный кабинет</h1>
-      <p class="help">
-        Здесь ты правишь публичные данные профиля (имя, роль, телефон, описание). Email и пароль — через экран входа/восстановления.
-      </p>
-
-      <div id="toast" class="toast" aria-live="polite"></div>
-
-      <div class="grid">
-        <div>
-          <label>Ваш email</label>
-          <input class="field" id="meEmail" type="text" disabled value="—" />
-          <div class="kv">Только для отображения. Изменение email пока не подключено.</div>
+    <div class="grid">
+      <div class="card">
+        <h1>Профиль</h1>
+        <div class="hint">
+          Здесь редактируем базовые данные профиля (визитки). Токен берём из localStorage: <b>abqd_token</b>.
         </div>
 
-        <div>
-          <label>Ваш slug</label>
-          <input class="field" id="meSlug" type="text" disabled value="—" />
-          <div class="kv">Профиль открывается как <code>/u/&lt;slug&gt;</code>.</div>
-        </div>
-      </div>
+        <div id="toast" class="toast" aria-live="polite"></div>
 
-      <div class="grid" style="margin-top:6px;">
-        <div>
-          <label for="fullName">Имя (в профиле)</label>
-          <input class="field" id="fullName" type="text" placeholder="Александр" />
+        <div class="row">
+          <div>
+            <label for="slug">Slug профиля</label>
+            <input id="slug" placeholder="например: alexander_nevolin_" />
+            <div class="mini">Если пусто — возьмём из конструктора (localStorage <b>abqd_constructor_demo_v2</b>).</div>
+          </div>
+          <div>
+            <label for="email">Email аккаунта</label>
+            <input id="email" disabled />
+          </div>
         </div>
-        <div>
-          <label for="role">Роль / Компания</label>
-          <input class="field" id="role" type="text" placeholder="Директор / ABQD" />
-        </div>
-      </div>
 
-      <div class="grid" style="margin-top:6px;">
-        <div>
-          <label for="phone">Телефон</label>
-          <input class="field" id="phone" type="tel" inputmode="tel" placeholder="+7 999 000-12-34" />
+        <div class="row">
+          <div>
+            <label for="fullName">Имя</label>
+            <input id="fullName" placeholder="Александр" />
+          </div>
+          <div>
+            <label for="phone">Телефон</label>
+            <input id="phone" placeholder="+7..." />
+          </div>
         </div>
-        <div>
-          <label for="logoLink">Сайт (logoLink)</label>
-          <input class="field" id="logoLink" type="url" placeholder="https://abqd.ru" />
-        </div>
-      </div>
 
-      <div style="margin-top:6px;">
+        <label for="role">Роль / Компания</label>
+        <input id="role" placeholder="CEO / Компания" />
+
+        <label for="logoLink">Сайт (logoLink)</label>
+        <input id="logoLink" placeholder="https://..." />
+
         <label for="about">О себе</label>
-        <textarea class="field" id="about" placeholder="Коротко: чем занимаешься и чем полезен"></textarea>
-      </div>
+        <textarea id="about" placeholder="Коротко и по делу..."></textarea>
 
-      <div class="row">
-        <button class="btn" id="btnSave" type="button">Сохранить</button>
-        <a class="btn ghost" id="btnOpenProfile" href="/u/" style="display:none;">Открыть профиль</a>
+        <div class="sep"></div>
+        <div class="mini">Диагностика (me):</div>
+        <pre id="meDump">{}</pre>
       </div>
-
-      <div class="kv" id="kvHint"></div>
-    </section>
+    </div>
   </div>
 
-  <script src="/dashboard/assets/account.js?v=1"></script>
+  <script type="module" src="/dashboard/assets/account.js?v=1"></script>
 </body>
 </html>
