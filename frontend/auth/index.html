@@ -1,840 +1,340 @@
-<!doctype html>
-<html lang="ru" data-theme="dark">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ABQD — Вход / Регистрация</title>
+<script>
+(() => {
+  const API_ORIGIN = "https://api.abqd.ru";
+  const API_BASE = API_ORIGIN + "/api/v1";
+  const LS_TOKEN_KEY = "abqd_token";
 
-  <!-- Montserrat (brand font) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  const $ = (id) => document.getElementById(id);
 
-  <style>
-    :root{
-      --font: "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      --txt: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.66);
-      --accent: 46,124,255;
-      --panelR: 22px;
-      --shadow: 0 30px 110px rgba(0,0,0,.55);
+  function showToast(msg, kind="err"){
+    const el = $("toast");
+    el.className = "toast show " + (kind === "ok" ? "ok" : "err");
+    el.textContent = msg;
+  }
+  function hideToast(){
+    const el = $("toast");
+    el.className = "toast";
+    el.textContent = "";
+  }
+  function setBusy(btn, busy, textBusy="Подождите…"){
+    if(!btn) return;
+    if(!btn.dataset.txt) btn.dataset.txt = btn.textContent;
+    btn.disabled = !!busy;
+    btn.textContent = busy ? textBusy : btn.dataset.txt;
+  }
+  function safeStr(v){
+    if(v === null || v === undefined) return "";
+    if(typeof v === "string") return v;
+    try { return JSON.stringify(v); } catch { return String(v); }
+  }
 
-      --corridorImg: url("https://static.tildacdn.com/tild3361-3261-4562-a464-333532376265/ChatGPT_Image_21__20.png");
+  async function fetchJson(path, { method="GET", body=null, headers={} } = {}){
+    const url = path.startsWith("http") ? path : (API_BASE + path);
+    const h = Object.assign({}, headers);
+    if(body !== null) h["content-type"] = "application/json";
 
-      --shellMax: 620px;
-      --cardMax: 560px;
+    const res = await fetch(url, {
+      method,
+      headers: h,
+      body: body !== null ? JSON.stringify(body) : undefined,
+      credentials: "omit",
+    });
+
+    const text = await res.text();
+    let json = null;
+    try { json = text ? JSON.parse(text) : null; } catch {}
+    const hdrs = {};
+    try { for (const [k,v] of res.headers.entries()) hdrs[k.toLowerCase()] = v; } catch {}
+
+    return { ok: res.ok, status: res.status, json, text, headers: hdrs, url };
+  }
+
+  function pickError(r){
+    const j = r && r.json;
+    if(j && typeof j === "object"){
+      return j.detail || j.message || safeStr(j);
     }
+    return (r && r.text) ? r.text : ("HTTP " + (r ? r.status : "ERR"));
+  }
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      font-family: var(--font);
-      color: var(--txt);
-      background: #07090d;
-      overflow-x:hidden;
+  function extractTokenFromJson(obj){
+    if(!obj || typeof obj !== "object") return "";
+    const candidates = [
+      obj.token,
+      obj.access_token,
+      obj.accessToken,
+      obj.jwt,
+      obj?.data?.token,
+      obj?.data?.access_token,
+      obj?.result?.token,
+    ];
+    for(const t of candidates){
+      if(typeof t === "string" && t.trim().length >= 12) return t.trim();
     }
-
-    .stage{
-      position: relative;
-      min-height: 100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: 34px 18px;
-      isolation:isolate;
-      overflow:hidden;
-    }
-
-    .bgImage{
-      position:absolute; inset:0;
-      z-index:0;
-      pointer-events:none;
-      background-color:#000;
-      background-image:
-        radial-gradient(1200px 800px at 50% 44%, rgba(255,255,255,.035), rgba(0,0,0,0) 62%),
-        linear-gradient(180deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.30) 46%, rgba(0,0,0,.86) 100%),
-        var(--corridorImg);
-      background-repeat:no-repeat;
-      background-position: 50% 50%;
-      background-size: cover;
-      filter: saturate(1.03) contrast(1.04) brightness(.92);
-      transform: translateZ(0);
-    }
-
-    .mask{
-      position:absolute; inset:0;
-      z-index:1;
-      pointer-events:none;
-      background:
-        radial-gradient(520px 520px at 88% 88%, rgba(0,0,0,.92), transparent 72%),
-        radial-gradient(760px 420px at 50% 46%, rgba(0,0,0,.55), transparent 70%);
-      opacity:.70;
-    }
-
-    .tint{
-      position:absolute; inset:0;
-      z-index:2;
-      pointer-events:none;
-      background:
-        radial-gradient(900px 620px at 18% 12%, rgba(var(--accent), .22), transparent 55%),
-        radial-gradient(900px 620px at 85% 20%, rgba(255,255,255,.08), transparent 60%),
-        radial-gradient(900px 720px at 50% 92%, rgba(var(--accent), .14), transparent 66%),
-        linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,0) 32%, rgba(0,0,0,.24) 100%);
-    }
-
-    .vignette{
-      position:absolute; inset:0;
-      z-index:3;
-      pointer-events:none;
-      background: radial-gradient(1300px 740px at 50% 52%, rgba(0,0,0,0) 30%, rgba(0,0,0,.62) 78%, rgba(0,0,0,.92) 100%);
-      opacity:.60;
-    }
-
-    .grain{
-      position:absolute; inset:0;
-      z-index:4;
-      pointer-events:none;
-      opacity:.03;
-      mix-blend-mode: overlay;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
-    }
-    @media (max-width: 980px){ .grain{ display:none; } }
-
-    .shell{
-      width: min(var(--shellMax), 100%);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap: 12px;
-      z-index:10;
-    }
-
-    .shellLogo{
-      height: clamp(70px, 7.5vw, 110px);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      pointer-events:none;
-      filter: drop-shadow(0 18px 70px rgba(0,0,0,.78)) drop-shadow(0 0 34px rgba(var(--accent), .12));
-    }
-    .shellLogo picture{ display:block; height:100%; }
-    .shellLogo img{ height:100%; width:auto; max-width: min(520px, 92vw); display:block; opacity:.96; }
-
-    .card{
-      position:relative;
-      width: min(var(--cardMax), 100%);
-      border-radius: var(--panelR);
-      padding: 26px;
-      border: 1px solid rgba(255,255,255,.12);
-      background:
-        radial-gradient(1200px 700px at 20% 0%, rgba(255,255,255,.10), transparent 60%),
-        radial-gradient(900px 600px at 80% 30%, rgba(120,80,255,.26), transparent 58%),
-        linear-gradient(180deg, rgba(255,255,255,.06) 0%, rgba(15,18,32,.62) 50%, rgba(7,9,16,.86) 100%);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-    .card::after{
-      content:"";
-      position:absolute;
-      inset:1px;
-      border-radius: calc(var(--panelR) - 1px);
-      pointer-events:none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.22);
-    }
-
-    .tabsWrap{
-      position:relative;
-      z-index:1;
-      display:flex;
-      padding: 6px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.22);
-      border: 1px solid rgba(255,255,255,.10);
-    }
-
-    .tab{
-      flex:1;
-      border:0;
-      border-radius: 999px;
-      padding: 14px 16px;
-      font-family: var(--font);
-      font-weight: 800;
-      font-size: 18px;
-      color: rgba(255,255,255,.72);
-      background: transparent;
-      cursor:pointer;
-      transition: transform .18s ease, background .18s ease, box-shadow .18s ease, color .18s ease;
-    }
-
-    .tab.active{
-      color: rgba(255,255,255,.96);
-      background: linear-gradient(180deg, rgba(46,124,255,.55), rgba(46,124,255,.22));
-      box-shadow: 0 16px 60px rgba(0,0,0,.35);
-      border: 1px solid rgba(46,124,255,.35);
-    }
-    .tab:active{ transform: scale(.99); }
-
-    .pane{ display:none; padding: 20px 6px 6px; position:relative; z-index:1; }
-    .pane.active{ display:block; }
-
-    label{ display:block; font-size: 16px; color: rgba(255,255,255,.70); margin: 14px 0 8px; }
-
-    .field{
-      width:100%;
-      padding: 18px 18px;
-      border-radius: 18px;
-      font-family: var(--font);
-      font-size: 18px;
-      color: rgba(255,255,255,.92);
-      outline:none;
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(0,0,0,.28), 0 18px 55px rgba(0,0,0,.18);
-      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
-    }
-    .field::placeholder{ color: rgba(255,255,255,.40); }
-    .field:focus{
-      border-color: rgba(46,124,255,.62);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.30), 0 0 0 5px rgba(46,124,255,.14), 0 22px 70px rgba(0,0,0,.26);
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-      transform: translateY(-1px);
-    }
-
-    .btn{
-      width:100%;
-      border:0;
-      border-radius: 20px;
-      padding: 18px 18px;
-      font-family: var(--font);
-      font-weight: 800;
-      font-size: 18px;
-      color: rgba(255,255,255,.95);
-      cursor:pointer;
-      background: linear-gradient(180deg, rgba(46,124,255,.60), rgba(46,124,255,.26));
-      border: 1px solid rgba(46,124,255,.38);
-      box-shadow: 0 18px 70px rgba(0,0,0,.32);
-      transition: transform .18s ease;
-      margin-top: 16px;
-    }
-    .btn:active{ transform: translateY(1px); }
-    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
-
-    .hint{ font-size: 13px; color: rgba(255,255,255,.56); line-height: 1.45; margin-top: 8px; }
-
-    .toast{
-      display:none;
-      margin-top: 12px;
-      padding: 12px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.20);
-      color: rgba(255,255,255,.86);
-      font-size: 14px;
-      position:relative;
-      z-index:1;
-      white-space: pre-wrap;
-    }
-    .toast.show{ display:block; }
-    .toast.ok{ border-color: rgba(104,245,169, .35); }
-    .toast.err{ border-color: rgba(255, 86, 110, .40); }
-
-    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
-    @media (max-width: 980px){ .row{ grid-template-columns:1fr; } }
-
-    .linkRow{ margin-top: 10px; display:flex; gap:18px; flex-wrap:wrap; }
-    .link{
-      border:0;
-      background: transparent;
-      color: rgba(255,255,255,.78);
-      font-family: var(--font);
-      cursor:pointer;
-      padding: 0;
-      font-size: 15px;
-      font-weight: 800;
-    }
-    .link:hover{ color: rgba(255,255,255,.90); }
-
-    .divider{
-      margin: 14px 0 6px;
-      height:1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
-      opacity:.9;
-    }
-
-    /* Показать пароль / код */
-    .passWrap{ position:relative; }
-    .passWrap .field{ padding-right: 118px; }
-    .toggleBtn{
-      position:absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.18);
-      color: rgba(255,255,255,.88);
-      font-family: var(--font);
-      font-weight: 800;
-      font-size: 14px;
-      padding: 10px 12px;
-      cursor:pointer;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
-    }
-    .toggleBtn:active{ transform: translateY(-50%) scale(.99); }
-
-    @media (prefers-reduced-motion: reduce){
-      .bgImage{ animation:none !important; }
-    }
-  </style>
-</head>
-<body>
-  <div class="stage">
-    <div class="bgImage" aria-hidden="true"></div>
-    <div class="mask" aria-hidden="true"></div>
-    <div class="tint" aria-hidden="true"></div>
-    <div class="vignette" aria-hidden="true"></div>
-    <div class="grain" aria-hidden="true"></div>
-
-    <div class="shell" role="main">
-      <div class="shellLogo" aria-hidden="true">
-        <picture>
-          <source media="(max-width: 640px)" srcset="https://static.tildacdn.com/tild6464-3131-4736-b938-656238643465/_abqd.png">
-          <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" alt="abqd" />
-        </picture>
-      </div>
-
-      <section class="card" aria-label="Auth">
-        <div class="tabsWrap" role="tablist" aria-label="Режим">
-          <button class="tab active" id="tabLogin" role="tab" aria-selected="true" aria-controls="paneLogin" type="button">Вход</button>
-          <button class="tab" id="tabRegister" role="tab" aria-selected="false" aria-controls="paneRegister" type="button">Регистрация</button>
-        </div>
-
-        <div id="toast" class="toast" aria-live="polite"></div>
-
-        <!-- LOGIN -->
-        <div class="pane active" id="paneLogin" role="tabpanel" aria-labelledby="tabLogin">
-          <form id="formLogin" autocomplete="on">
-            <div>
-              <label for="loginEmail">Email</label>
-              <input class="field" id="loginEmail" type="email" required placeholder="name@example.com" autocomplete="email" />
-            </div>
-
-            <div>
-              <label for="loginPass">Пароль</label>
-              <div class="passWrap">
-                <input class="field" id="loginPass" type="password" required placeholder="••••••••" autocomplete="current-password" />
-                <button class="toggleBtn" type="button" data-toggle="#loginPass">Показать</button>
-              </div>
-              <div class="hint">Если у тебя вход через код 6 цифр — вставь код как пароль или используй блок “Вход по коду”.</div>
-            </div>
-
-            <button class="btn" id="btnLogin" type="submit">Войти</button>
-
-            <div class="linkRow">
-              <button class="link" type="button" id="btnShowReset">Забыли пароль?</button>
-              <button class="link" type="button" id="btnShowCode">Вход по коду</button>
-            </div>
-
-            <!-- RESET -->
-            <div id="resetBox" style="display:none; margin-top:10px;">
-              <div class="divider"></div>
-              <label for="resetEmail">Email для восстановления</label>
-              <input class="field" id="resetEmail" type="email" placeholder="name@example.com" autocomplete="email" />
-              <button class="btn" id="btnReset" type="button" style="margin-top:10px;">Отправить</button>
-              <div class="hint">Если функция отключена на сервере — покажем ошибку (это нормально).</div>
-            </div>
-
-            <!-- CODE LOGIN -->
-            <div id="codeBox" style="display:none; margin-top:10px;">
-              <div class="divider"></div>
-              <div class="hint" style="margin-top:0;">
-                Получи код на почту, затем введи 6 цифр и войди.
-              </div>
-              <button class="btn" id="btnCodeRequest" type="button" style="margin-top:12px;">Получить код на почту</button>
-
-              <label for="loginCode" style="margin-top:14px;">Код (6 цифр)</label>
-              <div class="passWrap">
-                <input class="field" id="loginCode" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" maxlength="6" />
-                <button class="toggleBtn" type="button" data-toggle="#loginCode">Показать</button>
-              </div>
-
-              <button class="btn" id="btnCodeLogin" type="button">Войти по коду</button>
-              <div class="hint">Если сервер принимает код как password — “Войти по коду” сделает это автоматически.</div>
-            </div>
-
-          </form>
-        </div>
-
-        <!-- REGISTER -->
-        <div class="pane" id="paneRegister" role="tabpanel" aria-labelledby="tabRegister">
-          <form id="formRegister" autocomplete="on">
-            <div class="row">
-              <div>
-                <label for="regName">Имя</label>
-                <input class="field" id="regName" type="text" required placeholder="Александр" autocomplete="name" />
-              </div>
-              <div>
-                <label for="regPhone">Телефон</label>
-                <input class="field" id="regPhone" type="tel" inputmode="tel" placeholder="+7 999 000-12-34" autocomplete="tel" />
-                <div class="hint">Можно оставить пустым, если не требуется.</div>
-              </div>
-            </div>
-
-            <div>
-              <label for="regEmail">Email</label>
-              <input class="field" id="regEmail" type="email" required placeholder="name@example.com" autocomplete="email" />
-            </div>
-
-            <div class="row">
-              <div>
-                <label for="regPass">Пароль</label>
-                <div class="passWrap">
-                  <input class="field" id="regPass" type="password" required placeholder="Минимум 8 символов" autocomplete="new-password" />
-                  <button class="toggleBtn" type="button" data-toggle="#regPass">Показать</button>
-                </div>
-              </div>
-              <div>
-                <label for="regPass2">Повтори пароль</label>
-                <div class="passWrap">
-                  <input class="field" id="regPass2" type="password" required placeholder="Повтори" autocomplete="new-password" />
-                  <button class="toggleBtn" type="button" data-toggle="#regPass2">Показать</button>
-                </div>
-              </div>
-            </div>
-
-            <button class="btn" id="btnRegister" type="submit">Создать аккаунт</button>
-
-            <!-- Verify block (появится после register) -->
-            <div id="verifyBox" style="display:none; margin-top:14px;">
-              <div class="divider"></div>
-              <label for="regCode">Код из письма</label>
-              <input class="field" id="regCode" inputmode="numeric" autocomplete="one-time-code" placeholder="6 цифр" maxlength="6" />
-              <button class="btn" id="btnVerify" type="button" style="margin-top:10px;">Подтвердить</button>
-              <div class="hint">Код нужен один раз — при создании аккаунта.</div>
-              <div class="linkRow" style="margin-top:8px;">
-                <button class="link" type="button" id="btnResend">Отправить код ещё раз</button>
-              </div>
-            </div>
-
-            <div class="hint" style="margin-top:10px;">Нажимая «Создать аккаунт», вы подтверждаете согласие на обработку данных.</div>
-          </form>
-        </div>
-      </section>
-    </div>
-  </div>
-
-  <script>
-    (() => {
-      // ====== CONFIG ======
-      const API_ORIGIN = "https://api.abqd.ru";
-      const API_BASE = API_ORIGIN + "/api/v1";
-      const LS_TOKEN_KEY = "abqd_token";
-
-      // ====== HELPERS ======
-      const $ = (id) => document.getElementById(id);
-
-      function showToast(msg, kind="err"){
-        const el = $("toast");
-        el.className = "toast show " + (kind === "ok" ? "ok" : "err");
-        el.textContent = msg;
-      }
-      function hideToast(){
-        const el = $("toast");
-        el.className = "toast";
-        el.textContent = "";
-      }
-      function setBusy(btn, busy, textBusy="Подождите…"){
-        if(!btn) return;
-        if(!btn.dataset.txt) btn.dataset.txt = btn.textContent;
-        btn.disabled = !!busy;
-        btn.textContent = busy ? textBusy : btn.dataset.txt;
-      }
-      function safeStr(v){
-        if(v === null || v === undefined) return "";
-        if(typeof v === "string") return v;
-        try { return JSON.stringify(v); } catch { return String(v); }
-      }
-
-      async function fetchJson(path, { method="GET", body=null, headers={} } = {}){
-        const url = path.startsWith("http") ? path : (API_BASE + path);
-        const h = Object.assign({}, headers);
-        if(body !== null) h["content-type"] = "application/json";
-
-        const res = await fetch(url, {
-          method,
-          headers: h,
-          body: body !== null ? JSON.stringify(body) : undefined,
-          // Мы работаем через Bearer token. Если когда-то решишь на cookie-сессии — поменяешь на "include" и добавишь allow-credentials.
-          credentials: "omit",
-        });
-
-        const text = await res.text();
-        let json = null;
-        try { json = text ? JSON.parse(text) : null; } catch {}
-        const hdrs = {};
-        try { for (const [k,v] of res.headers.entries()) hdrs[k.toLowerCase()] = v; } catch {}
-
-        return { ok: res.ok, status: res.status, json, text, headers: hdrs, url };
-      }
-
-      function pickError(r){
-        const j = r && r.json;
-        if(j && typeof j === "object"){
-          return j.detail || j.message || safeStr(j);
+    // рекурсивный поиск ключей token/jwt
+    const seen = new Set();
+    const stack = [obj];
+    while(stack.length){
+      const cur = stack.pop();
+      if(!cur || typeof cur !== "object" || seen.has(cur)) continue;
+      seen.add(cur);
+      for(const [k,v] of Object.entries(cur)){
+        if(typeof v === "string" && /token|jwt/i.test(k) && v.trim().length >= 12){
+          return v.trim();
         }
-        return (r && r.text) ? r.text : ("HTTP " + (r ? r.status : "ERR"));
+        if(v && typeof v === "object") stack.push(v);
       }
+    }
+    return "";
+  }
 
-      // Очень устойчивое извлечение токена (на будущее, чтобы формат не ломал логин)
-      function extractTokenFromJson(obj){
-        if(!obj || typeof obj !== "object") return "";
+  function extractToken(r){
+    const t1 = extractTokenFromJson(r && r.json);
+    if(t1) return t1;
+    const h = (r && r.headers) || {};
+    const auth = h["authorization"] || h["x-abqd-token"] || h["x-token"];
+    if(typeof auth === "string" && auth.length >= 12){
+      return auth.replace(/^Bearer\s+/i, "").trim();
+    }
+    return "";
+  }
 
-        // частые варианты
-        const candidates = [
-          obj.token,
-          obj.access_token,
-          obj.accessToken,
-          obj.jwt,
-          obj.jwt_token,
-          obj.id_token,
-          obj.bearer,
-          obj?.data?.token,
-          obj?.data?.access_token,
-          obj?.data?.accessToken,
-          obj?.result?.token,
-          obj?.result?.access_token,
-          obj?.result?.accessToken,
-        ];
-        for(const t of candidates){
-          if(typeof t === "string" && t.trim().length >= 12) return t.trim();
-        }
+  function openCodeBox(){
+    const box = $("codeBox");
+    if(box) box.style.display = "block";
+  }
 
-        // рекурсивный поиск: любой ключ похожий на token/jwt
-        const seen = new Set();
-        const stack = [obj];
-        while(stack.length){
-          const cur = stack.pop();
-          if(!cur || typeof cur !== "object" || seen.has(cur)) continue;
-          seen.add(cur);
-          for(const [k,v] of Object.entries(cur)){
-            if(typeof v === "string" && /token|jwt/i.test(k) && v.trim().length >= 12){
-              return v.trim();
-            }
-            if(v && typeof v === "object") stack.push(v);
-          }
-        }
-        return "";
+  async function apiLogin(email, password){
+    const r = await fetchJson("/auth/login", { method:"POST", body:{ email, password } });
+    if(!r.ok) throw new Error(pickError(r));
+
+    const token = extractToken(r);
+    if(token){
+      localStorage.setItem(LS_TOKEN_KEY, token);
+      return { stage:"ok", token };
+    }
+
+    // ВАЖНО: если сервер 2-шаговый — 200 без token часто значит "код отправлен"
+    return {
+      stage: "code_sent",
+      token: "",
+      raw: (r.text || "").slice(0, 300)
+    };
+  }
+
+  async function apiMe(token){
+    const r = await fetchJson("/auth/me", { method:"GET", headers:{ "Authorization":"Bearer " + token } });
+    if(r.ok && r.json) return r.json;
+    return null;
+  }
+
+  function redirectAfterLogin(me){
+    const params = new URLSearchParams(location.search);
+    const next = params.get("next");
+    if(next){ location.href = next; return; }
+    if(me && (me.role === "ceo" || me.role === "admin")){ location.href = "/dashboard/"; return; }
+    location.href = "/constructor/";
+  }
+
+  // ✅ Запрос кода: пробуем несколько реальных вариантов, пока один не сработает.
+  async function apiRequestCode(email){
+    const tries = [
+      { path:"/auth/verify", body:{ email } },
+      { path:"/auth/verify", body:{ login: email } },
+      { path:"/auth/verify", body:{ username: email } },
+
+      // иногда код шлётся через login при пустом password
+      { path:"/auth/login", body:{ email, password:"" } },
+      { path:"/auth/login", body:{ email } },
+
+      // крайний вариант (если у вас код реализован как reset)
+      { path:"/auth/reset/request", body:{ email } },
+    ];
+
+    const errors = [];
+    for(const t of tries){
+      const r = await fetchJson(t.path, { method:"POST", body:t.body });
+      if(r.ok){
+        return { used: t.path, response: r.json || r.text };
       }
+      errors.push(`${t.path} HTTP ${r.status}: ${pickError(r)}`);
+    }
+    throw new Error("Не получилось запросить код.\n" + errors.join("\n"));
+  }
 
-      function extractToken(r){
-        // 1) из JSON
-        const t1 = extractTokenFromJson(r && r.json);
-        if(t1) return t1;
-
-        // 2) из заголовков (сработает только если сервер EXPOSE-ит эти хедеры)
-        const h = (r && r.headers) || {};
-        const auth = h["authorization"] || h["x-abqd-token"] || h["x-token"];
-        if(typeof auth === "string" && auth.length >= 12){
-          return auth.replace(/^Bearer\s+/i, "").trim();
-        }
-
-        return "";
-      }
-
-      async function apiLogin(email, password){
-        const r = await fetchJson("/auth/login", { method:"POST", body:{ email, password } });
-        if(!r.ok) throw new Error(pickError(r));
-        const token = extractToken(r);
-        if(!token){
-          const snippet = (r.text || "").slice(0, 300);
-          throw new Error("Логин OK, но token не пришёл.\nОтвет сервера: " + (snippet || "(пусто)"));
-        }
+  async function apiLoginByCode(email, code){
+    // 1) код как password
+    let r = await fetchJson("/auth/login", { method:"POST", body:{ email, password: code } });
+    if(r.ok){
+      const token = extractToken(r);
+      if(token){
         localStorage.setItem(LS_TOKEN_KEY, token);
         return token;
       }
+      throw new Error("Login OK, но token не пришёл. Ответ: " + ((r.text||"").slice(0,300) || "(пусто)"));
+    }
 
-      async function apiMe(token){
-        const r = await fetchJson("/auth/me", { method:"GET", headers:{ "Authorization": "Bearer " + token } });
-        if(r.ok && r.json) return r.json;
-        return null;
+    // 2) verify {email, code} (если у вас так устроено)
+    r = await fetchJson("/auth/verify", { method:"POST", body:{ email, code } });
+    if(!r.ok) throw new Error(pickError(r));
+    const token = extractToken(r);
+    if(!token) throw new Error("Verify OK, но token не пришёл. Ответ: " + ((r.text||"").slice(0,300) || "(пусто)"));
+    localStorage.setItem(LS_TOKEN_KEY, token);
+    return token;
+  }
+
+  // ===== UI =====
+  function activateTab(which){
+    hideToast();
+    const isLogin = which === "login";
+    $("tabLogin").classList.toggle("active", isLogin);
+    $("tabRegister").classList.toggle("active", !isLogin);
+    $("paneLogin").classList.toggle("active", isLogin);
+    $("paneRegister").classList.toggle("active", !isLogin);
+  }
+
+  $("tabLogin").addEventListener("click", () => activateTab("login"));
+  $("tabRegister").addEventListener("click", () => activateTab("register"));
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-toggle]");
+    if(!btn) return;
+    const sel = btn.getAttribute("data-toggle");
+    const inp = document.querySelector(sel);
+    if(!inp) return;
+    const isPwd = inp.type === "password";
+    inp.type = isPwd ? "text" : "password";
+    btn.textContent = isPwd ? "Скрыть" : "Показать";
+  });
+
+  $("btnShowReset").addEventListener("click", () => {
+    hideToast();
+    const box = $("resetBox");
+    box.style.display = box.style.display === "none" ? "block" : "none";
+  });
+
+  $("btnShowCode").addEventListener("click", () => {
+    hideToast();
+    const box = $("codeBox");
+    box.style.display = box.style.display === "none" ? "block" : "none";
+  });
+
+  // ===== LOGIN submit =====
+  $("formLogin").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideToast();
+
+    const email = $("loginEmail").value.trim();
+    const pass = $("loginPass").value;
+
+    if(!email){
+      showToast("Заполни email.", "err");
+      return;
+    }
+    if(!pass){
+      showToast("Введи пароль или используй “Вход по коду”.", "err");
+      return;
+    }
+
+    const btn = $("btnLogin");
+    try{
+      setBusy(btn, true);
+
+      const res = await apiLogin(email, pass);
+
+      if(res.stage === "ok"){
+        const me = await apiMe(res.token);
+        showToast("Вход выполнен.", "ok");
+        redirectAfterLogin(me);
+        return;
       }
 
-      function redirectAfterLogin(me){
-        const params = new URLSearchParams(location.search);
-        const next = params.get("next");
-        if(next){
-          location.href = next;
-          return;
-        }
-        if(me && (me.role === "ceo" || me.role === "admin")){
-          location.href = "/dashboard/";
-          return;
-        }
-        location.href = "/constructor/";
-      }
+      // ✅ 2-шаговый сценарий: token нет — считаем что код отправили
+      openCodeBox();
+      showToast(
+        "Код отправлен на почту (если письмо не пришло — проверь спам).\n" +
+        "Если письма нет — значит сервер не отправил. Тогда смотри логи SMTP.\n" +
+        (res.raw ? ("Ответ сервера: " + res.raw) : ""),
+        "ok"
+      );
+      $("loginCode").focus();
 
-      // OTP request: пробуем варианты (серверы отличаются)
-      async function apiRequestCode(email){
-        // 1) /auth/login без password (если сервер так отправляет код)
-        let r = await fetchJson("/auth/login", { method:"POST", body:{ email } });
-        if(r.ok) return;
+    }catch(err){
+      showToast(String(err && err.message ? err.message : err), "err");
+    }finally{
+      setBusy(btn, false);
+    }
+  });
 
-        // 2) /auth/verify только email (некоторые сервера так шлют код)
-        r = await fetchJson("/auth/verify", { method:"POST", body:{ email } });
-        if(r.ok) return;
+  // ===== CODE request =====
+  $("btnCodeRequest").addEventListener("click", async () => {
+    hideToast();
+    const email = $("loginEmail").value.trim();
+    if(!email){
+      showToast("Сначала введи email (вверху).", "err");
+      return;
+    }
 
-        throw new Error("Не удалось запросить код.\n" + pickError(r));
-      }
+    const btn = $("btnCodeRequest");
+    try{
+      setBusy(btn, true);
+      const out = await apiRequestCode(email);
+      openCodeBox();
+      showToast("Запрос кода выполнен через " + out.used + ". Проверь почту/спам.", "ok");
+      $("loginCode").focus();
+    }catch(err){
+      showToast(String(err && err.message ? err.message : err), "err");
+    }finally{
+      setBusy(btn, false);
+    }
+  });
 
-      // OTP verify: пробуем 2 пути
-      async function apiLoginByCode(email, code){
-        // 1) код как password в /auth/login
-        let r = await fetchJson("/auth/login", { method:"POST", body:{ email, password: code } });
-        if(r.ok){
-          const token = extractToken(r);
-          if(token){
-            localStorage.setItem(LS_TOKEN_KEY, token);
-            return token;
-          }
-          // если OK без токена — дадим понятную ошибку
-          const snippet = (r.text || "").slice(0, 300);
-          throw new Error("Логин по коду прошёл, но token не пришёл.\nОтвет: " + (snippet || "(пусто)"));
-        }
+  // ===== CODE login =====
+  $("btnCodeLogin").addEventListener("click", async () => {
+    hideToast();
+    const email = $("loginEmail").value.trim();
+    const code = ($("loginCode").value || "").trim();
 
-        // 2) /auth/verify {email, code}
-        r = await fetchJson("/auth/verify", { method:"POST", body:{ email, code } });
-        if(!r.ok) throw new Error(pickError(r));
-        const token = extractToken(r);
-        if(!token){
-          const snippet = (r.text || "").slice(0, 300);
-          throw new Error("Verify OK, но token не пришёл.\nОтвет: " + (snippet || "(пусто)"));
-        }
-        localStorage.setItem(LS_TOKEN_KEY, token);
-        return token;
-      }
+    if(!email){ showToast("Введи email (вверху).", "err"); return; }
+    if(!/^\d{6}$/.test(code)){ showToast("Код должен быть 6 цифр.", "err"); return; }
 
-      // ====== UI: tabs ======
-      function activateTab(which){
-        hideToast();
-        const isLogin = which === "login";
-        $("tabLogin").classList.toggle("active", isLogin);
-        $("tabRegister").classList.toggle("active", !isLogin);
-        $("paneLogin").classList.toggle("active", isLogin);
-        $("paneRegister").classList.toggle("active", !isLogin);
-      }
+    const btn = $("btnCodeLogin");
+    try{
+      setBusy(btn, true);
+      const token = await apiLoginByCode(email, code);
+      const me = await apiMe(token);
+      showToast("Вход по коду выполнен.", "ok");
+      redirectAfterLogin(me);
+    }catch(err){
+      showToast(String(err && err.message ? err.message : err), "err");
+    }finally{
+      setBusy(btn, false);
+    }
+  });
 
-      $("tabLogin").addEventListener("click", () => activateTab("login"));
-      $("tabRegister").addEventListener("click", () => activateTab("register"));
+  // ===== RESET =====
+  $("btnReset").addEventListener("click", async () => {
+    hideToast();
+    const email = ($("resetEmail").value || $("loginEmail").value || "").trim();
+    if(!email){ showToast("Введи email для восстановления.", "err"); return; }
 
-      // ====== UI: show/hide password toggles ======
-      document.addEventListener("click", (e) => {
-        const btn = e.target.closest("[data-toggle]");
-        if(!btn) return;
-        const sel = btn.getAttribute("data-toggle");
-        const inp = document.querySelector(sel);
-        if(!inp) return;
-        const isPwd = inp.type === "password";
-        inp.type = isPwd ? "text" : "password";
-        btn.textContent = isPwd ? "Скрыть" : "Показать";
-      });
+    const btn = $("btnReset");
+    try{
+      setBusy(btn, true);
+      const r = await fetchJson("/auth/reset/request", { method:"POST", body:{ email } });
+      if(!r.ok) throw new Error(pickError(r));
+      showToast("Если email существует — письмо отправлено.", "ok");
+    }catch(err){
+      showToast(String(err && err.message ? err.message : err), "err");
+    }finally{
+      setBusy(btn, false);
+    }
+  });
 
-      // ====== UI: blocks ======
-      $("btnShowReset").addEventListener("click", () => {
-        hideToast();
-        const box = $("resetBox");
-        box.style.display = box.style.display === "none" ? "block" : "none";
-      });
-      $("btnShowCode").addEventListener("click", () => {
-        hideToast();
-        const box = $("codeBox");
-        box.style.display = box.style.display === "none" ? "block" : "none";
-      });
+  // мелочь: автоподстановка email
+  $("loginEmail").addEventListener("input", () => {
+    if($("resetEmail").value.trim() === "") $("resetEmail").value = $("loginEmail").value.trim();
+  });
 
-      // ====== ACTIONS ======
-      $("formLogin").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        hideToast();
-        const email = $("loginEmail").value.trim();
-        const pass = $("loginPass").value;
-
-        if(!email || !pass){
-          showToast("Заполни email и пароль.", "err");
-          return;
-        }
-
-        const btn = $("btnLogin");
-        try{
-          setBusy(btn, true);
-          const token = await apiLogin(email, pass);
-          const me = await apiMe(token);
-          showToast("Вход выполнен.", "ok");
-          redirectAfterLogin(me);
-        }catch(err){
-          showToast(String(err && err.message ? err.message : err), "err");
-        }finally{
-          setBusy(btn, false);
-        }
-      });
-
-      $("btnCodeRequest").addEventListener("click", async () => {
-        hideToast();
-        const email = $("loginEmail").value.trim();
-        if(!email){
-          showToast("Сначала введи email (вверху).", "err");
-          return;
-        }
-        const btn = $("btnCodeRequest");
-        try{
-          setBusy(btn, true);
-          await apiRequestCode(email);
-          showToast("Код отправлен на почту. Проверь входящие/спам.", "ok");
-          $("loginCode").focus();
-        }catch(err){
-          showToast(String(err && err.message ? err.message : err), "err");
-        }finally{
-          setBusy(btn, false);
-        }
-      });
-
-      $("btnCodeLogin").addEventListener("click", async () => {
-        hideToast();
-        const email = $("loginEmail").value.trim();
-        const code = ($("loginCode").value || "").trim();
-
-        if(!email){
-          showToast("Введи email (вверху).", "err");
-          return;
-        }
-        if(!/^\d{6}$/.test(code)){
-          showToast("Код должен быть 6 цифр.", "err");
-          return;
-        }
-
-        const btn = $("btnCodeLogin");
-        try{
-          setBusy(btn, true);
-          const token = await apiLoginByCode(email, code);
-          const me = await apiMe(token);
-          showToast("Вход по коду выполнен.", "ok");
-          redirectAfterLogin(me);
-        }catch(err){
-          showToast(String(err && err.message ? err.message : err), "err");
-        }finally{
-          setBusy(btn, false);
-        }
-      });
-
-      $("btnReset").addEventListener("click", async () => {
-        hideToast();
-        const email = ($("resetEmail").value || $("loginEmail").value || "").trim();
-        if(!email){
-          showToast("Введи email для восстановления.", "err");
-          return;
-        }
-        const btn = $("btnReset");
-        try{
-          setBusy(btn, true);
-          const r = await fetchJson("/auth/reset/request", { method:"POST", body:{ email } });
-          if(!r.ok) throw new Error(pickError(r));
-          showToast("Если email существует — письмо отправлено.", "ok");
-        }catch(err){
-          showToast(String(err && err.message ? err.message : err), "err");
-        }finally{
-          setBusy(btn, false);
-        }
-      });
-
-      // Регистрация/верификация — оставил базово, без “магии” (т.к. серверный контракт может отличаться)
-      $("formRegister").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        hideToast();
-
-        const name = $("regName").value.trim();
-        const phone = $("regPhone").value.trim();
-        const email = $("regEmail").value.trim();
-        const p1 = $("regPass").value;
-        const p2 = $("regPass2").value;
-
-        if(!name || !email || !p1 || !p2){
-          showToast("Заполни обязательные поля.", "err");
-          return;
-        }
-        if(p1.length < 8){
-          showToast("Пароль минимум 8 символов.", "err");
-          return;
-        }
-        if(p1 !== p2){
-          showToast("Пароли не совпадают.", "err");
-          return;
-        }
-
-        const btn = $("btnRegister");
-        try{
-          setBusy(btn, true);
-          const r = await fetchJson("/auth/register", { method:"POST", body:{ name, phone, email, password: p1 } });
-          if(!r.ok) throw new Error(pickError(r));
-          showToast("Аккаунт создан. Если нужен код подтверждения — введи его ниже.", "ok");
-          $("verifyBox").style.display = "block";
-        }catch(err){
-          showToast(String(err && err.message ? err.message : err), "err");
-        }finally{
-          setBusy(btn, false);
-        }
-      });
-
-      $("btnVerify").addEventListener("click", async () => {
-        hideToast();
-        const email = $("regEmail").value.trim();
-        const code = ($("regCode").value || "").trim();
-        if(!email) return showToast("Нет email.", "err");
-        if(!/^\d{6}$/.test(code)) return showToast("Код должен быть 6 цифр.", "err");
-
-        const btn = $("btnVerify");
-        try{
-          setBusy(btn, true);
-          // пробуем verify как подтверждение + токен
-          const r = await fetchJson("/auth/verify", { method:"POST", body:{ email, code } });
-          if(!r.ok) throw new Error(pickError(r));
-          const token = extractToken(r);
-          if(token){
-            localStorage.setItem(LS_TOKEN_KEY, token);
-            const me = await apiMe(token);
-            showToast("Email подтверждён. Вход выполнен.", "ok");
-            redirectAfterLogin(me);
-          }else{
-            showToast("Email подтверждён.", "ok");
-          }
-        }catch(err){
-          showToast(String(err && err.message ? err.message : err), "err");
-        }finally{
-          setBusy(btn, false);
-        }
-      });
-
-      $("btnResend").addEventListener("click", async () => {
-        hideToast();
-        const email = $("regEmail").value.trim();
-        if(!email) return showToast("Введи email.", "err");
-        const btn = $("btnResend");
-        try{
-          setBusy(btn, true);
-          await apiRequestCode(email);
-          showToast("Код отправлен повторно.", "ok");
-        }catch(err){
-          showToast(String(err && err.message ? err.message : err), "err");
-        }finally{
-          setBusy(btn, false);
-        }
-      });
-
-      // автозаполнение resetEmail из loginEmail (мелочь, но удобно)
-      $("loginEmail").addEventListener("input", () => {
-        if($("resetEmail").value.trim() === "") $("resetEmail").value = $("loginEmail").value.trim();
-      });
-    })();
-  </script>
-</body>
-</html>
+})();
+</script>
