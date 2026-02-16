@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ABQD — Вход / Регистрация</title>
 
-  <!-- Montserrat (brand font) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -216,11 +215,11 @@
       background: linear-gradient(180deg, rgba(46,124,255,.60), rgba(46,124,255,.26));
       border: 1px solid rgba(46,124,255,.38);
       box-shadow: 0 18px 70px rgba(0,0,0,.32);
-      transition: transform .18s ease, filter .18s ease;
+      transition: transform .18s ease;
       margin-top: 16px;
     }
     .btn:active{ transform: translateY(1px); }
-    .btn[disabled]{ opacity:.55; cursor:not-allowed; filter: grayscale(.2); }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
 
     .hint{ font-size: 13px; color: rgba(255,255,255,.56); line-height: 1.45; margin-top: 8px; }
 
@@ -245,7 +244,7 @@
     .row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
     @media (max-width: 980px){ .row{ grid-template-columns:1fr; } }
 
-    .linkRow{ margin-top: 10px; display:flex; gap:16px; flex-wrap:wrap; }
+    .linkRow{ margin-top: 10px; display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
     .link{
       border:0;
       background: transparent;
@@ -258,29 +257,31 @@
     }
     .link:hover{ color: rgba(255,255,255,.90); }
 
-    /* password toggle */
     .pwWrap{ position:relative; }
-    .pwWrap .field{ padding-right: 108px; }
-    .pwToggle{
+    .pwBtn{
       position:absolute;
       right: 10px;
       top: 50%;
       transform: translateY(-50%);
-      border-radius: 14px;
-      padding: 10px 12px;
-      border: 1px solid rgba(46,124,255,.38);
+      border: 1px solid rgba(255,255,255,.22);
       background: rgba(0,0,0,.18);
-      color: rgba(255,255,255,.92);
+      color: rgba(255,255,255,.88);
       font-family: var(--font);
       font-weight: 800;
+      font-size: 14px;
+      padding: 10px 12px;
+      border-radius: 14px;
       cursor:pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
-    .pwToggle:active{ transform: translateY(-50%) scale(.99); }
+    .pwBtn:active{ transform: translateY(-50%) scale(.99); }
 
     .divider{
-      height: 1px;
-      background: rgba(255,255,255,.10);
-      margin: 16px 0 12px;
+      margin: 14px 0 10px;
+      height:1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+      opacity:.9;
     }
 
     @media (prefers-reduced-motion: reduce){
@@ -288,7 +289,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="stage">
     <div class="bgImage" aria-hidden="true"></div>
@@ -313,7 +313,6 @@
 
         <div id="toast" class="toast" aria-live="polite"></div>
 
-        <!-- LOGIN -->
         <div class="pane active" id="paneLogin" role="tabpanel" aria-labelledby="tabLogin">
           <form id="formLogin" autocomplete="on">
             <div>
@@ -325,9 +324,9 @@
               <label for="loginPass">Пароль</label>
               <div class="pwWrap">
                 <input class="field" id="loginPass" type="password" placeholder="••••••••" />
-                <button class="pwToggle" id="toggleLoginPass" type="button">Показать</button>
+                <button class="pwBtn" id="btnTogglePass" type="button">Показать</button>
               </div>
-              <div class="hint">Если у тебя вход через код 6 цифр — можешь вставить код как пароль или используй блок «Вход по коду» ниже.</div>
+              <div class="hint">Если у тебя вход по коду 6 цифр — можешь вставить код как пароль или используй блок «Вход по коду» ниже.</div>
             </div>
 
             <button class="btn" id="btnLogin" type="submit">Войти</button>
@@ -337,32 +336,27 @@
               <button class="link" type="button" id="btnShowOtp">Вход по коду</button>
             </div>
 
-            <!-- RESET -->
             <div id="resetBox" style="display:none; margin-top:10px;">
               <label for="resetEmail">Email для восстановления</label>
               <input class="field" id="resetEmail" type="email" placeholder="name@example.com" />
               <button class="btn" id="btnReset" type="button" style="margin-top:10px;">Отправить</button>
-              <div class="hint">Если функция отключена на сервере — покажем ошибку.</div>
+              <div class="hint">Если функция отключена на сервере — покажем ошибку (это нормально).</div>
             </div>
 
-            <!-- OTP -->
-            <div id="otpBox" style="display:none; margin-top:14px;">
+            <div id="otpBox" style="display:none; margin-top:12px;">
               <div class="divider"></div>
-              <div class="hint" style="margin-top:0;">Получи код на почту, затем введи 6 цифр и войди.</div>
+              <div class="hint" style="margin-top:0;">Получишь код на почту, затем введи 6 цифр и войди.</div>
+              <button class="btn" id="btnOtpSend" type="button" style="margin-top:12px;">Получить код на почту</button>
 
-              <button class="btn" id="btnOtpRequest" type="button" style="margin-top:12px;">Получить код на почту</button>
-
-              <label for="otpCode">Код (6 цифр)</label>
+              <label for="otpCode" style="margin-top:14px;">Код (6 цифр)</label>
               <input class="field" id="otpCode" inputmode="numeric" autocomplete="one-time-code" placeholder="6 цифр" maxlength="6" />
 
-              <button class="btn" id="btnOtpLogin" type="button" style="margin-top:12px;">Войти по коду</button>
-
-              <div class="hint">Если сервер работает по схеме <b>login → otp_id → verify → token</b> — мы это обработаем автоматически.</div>
+              <button class="btn" id="btnOtpVerify" type="button" style="margin-top:12px;">Войти по коду</button>
+              <div class="hint">Технически: сначала /auth/login → otp_id, затем /auth/verify → token.</div>
             </div>
           </form>
         </div>
 
-        <!-- REGISTER -->
         <div class="pane" id="paneRegister" role="tabpanel" aria-labelledby="tabRegister">
           <form id="formRegister" autocomplete="on">
             <div class="row">
@@ -373,7 +367,7 @@
               <div>
                 <label for="regPhone">Телефон</label>
                 <input class="field" id="regPhone" type="tel" inputmode="tel" placeholder="+7 999 000-12-34" />
-                <div class="hint">Можно оставить пустым.</div>
+                <div class="hint">Можно оставить пустым, если не требуется.</div>
               </div>
             </div>
 
@@ -385,516 +379,379 @@
             <div class="row">
               <div>
                 <label for="regPass">Пароль</label>
-                <div class="pwWrap">
-                  <input class="field" id="regPass" type="password" required placeholder="Минимум 8 символов" />
-                  <button class="pwToggle" id="toggleRegPass" type="button">Показать</button>
-                </div>
+                <input class="field" id="regPass" type="password" required placeholder="Минимум 8 символов" />
               </div>
               <div>
                 <label for="regPass2">Повтори пароль</label>
-                <div class="pwWrap">
-                  <input class="field" id="regPass2" type="password" required placeholder="Повтори" />
-                  <button class="pwToggle" id="toggleRegPass2" type="button">Показать</button>
-                </div>
+                <input class="field" id="regPass2" type="password" required placeholder="Повтори" />
               </div>
             </div>
 
             <button class="btn" id="btnRegister" type="submit">Создать аккаунт</button>
 
             <div id="verifyBox" style="display:none; margin-top:14px;">
-              <div class="divider"></div>
               <label for="regCode">Код из письма</label>
               <input class="field" id="regCode" inputmode="numeric" autocomplete="one-time-code" placeholder="6 цифр" maxlength="6" />
               <button class="btn" id="btnVerify" type="button" style="margin-top:10px;">Подтвердить</button>
-              <div class="hint">Если код не пришёл — отправь ещё раз.</div>
+              <div class="hint">Код нужен один раз — при создании аккаунта.</div>
               <div class="linkRow" style="margin-top:8px;">
                 <button class="link" type="button" id="btnResend">Отправить код ещё раз</button>
               </div>
             </div>
 
-            <div class="hint" style="margin-top:10px;">Нажимая «Создать аккаунт», вы соглашаетесь на обработку данных.</div>
+            <div class="hint" style="margin-top:10px;">Нажимая «Создать аккаунт», вы подтверждаете согласие на обработку данных.</div>
           </form>
         </div>
       </section>
     </div>
   </div>
 
-<script>
-(() => {
-  // === CONFIG ===
-  const API = "https://api.abqd.ru";
-  const TOKEN_KEY = "abqd_token";
+  <script>
+  (function(){
+    // ---- config
+    const API = "https://api.abqd.ru";
+    const TOKEN_KEY = "abqd_token";
 
-  // === helpers ===
-  const $ = (id) => document.getElementById(id);
-  const toast = $("toast");
+    // ---- helpers
+    const $ = (id)=>document.getElementById(id);
+    const toastEl = $("toast");
 
-  function showToast(type, msg){
-    toast.className = "toast show " + (type === "ok" ? "ok" : "err");
-    toast.textContent = String(msg ?? "");
-  }
-  function clearToast(){
-    toast.className = "toast";
-    toast.textContent = "";
-  }
-  function setBusy(btn, busy){
-    if (!btn) return;
-    btn.disabled = !!busy;
-    btn.dataset._txt = btn.dataset._txt || btn.textContent;
-    btn.textContent = busy ? "Подожди…" : btn.dataset._txt;
-  }
+    function showToast(type, msg){
+      toastEl.className = "toast show " + (type === "ok" ? "ok" : "err");
+      toastEl.textContent = String(msg || "");
+    }
+    function hideToast(){ toastEl.className = "toast"; toastEl.textContent = ""; }
 
-  function safeNextUrl(){
-    const u = new URL(location.href);
-    let next =
-      u.searchParams.get("next") ||
-      u.searchParams.get("return_to") ||
-      u.searchParams.get("redirect") ||
-      sessionStorage.getItem("abqd_return_to") ||
-      "";
-
-    if (!next) {
-      try {
-        const ref = document.referrer ? new URL(document.referrer) : null;
-        if (ref && ref.origin === location.origin) {
-          // если пришли с тарифов/конструктора — вернём туда
-          if (ref.pathname.startsWith("/tariffs")) next = ref.pathname + ref.search;
-          if (ref.pathname.startsWith("/constructor")) next = ref.pathname + ref.search;
-        }
-      } catch(_) {}
+    function getNextUrl(){
+      const u = new URL(window.location.href);
+      const next = u.searchParams.get("next");
+      // если next не задан — по умолчанию ведём в тарифы (как ты и хочешь после входа)
+      return next || "/tariffs/";
     }
 
-    if (!next) next = "/tariffs/";
-    // разрешаем только относительные пути на этом же домене
-    try {
-      if (next.startsWith("http")) {
-        const n = new URL(next);
-        if (n.origin === location.origin) next = n.pathname + n.search;
-        else next = "/tariffs/";
-      }
-      if (!next.startsWith("/")) next = "/tariffs/";
-    } catch(_) {
-      next = "/tariffs/";
+    function extractToken(obj){
+      if (!obj || typeof obj !== "object") return "";
+      return obj.token || obj.access_token || obj.accessToken || "";
     }
 
-    sessionStorage.setItem("abqd_return_to", next);
-    return next;
-  }
-
-  function extractToken(obj){
-    // возвращаем строку токена, если нашли
-    const seen = new Set();
-    const walk = (x) => {
-      if (!x) return null;
-      if (typeof x === "string") {
-        if (x.length >= 20) return x;
-        return null;
-      }
-      if (typeof x !== "object") return null;
-      if (seen.has(x)) return null;
-      seen.add(x);
-
-      // популярные ключи
-      const keys = ["access_token","token","jwt","bearer","id_token"];
-      for (const k of keys){
-        if (typeof x[k] === "string" && x[k].length >= 20) return x[k];
-        if (x[k] && typeof x[k] === "object") {
-          const inner = walk(x[k]);
-          if (inner) return inner;
-        }
-      }
-      // рекурсивно по всем полям
-      for (const k of Object.keys(x)){
-        const inner = walk(x[k]);
-        if (inner) return inner;
-      }
-      return null;
-    };
-    return walk(obj);
-  }
-
-  async function apiPost(path, body, token){
-    const res = await fetch(API + path, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        ...(token ? { "Authorization": "Bearer " + token } : {})
-      },
-      body: JSON.stringify(body ?? {})
-    });
-
-    const text = await res.text();
-    let json = null;
-    try { json = text ? JSON.parse(text) : null; } catch(_) {}
-    return { res, text, json };
-  }
-
-  function saveToken(tok){
-    localStorage.setItem(TOKEN_KEY, tok);
-  }
-
-  function redirectAfterAuth(){
-    const next = safeNextUrl();
-    location.href = next;
-  }
-
-  // === UI: tabs ===
-  const tabLogin = $("tabLogin");
-  const tabRegister = $("tabRegister");
-  const paneLogin = $("paneLogin");
-  const paneRegister = $("paneRegister");
-
-  function setTab(which){
-    clearToast();
-    const isLogin = which === "login";
-    tabLogin.classList.toggle("active", isLogin);
-    tabRegister.classList.toggle("active", !isLogin);
-    tabLogin.setAttribute("aria-selected", String(isLogin));
-    tabRegister.setAttribute("aria-selected", String(!isLogin));
-    paneLogin.classList.toggle("active", isLogin);
-    paneRegister.classList.toggle("active", !isLogin);
-  }
-
-  tabLogin.addEventListener("click", () => setTab("login"));
-  tabRegister.addEventListener("click", () => setTab("register"));
-
-  // === UI: show/hide password ===
-  function bindToggle(btnId, inputId){
-    const btn = $(btnId);
-    const inp = $(inputId);
-    if (!btn || !inp) return;
-    btn.addEventListener("click", () => {
-      const isPwd = inp.type === "password";
-      inp.type = isPwd ? "text" : "password";
-      btn.textContent = isPwd ? "Скрыть" : "Показать";
-      inp.focus();
-    });
-  }
-  bindToggle("toggleLoginPass", "loginPass");
-  bindToggle("toggleRegPass", "regPass");
-  bindToggle("toggleRegPass2", "regPass2");
-
-  // === blocks ===
-  const resetBox = $("resetBox");
-  const otpBox = $("otpBox");
-  $("btnShowReset").addEventListener("click", () => {
-    resetBox.style.display = resetBox.style.display === "none" ? "block" : "none";
-  });
-  $("btnShowOtp").addEventListener("click", () => {
-    otpBox.style.display = otpBox.style.display === "none" ? "block" : "none";
-  });
-
-  // === Auth logic ===
-  // если уже есть токен — сразу выходим туда, куда надо
-  const existing = localStorage.getItem(TOKEN_KEY);
-  if (existing && existing.length >= 20) {
-    // не делаем авто-редирект без next? но безопасно
-    // чтобы не мешать тестам — только если явно есть next/return_to
-    const u = new URL(location.href);
-    if (u.searchParams.get("next") || u.searchParams.get("return_to") || u.searchParams.get("redirect")) {
-      redirectAfterAuth();
+    async function fetchAny(path, body){
+      const res = await fetch(API + path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body || {})
+      });
+      const text = await res.text();
+      let json = null;
+      try { json = JSON.parse(text); } catch(e) {}
+      return { ok: res.ok, status: res.status, text, json };
     }
-  }
 
-  // --- LOGIN (password OR otp init) ---
-  const formLogin = $("formLogin");
-  const btnLogin = $("btnLogin");
-
-  async function handleLogin(email, password){
-    clearToast();
-    setBusy(btnLogin, true);
-
-    try{
-      // 1) обычный логин
-      const r = await apiPost("/api/v1/auth/login", { email, password }, null);
-
-      if (!r.res.ok){
-        const detail = r.json?.detail || r.text || ("HTTP " + r.res.status);
-        showToast("err", "Ошибка входа (" + r.res.status + "):\n" + detail);
-        return;
-      }
-
-      // token сразу?
-      const tok = extractToken(r.json);
-      if (tok){
-        saveToken(tok);
-        showToast("ok", "Готово. Входим…");
-        redirectAfterAuth();
-        return;
-      }
-
-      // OTP-ветка: ok:true,next:"verify",otp_id:"..."
-      if (r.json?.next === "verify" && r.json?.otp_id){
-        sessionStorage.setItem("abqd_otp_id", r.json.otp_id);
-        otpBox.style.display = "block";
-        showToast("ok", "Код отправлен на почту. Введи 6 цифр и нажми «Войти по коду».");
-        return;
-      }
-
-      showToast("err",
-        "Логин выполнен, но token не пришёл.\n" +
-        "Ожидаю token/access_token либо next=verify+otp_id.\n\nОтвет:\n" +
-        (r.text || JSON.stringify(r.json))
-      );
-
-    } finally {
-      setBusy(btnLogin, false);
-    }
-  }
-
-  formLogin.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = $("loginEmail").value.trim();
-    const pass  = $("loginPass").value.trim();
-    if (!email) return showToast("err","Введи email.");
-    // пароль может быть пустым, если человек хочет OTP — тогда логин тоже может выдать otp_id
-    await handleLogin(email, pass || "");
-  });
-
-  // --- RESET ---
-  const btnReset = $("btnReset");
-  btnReset.addEventListener("click", async () => {
-    clearToast();
-    const email = ($("resetEmail").value || $("loginEmail").value || "").trim();
-    if (!email) return showToast("err","Введи email для восстановления.");
-    setBusy(btnReset, true);
-    try{
-      const r = await apiPost("/api/v1/auth/reset/request", { email }, null);
-      if (!r.res.ok){
-        showToast("err", "Reset ("+r.res.status+"):\n" + (r.json?.detail || r.text));
-        return;
-      }
-      showToast("ok", "Если email существует — письмо отправлено.");
-    } finally {
-      setBusy(btnReset, false);
-    }
-  });
-
-  // --- OTP REQUEST ---
-  const btnOtpRequest = $("btnOtpRequest");
-  btnOtpRequest.addEventListener("click", async () => {
-    clearToast();
-    const email = $("loginEmail").value.trim();
-    if (!email) return showToast("err","Сначала введи email.");
-    setBusy(btnOtpRequest, true);
-
-    try{
-      // чаще всего сервер шлёт OTP при login(email) без password
-      let r = await apiPost("/api/v1/auth/login", { email }, null);
-
-      // fallback: некоторые реализации требуют password:""
-      if (!r.res.ok) {
-        r = await apiPost("/api/v1/auth/login", { email, password: "" }, null);
-      }
-
-      if (!r.res.ok){
-        showToast("err", "Не удалось отправить код ("+r.res.status+"):\n" + (r.json?.detail || r.text));
-        return;
-      }
-
-      const tok = extractToken(r.json);
-      if (tok){
-        saveToken(tok);
-        showToast("ok","Готово. Входим…");
-        redirectAfterAuth();
-        return;
-      }
-
-      if (r.json?.next === "verify" && r.json?.otp_id){
-        sessionStorage.setItem("abqd_otp_id", r.json.otp_id);
-        showToast("ok","Код отправлен. Введи 6 цифр и нажми «Войти по коду».");
-        return;
-      }
-
-      showToast("err",
-        "Код запросили, но ответ неожиданный.\n\nОтвет:\n" + (r.text || JSON.stringify(r.json))
-      );
-    } finally {
-      setBusy(btnOtpRequest, false);
-    }
-  });
-
-  // --- OTP VERIFY / LOGIN WITH CODE ---
-  const btnOtpLogin = $("btnOtpLogin");
-  btnOtpLogin.addEventListener("click", async () => {
-    clearToast();
-    const email = $("loginEmail").value.trim();
-    const code = $("otpCode").value.trim();
-    const otpId = sessionStorage.getItem("abqd_otp_id") || "";
-
-    if (!email) return showToast("err","Введи email.");
-    if (!/^\d{6}$/.test(code)) return showToast("err","Код должен быть 6 цифр.");
-
-    setBusy(btnOtpLogin, true);
-    try{
-      // 1) основной путь: /auth/verify
-      let r = null;
-
-      // пробуем разные поля, чтобы не зависеть от точного названия на сервере
-      const verifyBodies = [
-        { otp_id: otpId, code },
-        { otp_id: otpId, otp_code: code },
-        { otp_id: otpId, password: code },
-        { email, code },
-        { email, otp: code },
-      ];
-
-      for (const body of verifyBodies){
-        if (!body.otp_id && (body.otp_id !== 0) && (body.otp_id !== "") && ("otp_id" in body)) continue;
-        r = await apiPost("/api/v1/auth/verify", body, null);
-        if (r.res.status === 404 || r.res.status === 405) break; // verify нет — уйдём в fallback
-        if (r.res.ok) break; // есть шанс, что ok и токен внутри
-      }
-
-      if (r && r.res && r.res.ok){
-        const tok = extractToken(r.json);
-        if (tok){
-          saveToken(tok);
-          showToast("ok","Готово. Входим…");
-          redirectAfterAuth();
-          return;
-        }
-        // бывает: verify вернул ok, но без токена (плохо, но покажем)
-        showToast("err",
-          "Verify прошёл, но token не пришёл.\n\nОтвет:\n" + (r.text || JSON.stringify(r.json))
-        );
-        return;
-      }
-
-      // 2) fallback: сервер принимает код как password в /auth/login
-      const r2 = await apiPost("/api/v1/auth/login", { email, password: code }, null);
-      if (!r2.res.ok){
-        showToast("err", "Не удалось войти по коду ("+r2.res.status+"):\n" + (r2.json?.detail || r2.text));
-        return;
-      }
-      const tok2 = extractToken(r2.json);
-      if (tok2){
-        saveToken(tok2);
-        showToast("ok","Готово. Входим…");
-        redirectAfterAuth();
-        return;
-      }
-
-      if (r2.json?.next === "verify" && r2.json?.otp_id){
-        sessionStorage.setItem("abqd_otp_id", r2.json.otp_id);
-        showToast("ok","Код обновлён. Проверь почту и введи новый код.");
-        return;
-      }
-
-      showToast("err","Ожидаю token после входа по коду.\n\nОтвет:\n" + (r2.text || JSON.stringify(r2.json)));
-
-    } finally {
-      setBusy(btnOtpLogin, false);
-    }
-  });
-
-  // --- REGISTER ---
-  const formRegister = $("formRegister");
-  const btnRegister = $("btnRegister");
-  const verifyBox = $("verifyBox");
-  const btnVerify = $("btnVerify");
-  const btnResend = $("btnResend");
-
-  formRegister.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearToast();
-
-    const name = $("regName").value.trim();
-    const phone = $("regPhone").value.trim();
-    const email = $("regEmail").value.trim();
-    const pass = $("regPass").value;
-    const pass2 = $("regPass2").value;
-
-    if (!name) return showToast("err","Введи имя.");
-    if (!email) return showToast("err","Введи email.");
-    if (pass.length < 8) return showToast("err","Пароль минимум 8 символов.");
-    if (pass !== pass2) return showToast("err","Пароли не совпадают.");
-
-    setBusy(btnRegister, true);
-    try{
-      const payload = { name, email, password: pass };
-      if (phone) payload.phone = phone;
-
-      const r = await apiPost("/api/v1/auth/register", payload, null);
-      if (!r.res.ok){
-        showToast("err", "Регистрация ("+r.res.status+"):\n" + (r.json?.detail || r.text));
-        return;
-      }
-
-      const tok = extractToken(r.json);
-      if (tok){
-        saveToken(tok);
-        showToast("ok","Аккаунт создан. Входим…");
-        redirectAfterAuth();
-        return;
-      }
-
-      if (r.json?.next === "verify" && r.json?.otp_id){
-        sessionStorage.setItem("abqd_reg_otp_id", r.json.otp_id);
-        verifyBox.style.display = "block";
-        showToast("ok","Код отправлен на почту. Введи 6 цифр и нажми «Подтвердить».");
-        return;
-      }
-
-      // если сервер не отдаёт otp_id — всё равно покажем verify блок (попросим код)
-      verifyBox.style.display = "block";
-      showToast("ok","Аккаунт создан. Если нужно подтверждение — введи код из письма.");
-    } finally {
-      setBusy(btnRegister, false);
-    }
-  });
-
-  btnVerify.addEventListener("click", async () => {
-    clearToast();
-    const email = $("regEmail").value.trim();
-    const code = $("regCode").value.trim();
-    const otpId = sessionStorage.getItem("abqd_reg_otp_id") || "";
-
-    if (!/^\d{6}$/.test(code)) return showToast("err","Код должен быть 6 цифр.");
-
-    setBusy(btnVerify, true);
-    try{
-      const bodies = [
-        { otp_id: otpId, code },
-        { otp_id: otpId, otp_code: code },
-        { email, code },
-        { email, otp: code },
-      ];
-
+    async function postWithFallback(path, bodies){
+      // bodies: array of body variants
       let last = null;
       for (const b of bodies){
-        if ("otp_id" in b && !b.otp_id) continue;
-        const r = await apiPost("/api/v1/auth/verify", b, null);
-        last = r;
-        if (r.res.status === 404 || r.res.status === 405) break;
-        if (r.res.ok) {
-          const tok = extractToken(r.json);
-          if (tok){
-            saveToken(tok);
-            showToast("ok","Подтверждено. Входим…");
-            redirectAfterAuth();
-            return;
-          }
-        }
+        last = await fetchAny(path, b);
+        // принимаем любой ответ (даже 4xx) — дальше разберёмся
+        // но если 422 от валидации — пробуем другой вариант тела
+        if (last.status !== 422) return last;
+      }
+      return last;
+    }
+
+    function saveTokenAndGo(token){
+      localStorage.setItem(TOKEN_KEY, token);
+      window.location.href = getNextUrl();
+    }
+
+    // ---- tabs
+    const tabLogin = $("tabLogin");
+    const tabRegister = $("tabRegister");
+    const paneLogin = $("paneLogin");
+    const paneRegister = $("paneRegister");
+
+    function setTab(which){
+      hideToast();
+      if (which === "login"){
+        tabLogin.classList.add("active");
+        tabRegister.classList.remove("active");
+        paneLogin.classList.add("active");
+        paneRegister.classList.remove("active");
+        tabLogin.setAttribute("aria-selected","true");
+        tabRegister.setAttribute("aria-selected","false");
+      } else {
+        tabRegister.classList.add("active");
+        tabLogin.classList.remove("active");
+        paneRegister.classList.add("active");
+        paneLogin.classList.remove("active");
+        tabRegister.setAttribute("aria-selected","true");
+        tabLogin.setAttribute("aria-selected","false");
+      }
+    }
+    tabLogin.addEventListener("click", ()=>setTab("login"));
+    tabRegister.addEventListener("click", ()=>setTab("register"));
+
+    // ---- UI bits
+    const resetBox = $("resetBox");
+    $("btnShowReset").addEventListener("click", ()=>{
+      resetBox.style.display = (resetBox.style.display === "none" ? "block" : "none");
+    });
+
+    const otpBox = $("otpBox");
+    $("btnShowOtp").addEventListener("click", ()=>{
+      otpBox.style.display = (otpBox.style.display === "none" ? "block" : "none");
+      if (otpBox.style.display !== "none") $("otpCode").focus();
+    });
+
+    $("btnTogglePass").addEventListener("click", ()=>{
+      const inp = $("loginPass");
+      const btn = $("btnTogglePass");
+      if (inp.type === "password"){ inp.type = "text"; btn.textContent = "Скрыть"; }
+      else { inp.type = "password"; btn.textContent = "Показать"; }
+    });
+
+    // ---- auth state for otp
+    let otpIdLogin = "";    // for login flow
+    let otpIdRegister = ""; // for register flow
+
+    // ---- LOGIN: password OR first step of otp
+    $("formLogin").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      hideToast();
+
+      const email = $("loginEmail").value.trim();
+      const pass = $("loginPass").value.trim();
+
+      if (!email){
+        showToast("err","Укажи email.");
+        return;
       }
 
-      showToast("err", "Не удалось подтвердить.\n" + (last?.json?.detail || last?.text || "Unknown error"));
+      // 1) пробуем классический логин email+password (или email+code, если сервер так принимает)
+      const r1 = await fetchAny("/api/v1/auth/login", { email, password: pass });
 
-    } finally {
-      setBusy(btnVerify, false);
-    }
-  });
+      // если вернулся token — отлично
+      const t1 = extractToken(r1.json);
+      if (r1.ok && t1){
+        showToast("ok","Вход выполнен.");
+        saveTokenAndGo(t1);
+        return;
+      }
 
-  btnResend.addEventListener("click", async () => {
-    clearToast();
-    // самый безопасный ресенд — через OTP login по email (аккаунт уже есть)
-    setTab("login");
-    otpBox.style.display = "block";
-    $("loginEmail").value = $("regEmail").value.trim();
-    showToast("ok", "Перешёл во «Вход по коду». Нажми «Получить код на почту».");
-  });
+      // если сервер сказал "next: verify" (OTP-режим) — показываем блок кода и ждём verify
+      if (r1.ok && r1.json && r1.json.next === "verify" && (r1.json.otp_id || r1.json.otpId)){
+        otpIdLogin = r1.json.otp_id || r1.json.otpId;
+        otpBox.style.display = "block";
+        showToast("ok","Код отправлен на почту. Введи 6 цифр ниже и нажми «Войти по коду».");
+        $("otpCode").focus();
+        return;
+      }
 
-})();
-</script>
+      // если парольный логин не прошёл — покажем ошибку (часто это 401)
+      const msg = (r1.json && (r1.json.detail || r1.json.message)) ? (r1.json.detail || r1.json.message) : r1.text;
+      showToast("err", `Ошибка входа (${r1.status}): ${msg}`);
+    });
+
+    // ---- OTP SEND (explicit)
+    $("btnOtpSend").addEventListener("click", async ()=>{
+      hideToast();
+      const email = $("loginEmail").value.trim();
+      if (!email){
+        showToast("err","Сначала укажи email.");
+        return;
+      }
+
+      // разные бэкенды требуют разные тела — пробуем несколько вариантов без гаданий
+      const r = await postWithFallback("/api/v1/auth/login", [
+        { email },
+        { email, password: "" },
+        { email, otp: true },
+      ]);
+
+      if (r.ok && r.json && r.json.next === "verify" && (r.json.otp_id || r.json.otpId)){
+        otpIdLogin = r.json.otp_id || r.json.otpId;
+        otpBox.style.display = "block";
+        showToast("ok","Код отправлен. Введи 6 цифр и нажми «Войти по коду».");
+        $("otpCode").focus();
+        return;
+      }
+
+      // вдруг сервер сразу вернул token (редко, но бывает)
+      const t = extractToken(r.json);
+      if (r.ok && t){
+        showToast("ok","Вход выполнен.");
+        saveTokenAndGo(t);
+        return;
+      }
+
+      const msg = (r.json && (r.json.detail || r.json.message)) ? (r.json.detail || r.json.message) : r.text;
+      showToast("err", `Не удалось отправить код (${r.status}): ${msg}`);
+    });
+
+    // ---- OTP VERIFY (login flow)
+    $("btnOtpVerify").addEventListener("click", async ()=>{
+      hideToast();
+      const email = $("loginEmail").value.trim();
+      const code = $("otpCode").value.trim();
+
+      if (!email){ showToast("err","Укажи email."); return; }
+      if (!/^\d{6}$/.test(code)){ showToast("err","Код должен быть 6 цифр."); return; }
+
+      // 1) основной путь: /auth/verify
+      // otp_id может быть пуст, если пользователь не нажимал "получить код", но делал submit — тогда он уже должен быть
+      const tryBodies = [
+        { email, otp_id: otpIdLogin, code },
+        { otp_id: otpIdLogin, code },
+        { email, otpId: otpIdLogin, code },
+      ];
+
+      let r = await postWithFallback("/api/v1/auth/verify", tryBodies);
+
+      // 2) fallback: некоторые реализации принимают код как password в /auth/login
+      if (!r.ok){
+        const r2 = await fetchAny("/api/v1/auth/login", { email, password: code });
+        if (r2.ok) r = r2;
+      }
+
+      const t = extractToken(r.json);
+      if (r.ok && t){
+        showToast("ok","Готово. Вход выполнен.");
+        saveTokenAndGo(t);
+        return;
+      }
+
+      // если снова next=verify — значит otp_id не тот/просрочен → просим запросить новый
+      if (r.ok && r.json && r.json.next === "verify"){
+        showToast("err","Код не принят. Нажми «Получить код на почту» ещё раз и введи новый код.");
+        return;
+      }
+
+      const msg = (r.json && (r.json.detail || r.json.message)) ? (r.json.detail || r.json.message) : r.text;
+      showToast("err", `Не удалось войти по коду (${r.status}): ${msg}`);
+    });
+
+    // ---- RESET (optional, if your backend supports it)
+    $("btnReset").addEventListener("click", async ()=>{
+      hideToast();
+      const email = $("resetEmail").value.trim() || $("loginEmail").value.trim();
+      if (!email){ showToast("err","Укажи email."); return; }
+
+      // у тебя ранее был /api/v1/auth/reset/request — оставляю так
+      const r = await fetchAny("/api/v1/auth/reset/request", { email });
+      if (r.ok){
+        showToast("ok","Если email существует — письмо отправлено.");
+      } else {
+        const msg = (r.json && (r.json.detail || r.json.message)) ? (r.json.detail || r.json.message) : r.text;
+        showToast("err", `Ошибка (${r.status}): ${msg}`);
+      }
+    });
+
+    // ---- REGISTER
+    $("formRegister").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      hideToast();
+
+      const name = $("regName").value.trim();
+      const phone = $("regPhone").value.trim();
+      const email = $("regEmail").value.trim();
+      const p1 = $("regPass").value;
+      const p2 = $("regPass2").value;
+
+      if (!name || !email || !p1 || !p2){ showToast("err","Заполни обязательные поля."); return; }
+      if (p1 !== p2){ showToast("err","Пароли не совпадают."); return; }
+      if (p1.length < 8){ showToast("err","Пароль минимум 8 символов."); return; }
+
+      const body = { name, email, password: p1 };
+      if (phone) body.phone = phone;
+
+      const r = await fetchAny("/api/v1/auth/register", body);
+
+      const t = extractToken(r.json);
+      if (r.ok && t){
+        showToast("ok","Аккаунт создан. Вход выполнен.");
+        saveTokenAndGo(t);
+        return;
+      }
+
+      // если нужно подтверждение
+      if (r.ok && r.json && r.json.next === "verify" && (r.json.otp_id || r.json.otpId)){
+        otpIdRegister = r.json.otp_id || r.json.otpId;
+        $("verifyBox").style.display = "block";
+        showToast("ok","Код отправлен. Введи 6 цифр и подтверди аккаунт.");
+        $("regCode").focus();
+        return;
+      }
+
+      const msg = (r.json && (r.json.detail || r.json.message)) ? (r.json.detail || r.json.message) : r.text;
+      showToast("err", `Ошибка регистрации (${r.status}): ${msg}`);
+    });
+
+    // ---- REGISTER VERIFY
+    $("btnVerify").addEventListener("click", async ()=>{
+      hideToast();
+      const email = $("regEmail").value.trim();
+      const code = $("regCode").value.trim();
+
+      if (!email){ showToast("err","Укажи email."); return; }
+      if (!/^\d{6}$/.test(code)){ showToast("err","Код должен быть 6 цифр."); return; }
+
+      let r = await postWithFallback("/api/v1/auth/verify", [
+        { email, otp_id: otpIdRegister, code },
+        { otp_id: otpIdRegister, code },
+        { email, otpId: otpIdRegister, code },
+      ]);
+
+      const t = extractToken(r.json);
+      if (r.ok && t){
+        showToast("ok","Аккаунт подтверждён. Вход выполнен.");
+        saveTokenAndGo(t);
+        return;
+      }
+
+      const msg = (r.json && (r.json.detail || r.json.message)) ? (r.json.detail || r.json.message) : r.text;
+      showToast("err", `Не удалось подтвердить (${r.status}): ${msg}`);
+    });
+
+    // ---- RESEND (simplest safe approach)
+    $("btnResend").addEventListener("click", async ()=>{
+      hideToast();
+      const name = $("regName").value.trim();
+      const phone = $("regPhone").value.trim();
+      const email = $("regEmail").value.trim();
+      const p1 = $("regPass").value;
+
+      if (!name || !email || !p1){
+        showToast("err","Заполни имя/email/пароль и нажми ещё раз.");
+        return;
+      }
+
+      const body = { name, email, password: p1 };
+      if (phone) body.phone = phone;
+
+      const r = await fetchAny("/api/v1/auth/register", body);
+
+      if (r.ok && r.json && r.json.next === "verify" && (r.json.otp_id || r.json.otpId)){
+        otpIdRegister = r.json.otp_id || r.json.otpId;
+        $("verifyBox").style.display = "block";
+        showToast("ok","Код отправлен повторно.");
+        $("regCode").focus();
+        return;
+      }
+
+      const msg = (r.json && (r.json.detail || r.json.message)) ? (r.json.detail || r.json.message) : r.text;
+      showToast("err", `Не удалось отправить повторно (${r.status}): ${msg}`);
+    });
+
+    // ---- if already logged in, optionally redirect
+    try{
+      const t = localStorage.getItem(TOKEN_KEY);
+      if (t && t.length > 10){
+        // не редиректим автоматически: иногда надо сменить аккаунт
+        // но можно раскомментировать, если хочешь:
+        // window.location.href = getNextUrl();
+      }
+    }catch(e){}
+
+  })();
+  </script>
 </body>
 </html>
