@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ABQD — Проверка оплаты</title>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b0f17;color:#e9eef7;display:grid;place-items:center;min-height:100vh}
+    .card{width:min(620px,92vw);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:20px}
+    .muted{color:rgba(233,238,247,.72);font-size:14px;line-height:1.5}
+    .btn{display:inline-flex;gap:8px;align-items:center;margin-top:14px;padding:10px 14px;border-radius:12px;background:#2a62ff;color:#fff;text-decoration:none}
+    .btn.secondary{background:rgba(255,255,255,.10)}
+    code{background:rgba(0,0,0,.25);padding:2px 6px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Проверяем оплату…</h2>
+    <div id="msg" class="muted">Пожалуйста, не закрывайте страницу.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a id="go" class="btn" href="/dashboard/" style="display:none">В кабинет</a>
+      <a id="retry" class="btn secondary" href="/pay/return/" style="display:none">Повторить</a>
+      <a id="tariffs" class="btn secondary" href="/tariffs/" style="display:none">Тарифы</a>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const API = "https://api.abqd.ru";
+  const msg = document.getElementById("msg");
+  const go = document.getElementById("go");
+  const retry = document.getElementById("retry");
+  const tariffs = document.getElementById("tariffs");
+
+  const qs = new URLSearchParams(location.search);
+  const next = qs.get("next") || "/dashboard/";
+
+  const token = localStorage.getItem("abqd_token") || "";
+  const orderIdLS = localStorage.getItem("abqd_last_order_id") || "";
+  const planLS = localStorage.getItem("abqd_last_plan") || "";
+
+  const order_id = (qs.get("order_id") || qs.get("payment_id") || orderIdLS || "").trim();
+
+  const show = (el, href) => { el.style.display="inline-flex"; if(href) el.href = href; };
+
+  if (!token) {
+    msg.textContent = "Нужно войти, чтобы подтвердить оплату.";
+    show(tariffs, "/auth/?next=" + encodeURIComponent("/pay/return/?next=" + encodeURIComponent(next)));
+    return;
+  }
+
+  if (!order_id) {
+    msg.innerHTML = 'Не найден <code>order_id</code> в браузере. Открой тарифы и нажми «Оплатить/Продолжить».';
+    show(tariffs, "/tariffs/?next=" + encodeURIComponent(next));
+    return;
+  }
+
+  async function check() {
+    try {
+      const r = await fetch(API + "/api/v1/payments/check", {
+        method: "POST",
+        headers: { "content-type": "application/json", "authorization": "Bearer " + token },
+        body: JSON.stringify({ order_id, payment_id: order_id, plan: planLS || undefined })
+      });
+
+      if (r.status === 401) {
+        localStorage.removeItem("abqd_token");
+        location.replace("/auth/?next=" + encodeURIComponent("/pay/return/?next=" + encodeURIComponent(next)));
+        return;
+      }
+
+      const j = await r.json().catch(() => ({}));
+      const st = (j.status || "").toLowerCase();
+
+      if (st === "succeeded") {
+        msg.textContent = "Оплата подтверждена. Перенаправляем в кабинет…";
+        show(go, next);
+        setTimeout(() => location.replace(next), 700);
+        return;
+      }
+
+      msg.textContent = "Оплата пока не подтверждена (" + (st || "unknown") + "). Можно повторить проверку через пару секунд.";
+      show(retry, "/pay/return/?next=" + encodeURIComponent(next));
+      show(tariffs, "/tariffs/?next=" + encodeURIComponent(next));
+    } catch (e) {
+      msg.textContent = "Не удалось проверить оплату (временная ошибка сети). Повтори попытку.";
+      show(retry, "/pay/return/?next=" + encodeURIComponent(next));
+      show(tariffs, "/tariffs/?next=" + encodeURIComponent(next));
+    }
+  }
+
+  check();
+})();
+</script>
+</body>
+</html>
