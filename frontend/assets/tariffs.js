@@ -1,3 +1,19 @@
+/* ABQD_TARIFFS_ACCESS_BYPASS_v1 */
+(async function(){
+  try{
+    const token = localStorage.getItem("abqd_token") || "";
+    if(!token) return;
+    const r = await fetch("https://api.abqd.ru/api/v1/access/status", {headers:{authorization:"Bearer "+token}});
+    if(r.status===401){ localStorage.removeItem("abqd_token"); return; }
+    if(!r.ok) return;
+    const st = await r.json();
+    if(st && (st.paid_active || st.trial_active)){
+      const next = new URLSearchParams(location.search).get("next") || "/dashboard/";
+      location.replace(next);
+    }
+  }catch(e){}
+})();
+
 (() => {
   const API = "https://api.abqd.ru/api/v1";
   const ORIGIN = "https://app.abqd.ru";
