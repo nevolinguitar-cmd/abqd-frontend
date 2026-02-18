@@ -8,6 +8,27 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <!-- ABQD_ACCESS_GUARD_v1 -->
+<script>
+(function(){
+  const API="https://api.abqd.ru";
+  const token=localStorage.getItem("abqd_token")||"";
+  const NEXT="/dashboard/";
+  if(!token){ location.replace("/auth/?next="+encodeURIComponent(NEXT)); return; }
+
+  fetch(API+"/api/v1/access/status",{headers:{authorization:"Bearer "+token}})
+    .then(r=>{
+      if(r.status===401){ localStorage.removeItem("abqd_token"); location.replace("/auth/?next="+encodeURIComponent(NEXT)); return null; }
+      return r.ok ? r.json(): null;
+    })
+    .then(s=>{
+      if(!s) return; // fail-open
+      if(s.paid_active || s.trial_active) return;
+      location.replace("/tariffs/?reason=expired&next="+encodeURIComponent(NEXT));
+    })
+    .catch(()=>{});
+})();
+</script>
+<script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
