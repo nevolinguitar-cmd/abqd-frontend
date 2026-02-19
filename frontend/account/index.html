@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ABQD — Аккаунт</title>
+  <script src="/assets/header.js" defer></script>
+  <script src="/assets/account.js" defer></script>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b0f17;color:#e9eef7}
+    .wrap{max-width:920px;margin:0 auto;padding:18px}
+    .card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:16px}
+    .muted{color:rgba(233,238,247,.72)}
+    .row{display:flex;gap:14px;flex-wrap:wrap}
+    .row>div{flex:1;min-width:220px}
+    a{color:#8fb0ff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Аккаунт</h2>
+    <div class="card">
+      <div class="muted">Пользователь: <b id="who">—</b></div>
+      <div class="row" style="margin-top:10px">
+        <div>Статус: <b id="accessState">—</b></div>
+        <div>План: <b id="plan">—</b></div>
+        <div>Оплачено до: <b id="paidUntil">—</b></div>
+        <div>Триал до: <b id="trialUntil">—</b></div>
+      </div>
+      <div style="margin-top:12px">
+        <a id="renewBtn" href="/tariffs/?next=%2Fdashboard%2F" style="display:none">Продлить / выбрать тариф</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
