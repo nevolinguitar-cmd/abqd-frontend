@@ -1,139 +1,179 @@
-/* ABQD_TARIFFS_ACCESS_BYPASS_v1 */
-(async function(){
-  try{
-    const token = localStorage.getItem("abqd_token") || "";
-    if(!token) return;
-    const r = await fetch("https://api.abqd.ru/api/v1/access/status", {headers:{authorization:"Bearer "+token}});
-    if(r.status===401){ localStorage.removeItem("abqd_token"); return; }
-    if(!r.ok) return;
-    const st = await r.json();
-    if(st && (st.paid_active || st.trial_active)){
-      const next = new URLSearchParams(location.search).get("next") || "/dashboard/";
-      location.replace(next);
-    }
-  }catch(e){}
-})();
-
+/* ABQD_TARIFFS_PAYFLOW_v3 */
+/* ABQD_TARIFFS_YOOKASSA_REDIRECT_v4 */
+/* ABQD_STORE_LAST_PAYMENT_IDS_v3 */
 (() => {
+  "use strict";
+
   const API = "https://api.abqd.ru/api/v1";
   const ORIGIN = "https://app.abqd.ru";
-  const TOKEN_KEY = "abqd_token";
 
-  const mapPlan = (p) => {
-    p = (p || "").toLowerCase();
-    if (p === "starter") return "probn";
-    if (["probn", "pro", "full", "trial"].includes(p)) return p;
+  const TOKEN_KEY = "abqd_token";
+  const KEY_O = "abqd_last_order_id";
+  const KEY_P = "abqd_last_payment_id";
+  const KEY_PLAN = "abqd_last_plan";
+
+  const qs = () => new URLSearchParams(location.search);
+
+  const safePath = (p) => {
+    if (!p || typeof p !== "string") return "/dashboard/";
+    if (!p.startsWith("/")) return "/dashboard/";
+    if (p.startsWith("//")) return "/dashboard/";
     return p;
   };
 
+  const mapPlan = (p) => {
+    p = String(p || "").toLowerCase().trim();
+    if (p === "starter") return "probn";
+    if (p === "pro") return "pro";
+    if (p === "full") return "full";
+    if (p === "probn") return "probn";
+    return p || "probn";
+  };
+
   const token = () => localStorage.getItem(TOKEN_KEY) || "";
-  const authed = () => !!token();
-  const qs = () => new URLSearchParams(location.search);
 
-  const setBtnBusy = (btn, text) => {
-    if (!btn || btn.tagName !== "BUTTON") return;
+  const setBusy = (btn, text) => {
+    if (!btn) return;
     btn.disabled = true;
-    btn.dataset._txt = btn.textContent;
-    btn.textContent = text;
+    btn.dataset._abqdTxt = btn.textContent || "";
+    if (text) btn.textContent = text;
   };
+
   const restoreBtn = (btn) => {
-    if (!btn || btn.tagName !== "BUTTON") return;
-    if (btn.dataset._txt) btn.textContent = btn.dataset._txt;
+    if (!btn) return;
     btn.disabled = false;
+    if (btn.dataset._abqdTxt) btn.textContent = btn.dataset._abqdTxt;
   };
 
-  const goAuth = (nextUrl, mode = "register") => {
-    location.href = `${ORIGIN}/auth/?mode=${encodeURIComponent(mode)}&next=${encodeURIComponent(nextUrl)}`;
+  const go = (url) => { try { location.replace(url); } catch(e) { location.href = url; } };
+
+  const goAuth = (nextPath, mode = "login") => {
+    const n = safePath(nextPath);
+    location.href = `${ORIGIN}/auth/?mode=${encodeURIComponent(mode)}&next=${encodeURIComponent(n)}`;
   };
 
-  async function createPayment(plan) {
-    // максимально надежно: после оплаты вернуться на tariffs, а уже tariffs решит куда дальше
-    const return_url = `${ORIGIN}/tariffs/?paid=1&plan=${encodeURIComponent(plan)}`;
+  async function fetchStatus(t) {
+    const r = await fetch(`${API}/access/status`, { headers: { authorization: "Bearer " + t } });
+    if (r.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      return { _unauth: true };
+    }
+    if (!r.ok) return null;
+    return await r.json();
+  }
 
-    const headers = { "Content-Type": "application/json" };
+  async function redirectIfActive() {
     const t = token();
-    if (t) headers["Authorization"] = `Bearer ${t}`;
+    if (!t) return;
 
-    const res = await fetch(`${API}/payments/create`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ plan, return_url }),
-    });
-
-    const text = await res.text();
-    let j;
-    try { j = JSON.parse(text); } catch { j = { detail: text.slice(0, 200) }; }
-
-    if (!res.ok) {
-      const err = new Error(j.detail || `HTTP ${res.status}`);
-      err.status = res.status;
-      err.data = j;
-      throw err;
-    }
-    return j;
-  }
-
-  function afterPaid(plan) {
-    const nextCrm = `${ORIGIN}/dashboard/crm?paid=1&plan=${encodeURIComponent(plan)}`;
-    if (authed()) location.replace(nextCrm);
-    else goAuth(nextCrm, "login");
-  }
-
-  async function pay(plan) {
-    plan = mapPlan(plan);
-
-    // TRIAL -> constructor, no activation
-    if (plan === "trial") {
-      location.href = `${ORIGIN}/constructor/`;
-      return;
-    }
-
-    // PAID -> YooKassa via API
-    const btn = document.activeElement;
     try {
-      setBtnBusy(btn, "Переходим к оплате…");
-      const j = await createPayment(plan);
-      if (!j.confirmation_url) throw new Error("No confirmation_url");
-      location.href = j.confirmation_url;
-    } catch (e) {
-      // если API требует токен — попросим регистрацию и автозапустим оплату
-      if (e && (e.status === 401 || e.status === 403)) {
-        const back = `${ORIGIN}/tariffs/?plan=${encodeURIComponent(plan)}&autostart=1`;
-        return goAuth(back, "register");
+      const st = await fetchStatus(t);
+      if (!st || st._unauth) return;
+
+      const active = !!(st.paid_active || st.trial_active);
+      if (!active) return;
+
+      const next = safePath(qs().get("next") || "/dashboard/");
+      // если кто-то пришёл на тарифы с next=/tariffs — не зацикливаем
+      if (next.startsWith("/tariffs") || next.startsWith("/auth")) {
+        go("/dashboard/");
+      } else {
+        go(next);
       }
-      alert("Ошибка оплаты");
+    } catch (e) {}
+  }
+
+  async function startTrial(btn) {
+    const t = token();
+    const next = safePath(qs().get("next") || "/dashboard/");
+
+    if (!t) return goAuth(`/tariffs/?next=${encodeURIComponent(next)}`, "login");
+
+    setBusy(btn, "Запускаю…");
+    try {
+      const r = await fetch(`${API}/trial/activate`, {
+        method: "POST",
+        headers: { authorization: "Bearer " + t }
+      });
+
+      if (r.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+        return goAuth(`/tariffs/?next=${encodeURIComponent(next)}`, "login");
+      }
+
+      if (!r.ok) throw new Error("trial activate failed");
+
+      go(next);
+    } catch (e) {
+      alert("Не удалось активировать trial. Попробуй ещё раз.");
+    } finally {
       restoreBtn(btn);
-      console.error(e);
     }
   }
 
-  // If returned from payment
-  try {
-    const paid = qs().get("paid") === "1";
-    const plan = mapPlan(qs().get("plan"));
-    if (paid && plan && plan !== "trial") {
-      afterPaid(plan);
-      return;
+  async function createPayment(btn, planRaw) {
+    const t = token();
+    const next = safePath(qs().get("next") || "/dashboard/");
+
+    if (!t) return goAuth(`/tariffs/?next=${encodeURIComponent(next)}`, "login");
+
+    const plan = mapPlan(planRaw);
+
+    // всегда возвращаемся на /pay/return/ — он сделает payments/check и отправит дальше
+    const return_url = `${ORIGIN}/pay/return/?next=${encodeURIComponent(next)}&plan=${encodeURIComponent(plan)}`;
+
+    setBusy(btn, "Переход к оплате…");
+    try {
+      const r = await fetch(`${API}/payments/create`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer " + t
+        },
+        body: JSON.stringify({ plan, return_url })
+      });
+
+      if (r.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+        return goAuth(`/tariffs/?next=${encodeURIComponent(next)}`, "login");
+      }
+
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j && j.detail ? j.detail : "payments/create failed");
+
+      // сохраняем IDs, чтобы /pay/return/ мог восстановиться даже если query потеряется
+      if (j.order_id) localStorage.setItem(KEY_O, String(j.order_id));
+      if (j.payment_id) localStorage.setItem(KEY_P, String(j.payment_id));
+      localStorage.setItem(KEY_PLAN, String(plan));
+
+      if (!j.confirmation_url) throw new Error("No confirmation_url");
+
+      location.href = j.confirmation_url; // YooMoney/ЮKassa checkout
+    } catch (e) {
+      console.error(e);
+      alert("Не удалось открыть оплату. Проверь, что ты залогинен, и попробуй ещё раз.");
+      restoreBtn(btn);
     }
-  } catch (e) {}
+  }
 
-  // Autostart after auth: /tariffs/?plan=pro&autostart=1
-  try {
-    const plan = mapPlan(qs().get("plan"));
-    const autostart = qs().get("autostart") === "1";
-    if (autostart && plan) {
-      const u = new URL(location.href);
-      u.searchParams.delete("autostart");
-      history.replaceState(null, "", u.toString());
-      pay(plan);
-    }
-  } catch (e) {}
+  function bindUI() {
+    const trialBtn = document.getElementById("btnStartTrial");
+    if (trialBtn) trialBtn.addEventListener("click", () => startTrial(trialBtn));
 
-  // Bind buttons
-  const btnTrial = document.getElementById("btnStartTrial");
-  if (btnTrial) btnTrial.addEventListener("click", () => pay("trial"));
+    document.querySelectorAll(".btnChoosePlan").forEach((b) => {
+      b.addEventListener("click", () => createPayment(b, b.getAttribute("data-plan")));
+    });
+  }
 
-  document.querySelectorAll(".btnChoosePlan").forEach((b) => {
-    b.addEventListener("click", () => pay(b.dataset.plan));
-  });
+  async function init() {
+    // если доступ уже активен — не пускаем на тарифы, сразу кидаем в next/dashboard
+    redirectIfActive();
+    bindUI();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
 })();

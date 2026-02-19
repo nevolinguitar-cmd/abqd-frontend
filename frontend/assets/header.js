@@ -1,12 +1,11 @@
-/* ABQD_HEADER_v2 (nav: dashboard/constructor/account; no tariffs in main) */
+/* ABQD_HEADER_v2 */
 (() => {
   try {
+    if (location.pathname.startsWith("/auth")) return;
+
     const API = "https://api.abqd.ru";
     const KEY = "abqd_token";
-    const ID  = "abqd-header";
-
-    const path = String(location.pathname || "");
-    if (path === "/auth" || path.startsWith("/auth/")) return;
+    const ID = "abqd-header";
     if (document.getElementById(ID)) return;
 
     const safePath = (p) => {
@@ -15,161 +14,106 @@
       if (p.startsWith("//")) return "/dashboard/";
       return p;
     };
+    const currentPath = safePath(location.pathname + location.search);
 
-    const getToken = () => { try { return localStorage.getItem(KEY) || ""; } catch(e){ return ""; } };
-
-    const html = `
-<style>
-:root{ --abqdHdrH: 0px; }
-#abqd-header{
-  position:fixed; left:0; right:0; top:0;
-  z-index:2147483647;
-  height:56px;
-  display:flex; align-items:center; justify-content:center;
-  background: rgba(10,14,22,.70);
-  border-bottom: 1px solid rgba(255,255,255,.10);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+    const style = document.createElement("style");
+    style.textContent = `
+:root{ --abqdHdrH: 56px; }
+#${ID}{position:fixed;left:0;right:0;top:0;height:var(--abqdHdrH);z-index:2147483647;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;
+  background:rgba(10,14,22,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.10);color:#eef2ff;font:600 14px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial;
 }
-#abqd-header .in{
-  width:min(1200px, calc(100vw - 24px));
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  color: rgba(255,255,255,.92);
-}
-#abqd-header a{
-  color: rgba(255,255,255,.92);
-  text-decoration:none;
-}
-#abqd-header .brand{
-  font-weight:900; letter-spacing:.5px;
-  display:flex; align-items:center; gap:10px;
-}
-#abqd-header .nav{
-  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-}
-#abqd-header .pill{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:8px 12px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  font-weight:800; font-size:13px;
-}
-#abqd-header .pill:hover{ background: rgba(255,255,255,.10); }
-#abqd-header .right{ display:flex; gap:10px; align-items:center; }
-#abqd-header .status{
-  font-size:12px; font-weight:900;
-  padding:7px 10px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.88);
-}
-#abqd-header .status.bad{ border-color: rgba(255,90,90,.35); background: rgba(255,90,90,.10); }
-#abqd-header .btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:8px 12px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.16);
-  background: rgba(255,255,255,.10);
-  font-weight:900; font-size:13px;
-}
-#abqd-header .btn.primary{
-  background:#2a62ff; border-color: rgba(42,98,255,.45);
-}
+#${ID} a{color:inherit;text-decoration:none;opacity:.92}
+#${ID} a:hover{opacity:1}
+#${ID} .left{display:flex;align-items:center;gap:14px;min-width:0}
+#${ID} .brand{font-weight:900;letter-spacing:.12em;opacity:.92}
+#${ID} .nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#${ID} .right{display:flex;align-items:center;gap:10px}
+#${ID} .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);font-weight:700}
+#${ID} .muted{opacity:.75;font-weight:600;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 body{ padding-top: var(--abqdHdrH) !important; }
 html,body{ scroll-padding-top: var(--abqdHdrH) !important; }
-</style>
-
-<div class="in">
-  <a class="brand" href="/dashboard/">ABQD</a>
-
-  <div class="nav">
-    <a class="pill" href="/dashboard/">Кабинет</a>
-    <a class="pill" href="/constructor/">Конструктор</a>
-    <a class="pill" href="/account/">Аккаунт</a>
-  </div>
-
-  <div class="right">
-    <span id="abqdStatus" class="status" style="display:none">…</span>
-    <a id="abqdPayBtn" class="btn" href="/tariffs/" style="display:none">Оплатить</a>
-    <a id="abqdLoginBtn" class="btn primary" href="/auth/" style="display:none">Войти</a>
-    <button id="abqdLogoutBtn" class="btn" type="button" style="display:none">Выйти</button>
-  </div>
-</div>
+@media (max-width:520px){ :root{--abqdHdrH: 52px;} #${ID} .brand{display:none} #${ID} .muted{max-width:46vw} }
 `;
+    document.head.appendChild(style);
 
-    function mount(){
-      if (document.getElementById(ID)) return;
-      const el = document.createElement("div");
-      el.id = ID;
-      el.innerHTML = html;
-      document.body.prepend(el);
-      document.documentElement.style.setProperty("--abqdHdrH", "56px");
+    const el = document.createElement("div");
+    el.id = ID;
+    el.innerHTML = `
+      <div class="left">
+        <div class="brand">ABQD</div>
+        <div class="nav">
+          <a class="pill" href="/dashboard/">Кабинет</a>
+          <a class="pill" href="/constructor/">Конструктор</a>
+          <a class="pill" href="/account/">Аккаунт</a>
+        </div>
+      </div>
+      <div class="right">
+        <span id="abqd-hdr-status" class="pill">…</span>
+        <span id="abqd-hdr-who" class="muted"></span>
+        <a id="abqd-hdr-auth" class="pill" href="/auth/?next=${encodeURIComponent(currentPath)}">Войти</a>
+        <a id="abqd-hdr-logout" class="pill" href="#" style="display:none">Выйти</a>
+      </div>
+    `;
 
-      const st = document.getElementById("abqdStatus");
-      const pay = document.getElementById("abqdPayBtn");
-      const login = document.getElementById("abqdLoginBtn");
-      const logout = document.getElementById("abqdLogoutBtn");
+    const mount = () => document.body.prepend(el);
 
-      const next = safePath(location.pathname + location.search);
-      login.href = "/auth/?next=" + encodeURIComponent(next);
+    const $st = () => document.getElementById("abqd-hdr-status");
+    const $who = () => document.getElementById("abqd-hdr-who");
+    const $auth = () => document.getElementById("abqd-hdr-auth");
+    const $lo = () => document.getElementById("abqd-hdr-logout");
 
-      const token = getToken();
-      if (!token) {
-        login.style.display = "inline-flex";
-        st.style.display = "none";
-        pay.style.display = "none";
-        logout.style.display = "none";
-        return;
-      }
+    const token = () => localStorage.getItem(KEY) || "";
 
-      logout.style.display = "inline-flex";
-      logout.addEventListener("click", () => {
-        try { localStorage.removeItem(KEY); } catch(e){}
-        try { document.cookie = "abqd_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax; secure"; } catch(e){}
-        location.replace("/auth/?next=" + encodeURIComponent("/dashboard/"));
-      });
+    const setLoggedOut = () => {
+      if ($st()) $st().textContent = "гость";
+      if ($who()) $who().textContent = "";
+      if ($auth()) $auth().style.display = "inline-flex";
+      if ($lo()) $lo().style.display = "none";
+    };
 
-      // show status
-      st.style.display = "inline-flex";
-      st.textContent = "проверяем…";
+    const setLoggedIn = (active) => {
+      if ($st()) $st().textContent = active ? "активно" : "неактивно";
+      if ($auth()) $auth().style.display = "none";
+      if ($lo()) $lo().style.display = "inline-flex";
+    };
 
-      fetch(API + "/api/v1/access/status", { headers: { authorization: "Bearer " + token } })
+    const refresh = async () => {
+      const t = token();
+      if (!t) { setLoggedOut(); return; }
+
+      fetch(API + "/api/v1/auth/me", { headers: { authorization: "Bearer " + t }})
+        .then(r => (r.status===401 ? null : (r.ok ? r.json(): null)))
+        .then(u => { if (u && $who()) $who().textContent = u.email || ""; })
+        .catch(() => {});
+
+      fetch(API + "/api/v1/access/status", { headers: { authorization: "Bearer " + t }})
         .then(r => {
-          if (r.status === 401) {
-            try { localStorage.removeItem(KEY); } catch(e){}
-            login.style.display = "inline-flex";
-            logout.style.display = "none";
-            st.style.display = "none";
-            pay.style.display = "none";
-            return null;
-          }
+          if (r.status===401){ localStorage.removeItem(KEY); setLoggedOut(); return null; }
           return r.ok ? r.json() : null;
         })
-        .then(s => {
-          if (!s) return;
-          const active = !!(s.paid_active || s.trial_active);
-          if (active) {
-            st.classList.remove("bad");
-            st.textContent = "активно";
-            pay.style.display = "none";
-          } else {
-            st.classList.add("bad");
-            st.textContent = "неактивно";
-            pay.style.display = "inline-flex"; // но тарифы не в навигации — только как действие
-            pay.href = "/tariffs/?reason=inactive&next=" + encodeURIComponent("/dashboard/");
-          }
+        .then(st => {
+          if (!st) return;
+          setLoggedIn(!!(st.paid_active || st.trial_active));
         })
-        .catch(() => {
-          // fail-open
-          st.textContent = "…";
-        });
-    }
+        .catch(() => {});
+    };
 
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", mount, { once:true });
-    } else {
+    const onLogout = (e) => {
+      e.preventDefault();
+      try { localStorage.removeItem(KEY); } catch(_) {}
+      location.replace("/auth/?next=" + encodeURIComponent("/dashboard/"));
+    };
+
+    const start = () => {
       mount();
-    }
-  } catch(e) {}
+      if ($lo()) $lo().addEventListener("click", onLogout);
+      refresh();
+    };
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once:true });
+    else start();
+
+  } catch (e) {}
 })();
