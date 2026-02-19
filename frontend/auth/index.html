@@ -288,6 +288,73 @@
       .bgImage{ animation:none !important; }
     }
   </style>
+
+<!-- ABQD_AUTH_SMART_REDIRECT_v1 -->
+<script>
+(() => {
+  const API = "https://api.abqd.ru";
+  const KEY = "abqd_token";
+
+  const qs = new URLSearchParams(location.search);
+  const rawNext = (qs.get("next") || "/dashboard/").trim();
+
+  // only allow same-origin absolute paths
+  const safeNext = (n) => {
+    if (!n || typeof n !== "string") return "/dashboard/";
+    if (!n.startsWith("/")) return "/dashboard/";
+    if (n.startsWith("//")) return "/dashboard/";
+    return n;
+  };
+
+  const pickDestIfActive = () => {
+    const n = safeNext(rawNext);
+    // если next указывает на /tariffs/ — при активной подписке это бессмысленно
+    if (n.startsWith("/tariffs")) return "/dashboard/";
+    if (n.startsWith("/auth")) return "/dashboard/";
+    return n;
+  };
+
+  const go = (url) => { try { location.replace(url); } catch(e) { location.href = url; } };
+
+  async function checkAndRedirect(token) {
+    if (!token) return;
+    try {
+      const r = await fetch(API + "/api/v1/access/status", {
+        headers: { authorization: "Bearer " + token }
+      });
+
+      if (r.status === 401) {
+        localStorage.removeItem(KEY);
+        return; // остаёмся на /auth/
+      }
+      if (!r.ok) return; // fail-open: не ломаем логин при временной ошибке
+
+      const st = await r.json();
+      const active = !!(st && (st.paid_active || st.trial_active));
+      if (active) {
+        go(pickDestIfActive());
+      } else {
+        const n = safeNext(rawNext);
+        go("/tariffs/?reason=inactive&next=" + encodeURIComponent(n));
+      }
+    } catch (e) {
+      // fail-open
+    }
+  }
+
+  // 1) если токен уже есть — сразу проверим и не дадим оплаченному попасть на тарифы
+  const existing = localStorage.getItem(KEY) || "";
+  if (existing) setTimeout(() => checkAndRedirect(existing), 50);
+
+  // 2) перехват момента, когда токен кладут в localStorage (после verify)
+  const origSet = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(k, v) {
+    origSet(k, v);
+    if (k === KEY && v) setTimeout(() => checkAndRedirect(String(v)), 50);
+  };
+})();
+</script>
+
 </head>
 <body>
   <div class="stage">
