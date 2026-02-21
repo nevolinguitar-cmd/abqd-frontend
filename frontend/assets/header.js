@@ -1,4 +1,4 @@
-/* ABQD_HEADER_v38_DESKTOP_OK_MOBILE_RESTORE */
+/* ABQD_HEADER_v40_FINAL_STABLE */
 
 (() => {
   try {
