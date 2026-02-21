@@ -1,1509 +1,522 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { 
+  Search, Moon, Sun, Plus, CheckCircle2, AlertCircle, Clock, Zap, Bot, 
+  Calendar, BarChart3, X, User, CreditCard, Target, Mail, Phone, 
+  GripVertical, Edit2, Trash2, PanelLeftClose, PanelLeftOpen, Cloud, Check, PlusCircle
+} from 'lucide-react';
 
 /**
- * ABQD CRM — Full-Screen Kanban Prototype (single-file React)
- *
- * Что сделано в этой версии:
- * ✅ Исправлена ошибка ReferenceError: theme is not defined — useStoredTheme() вызывается в App() ДО использования theme.
- * ✅ «Панель» из правой колонки (Статус/Переместить + качество данных) перенесена в верхнюю шапку (Header).
- * ✅ Убраны дубли из боковой панели: слева теперь только «Плагины».
- * ✅ Карточка сделки открывается в удобном формате: широкая боковая панель ИЛИ всплывающее окно (переключатель в шапке).
- * ✅ На маленьких экранах (≤880px) детали всегда открываются как всплывающее окно.
- * ✅ Добавлены тест-кейсы.
+ * ABQD CRM — Универсальный Dashboard
+ * Архитектура: Модульная, с изоляцией состояний, кастомными хуками и оптимизацией рендеринга.
  */
 
-// -------------------------
-// API CONFIG (optional)
-// -------------------------
-const apiKey = ""; // API Key injected by environment
+// ==========================================
+// 1. КОНСТАНТЫ И ДАННЫЕ
+// ==========================================
 
-async function callGemini(prompt, jsonMode = false) {
-  try {
-    if (!apiKey) {
-      return jsonMode ? "{}" : "Демо-режим: API ключ не задан.";
-    }
-
-    const body = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: jsonMode ? { responseMimeType: "application/json" } : undefined,
-    };
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`AI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  } catch (e) {
-    console.error(e);
-    return jsonMode ? "{}" : "AI временно недоступен.";
-  }
-}
-
-// -------------------------
-// DATA
-// -------------------------
-const demoStages = [
-  { key: "inbox", title: "Входящие", hint: "Новые касания и лиды", gates: [] },
-  { key: "qual", title: "Квалификация", hint: "Понимаем цель/контекст", gates: ["budget", "deadline"] },
-  { key: "proposal", title: "Предложение", hint: "КП / условия", gates: ["decisionMaker", "email"] },
-  { key: "contract", title: "Договор", hint: "Юр. данные и согласование", gates: ["inn", "legalName"] },
-  { key: "won", title: "Выиграно", hint: "Сделка закрыта", gates: [] },
-  { key: "lost", title: "Потеряно", hint: "Причина и ретеншн", gates: ["lostReason"] },
+const PLUGINS = [
+  { id: "ai_agent", title: "AI агент", icon: <Bot className="w-4 h-4" />, desc: "Next Action и резюме" },
+  { id: "calendar", title: "Календарь", icon: <Calendar className="w-4 h-4" />, desc: "Встречи и слоты" },
+  { id: "analytics", title: "Аналитика", icon: <BarChart3 className="w-4 h-4" />, desc: "Конверсия воронки" },
 ];
 
-const stageTitleByKey = Object.fromEntries(demoStages.map((s) => [s.key, s.title]));
+const INITIAL_STAGES = [
+  { key: "inbox", title: "Входящие", color: "bg-slate-400", gates: [] },
+  { key: "qual", title: "Квалификация", color: "bg-blue-400", gates: ["budget", "deadline"] },
+  { key: "proposal", title: "Предложение", color: "bg-indigo-400", gates: ["decisionMaker", "email"] },
+  { key: "contract", title: "Договор", color: "bg-violet-400", gates: ["inn", "legalName"] },
+  { key: "won", title: "Выиграно", color: "bg-emerald-400", gates: [] },
+  { key: "lost", title: "Потеряно", color: "bg-rose-400", gates: ["lostReason"] },
+];
 
-const roleDefs = {
-  hunter: { title: "Hunter", subtitle: "Новые лиды · дозвон · КП", icon: "🎯" },
-  farmer: { title: "Farmer", subtitle: "Удержание · LTV · продления", icon: "🌿" },
+const ROLES = {
+  novice: { title: "Новички", desc: "Работа с новыми лидами" },
+  worker: { title: "Рабочие", desc: "Ведение текущих сделок" },
 };
 
-const planRanks = { free: 0, starter: 1, pro: 2, business: 3 };
-const planTitles = { free: "Free", starter: "Start", pro: "Pro", business: "Business" };
-
-const pluginCatalog = [
+const INITIAL_DEALS = [
   {
-    id: "ai_agent",
-    title: "AI агент",
-    icon: "🤖",
-    minPlan: "pro",
-    desc: "Next Action, резюме звонков/чатов, автозадачи.",
+    id: "D-1001", company: "SOVA Studio", contact: "Анастасия", stage: "inbox", 
+    amount: 180000, currency: "RUB", score: 78, phone: "+7 900 111-22-33", email: "hello@sova.studio", 
+    fields: { budget: "180k", deadline: "", note: "Интерес к CRM-системе." }, tags: ["warm"], nextTaskAt: "2026-02-25", plugins: ["ai_agent"]
   },
   {
-    id: "calendar",
-    title: "Календарь",
-    icon: "🗓️",
-    minPlan: "starter",
-    desc: "Слоты, встречи, напоминания (интеграции позже).",
-  },
-  {
-    id: "constructor",
-    title: "Конструктор",
-    icon: "⌁",
-    minPlan: "free",
-    desc: "Быстрый переход в визитку/профиль (NFC).",
-  },
-  {
-    id: "analytics",
-    title: "Аналитика",
-    icon: "📈",
-    minPlan: "pro",
-    desc: "Конверсия, скорость воронки, причины потерь.",
-  },
-  {
-    id: "automation",
-    title: "Автоматизации",
-    icon: "⚡",
-    minPlan: "business",
-    desc: "Триггеры: этап → действие, таймеры, вебхуки.",
-  },
-];
-
-const demoDealsSeed = [
-  {
-    id: "D-1001",
-    company: "SOVA Studio",
-    contact: "Анастасия · директор",
-    stage: "inbox",
-    amount: 180000,
-    currency: "RUB",
-    score: 78,
-    phone: "+7 900 111-22-33",
-    email: "hello@sova.studio",
-    fields: {
-      budget: "",
-      deadline: "",
-      decisionMaker: "",
-      inn: "",
-      legalName: "",
-      lostReason: "",
-      note: "Интерес: NFC-значок + CRM. Бюджет около 200к, нужно до конца февраля.",
-    },
-    tags: ["nfc", "crm", "warm"],
-    plugins: ["constructor"],
-    nextTaskAt: "2026-01-27",
-    tasks: [
-      { id: "T-1", title: "Первый звонок", due: "2026-01-26", done: false },
-      { id: "T-2", title: "Отправить кейс", due: "2026-01-27", done: false },
-    ],
-    timeline: [
-      { id: "A-1", type: "nfc", at: "2026-01-25T11:10:00.000Z", text: "NFC tap → меню услуг" },
-      { id: "A-2", type: "note", at: "2026-01-25T12:40:00.000Z", text: "Попросила примеры воронок" },
-    ],
-  },
-  {
-    id: "D-1002",
-    company: "Nord Realty",
-    contact: "Ольга · риелтор",
-    stage: "qual",
-    amount: 95000,
-    currency: "RUB",
-    score: 71,
-    phone: "+7 999 222-33-44",
-    email: "",
-    fields: {
-      budget: "95 000",
-      deadline: "2026-02-01",
-      decisionMaker: "",
-      inn: "",
-      legalName: "",
-      lostReason: "",
-      note: "Нужна быстрая передача контактов + календарь встреч.",
-    },
-    tags: ["realty", "qual"],
-    plugins: ["calendar"],
-    nextTaskAt: "2026-01-26",
-    tasks: [{ id: "T-3", title: "Квалификация: ЛПР + email", due: "2026-01-26", done: false }],
-    timeline: [
-      { id: "A-3", type: "call", at: "2026-01-25T16:05:00.000Z", text: "Звонок — пропущен" },
-      { id: "A-4", type: "msg", at: "2026-01-25T16:06:00.000Z", text: "WhatsApp → сообщение" },
-    ],
-  },
-  {
-    id: "D-1003",
-    company: "ABQD Partners",
-    contact: "Максим · закупки",
-    stage: "proposal",
-    amount: 240000,
-    currency: "RUB",
-    score: 86,
-    phone: "+7 901 333-44-55",
-    email: "team@abqd.partners",
-    fields: {
-      budget: "240 000",
-      deadline: "2026-02-10",
-      decisionMaker: "Максим",
-      inn: "",
-      legalName: "",
-      lostReason: "",
-      note: "Ждут КП: варианты по меткам/значкам + пакет CRM.",
-    },
-    tags: ["hot", "proposal"],
-    plugins: ["ai_agent", "analytics"],
-    nextTaskAt: "2026-01-28",
-    tasks: [{ id: "T-4", title: "Подготовить КП", due: "2026-01-28", done: false }],
-    timeline: [
-      { id: "A-5", type: "msg", at: "2026-01-24T10:10:00.000Z", text: "Telegram — ответ" },
-      { id: "A-6", type: "email", at: "2026-01-24T12:30:00.000Z", text: "Email → структура КП" },
-    ],
-  },
-];
-
-// -------------------------
-// HELPERS
-// -------------------------
-function cx() {
-  return Array.prototype.slice.call(arguments).filter(Boolean).join(" ");
-}
-
-function deepCopy(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
-
-function clamp(n, a, b) {
-  const x = Number(n);
-  if (Number.isNaN(x)) return a;
-  return Math.max(a, Math.min(b, x));
-}
-
-function planTitle(key) {
-  return planTitles[key] || "Free";
-}
-
-function isPluginUnlockedForPlan(plugin, planKey) {
-  const min = plugin?.minPlan || "free";
-  return (planRanks[planKey] ?? 0) >= (planRanks[min] ?? 0);
-}
-
-function pluginMinPlanText(plugin) {
-  const min = plugin?.minPlan || "free";
-  return `${planTitle(min)}+`;
-}
-
-function pluginHoverTitle(plugin) {
-  if (!plugin) return "";
-  return `${plugin.title} — ${plugin.desc} • Доступ: ${pluginMinPlanText(plugin)}`;
-}
-
-function createSearchString(deal) {
-  const base = [
-    deal.company,
-    deal.contact,
-    deal.id,
-    deal.stage,
-    deal.email,
-    deal.phone,
-    (deal.tags || []).join(" "),
-    JSON.stringify(deal.fields || {}),
-  ]
-    .filter(Boolean)
-    .join(" ");
-  return base.toLowerCase();
-}
-
-function formatMoney(amount, currency) {
-  try {
-    const a = Number(amount || 0);
-    return new Intl.NumberFormat("ru-RU", {
-      style: "currency",
-      currency: currency || "RUB",
-      maximumFractionDigits: 0,
-    }).format(a);
-  } catch {
-    return `${amount || 0} ${currency || "RUB"}`;
+    id: "D-1002", company: "Nord Realty", contact: "Алексей", stage: "qual", 
+    amount: 320000, currency: "RUB", score: 85, phone: "+7 900 444-55-66", email: "info@nord.re", 
+    fields: { budget: "300k+", deadline: "март", note: "Нужен календарь встреч." }, tags: ["hot"], nextTaskAt: "2026-02-22", plugins: ["calendar", "analytics"]
   }
-}
+];
 
-function dueTone(dateStr) {
+// ==========================================
+// 2. УТИЛИТЫ И СТИЛИ
+// ==========================================
+
+const formatMoney = (amount, currency = "RUB") => {
+  return new Intl.NumberFormat("ru-RU", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
+};
+
+const getScoreInfo = (score) => {
+  if (score >= 85) return { text: "Горячий", color: "text-orange-400 bg-orange-400/10 border-orange-400/20 shadow-[0_0_12px_rgba(251,146,60,0.15)]" };
+  if (score >= 70) return { text: "Тёплый", color: "text-amber-400 bg-amber-400/10 border-amber-400/20 shadow-[0_0_12px_rgba(251,191,36,0.15)]" };
+  return { text: "Холодный", color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20 shadow-[0_0_12px_rgba(34,211,238,0.15)]" };
+};
+
+const getDueStatus = (dateStr) => {
   if (!dateStr) return "none";
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const parts = String(dateStr).split("-");
-  if (parts.length !== 3) return "none";
-  const [y, m, d] = parts.map(Number);
-  if (!y || !m || !d) return "none";
-  const target = new Date(y, m - 1, d);
-  if (Number.isNaN(target.getTime())) return "none";
-  if (target.getTime() < today.getTime()) return "bad";
-  if (target.getTime() === today.getTime()) return "warn";
-  return "good";
-}
-
-function scoreLabel(score) {
-  const s = Number(score || 0);
-  if (s >= 85) return { text: "Горячий", tone: "hot" };
-  if (s >= 70) return { text: "Тёплый", tone: "warm" };
-  if (s >= 55) return { text: "Холодный", tone: "cold" };
-  return { text: "Слабый", tone: "weak" };
-}
-
-function requiredMissingForStage(deal, toStageKey) {
-  const stage = demoStages.find((s) => s.key === toStageKey);
-  if (!stage) return [];
-  const gates = stage.gates || [];
-  const f = deal?.fields || {};
-  return gates.filter((k) => !String(f?.[k] ?? "").trim());
-}
-
-function fieldLabelHuman(key) {
-  const map = {
-    budget: "Бюджет",
-    deadline: "Срок",
-    decisionMaker: "ЛПР",
-    email: "Email",
-    inn: "ИНН",
-    legalName: "Юр. название",
-    lostReason: "Причина потери",
-  };
-  return map[key] || key;
-}
-
-function pickPatchFromDraft(draft) {
-  return {
-    email: draft.email,
-    phone: draft.phone,
-    amount: draft.amount,
-    score: draft.score,
-    nextTaskAt: draft.nextTaskAt,
-    fields: draft.fields,
-    tags: draft.tags,
-  };
-}
-
-function effectivePanelMode(mode, isSmall) {
-  return isSmall ? "modal" : mode;
-}
-
-// Mock API (deterministic; no random failures)
-const mockApi = {
-  saveDealPatch: async (dealId, patch) => {
-    await new Promise((r) => setTimeout(r, 180));
-    return { ok: true, dealId, patch };
-  },
-  moveStage: async (dealId, toStage, missing) => {
-    await new Promise((r) => setTimeout(r, 140));
-    if (missing && missing.length) return { ok: false, code: "GATES", missing };
-    return { ok: true, dealId, toStage };
-  },
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  if (target < today) return "expired";
+  if (target.getTime() === today.getTime()) return "today";
+  return "future";
 };
 
-// -------------------------
-// HOOKS
-// -------------------------
-function useStoredTheme() {
-  const [theme, setTheme] = useState("light");
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem("abqd_crm_theme");
-      if (saved === "dark" || saved === "light") {
-        setTheme(saved);
-        return;
-      }
-      const prefersDark =
-        typeof window !== "undefined" &&
-        !!window.matchMedia &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(prefersDark ? "dark" : "light");
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const set = (t) => {
-    setTheme(t);
-    try {
-      window.localStorage.setItem("abqd_crm_theme", t);
-    } catch {
-      // ignore
-    }
-  };
-
-  return [theme, set];
-}
-
-function useStoredEnum(key, initial, allowed) {
-  const [val, setVal] = useState(initial);
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(key);
-      if (saved && allowed.includes(saved)) setVal(saved);
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const set = (v) => {
-    if (!allowed.includes(v)) return;
-    setVal(v);
-    try {
-      window.localStorage.setItem(key, v);
-    } catch {
-      // ignore
-    }
-  };
-
-  return [val, set];
-}
-
-function useMediaQuery(query) {
-  const [match, setMatch] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const m = window.matchMedia(query);
-    const onChange = () => setMatch(!!m.matches);
-    onChange();
-    try {
-      m.addEventListener("change", onChange);
-      return () => m.removeEventListener("change", onChange);
-    } catch {
-      // Safari old
-      m.addListener(onChange);
-      return () => m.removeListener(onChange);
-    }
-  }, [query]);
-
-  return match;
-}
-
-function useElementHeight(ref, fallback) {
-  const [h, setH] = useState(fallback);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const measure = () => {
-      const v = el.offsetHeight;
-      if (v && v !== h) setH(v);
-    };
-
-    measure();
-
-    if (typeof ResizeObserver !== "undefined") {
-      const ro = new ResizeObserver(() => measure());
-      ro.observe(el);
-      return () => ro.disconnect();
-    }
-
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref.current]);
-
-  return h;
-}
-
-function useToasts() {
-  const [toasts, setToasts] = useState([]);
-  const timersRef = useRef([]);
-
-  useEffect(() => {
-    return () => {
-      timersRef.current.forEach((id) => clearTimeout(id));
-      timersRef.current = [];
-    };
-  }, []);
-
-  const push = useCallback((tone, title, text) => {
-    const id = `toast_${Math.random().toString(16).slice(2)}`;
-    const t = { id, tone, title, text };
-    setToasts((prev) => [t, ...prev].slice(0, 6));
-    const timer = setTimeout(() => {
-      setToasts((prev) => prev.filter((x) => x.id !== id));
-    }, 3400);
-    timersRef.current.push(timer);
-  }, []);
-
-  return { toasts, push };
-}
-
-// -------------------------
-// STYLES
-// -------------------------
-const css = `
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
-
-:root{
-  --radius: 16px;
-  --header-h: 74px;
-  --brand: #6366f1;
-  --brand2: #8b5cf6;
-  --ok: rgba(16,185,129,.14);
-  --warn: rgba(245,158,11,.14);
-  --bad: rgba(244,63,94,.14);
-}
-
-[data-theme='dark']{
-  --bg:#0f0f14;
-  --panel: rgba(22, 22, 30, 0.65);
-  --panel2: rgba(22, 22, 30, 0.82);
-  --fg:#f5f5f6;
-  --muted: rgba(245,245,246,.65);
-  --muted2: rgba(245,245,246,.48);
-  --bd: rgba(245,245,246,.14);
-  --bd2: rgba(245,245,246,.10);
-  --shadow: rgba(0,0,0,.38);
-}
-
-[data-theme='light']{
-  --bg:#f6f3ff;
-  --panel: rgba(255,255,255,0.7);
-  --panel2: rgba(255,255,255,0.88);
-  --fg:#111827;
-  --muted: rgba(17,24,39,.62);
-  --muted2: rgba(17,24,39,.42);
-  --bd: rgba(139,92,246,.16);
-  --bd2: rgba(139,92,246,.10);
-  --shadow: rgba(124,58,237,.12);
-}
-
-*{ box-sizing:border-box; }
-html, body, #root{ height:100%; width:100%; margin:0; padding:0; overflow:hidden; }
-
-.abqd-root{
-  height:100%; width:100%;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  display:flex; flex-direction:column;
-}
-
-.abqd-header{
-  padding: 12px 16px;
-  display:flex; align-items:center; justify-content:space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--bd2);
-  background: linear-gradient(135deg, var(--panel2), var(--panel));
-  backdrop-filter: blur(14px);
-}
-
-.abqd-left{
-  display:flex;
-  align-items:center;
-  gap: 12px;
-  min-width: 260px;
-  flex: 1 1 560px;
-  flex-wrap: wrap;
-}
-
-.abqd-brand{ display:flex; align-items:center; gap:12px; }
-
-.abqd-logo{
-  width: 34px; height:34px;
-  border-radius: 12px;
-  background: radial-gradient(circle at 30% 30%, var(--brand2), var(--brand));
-  box-shadow: 0 10px 30px var(--shadow);
-}
-
-.abqd-title{ display:flex; flex-direction:column; line-height: 1.05; }
-.abqd-title b{ font-size: 14px; letter-spacing: 0.2px; }
-.abqd-title span{ font-size: 12px; color: var(--muted); }
-
-.abqd-headerTools{ display:flex; align-items:center; gap:10px; flex-wrap: wrap; justify-content:flex-end; }
-
-.abqd-pill{
-  height: 36px;
-  display:flex; align-items:center;
-  padding: 0 12px;
-  border: 1px solid var(--bd);
-  background: var(--panel);
-  border-radius: 999px;
-  gap: 8px;
-}
-
-.abqd-pill--wide{ height: 44px; padding: 0 12px; border-radius: 18px; }
-
-.abqd-select{
-  height: 28px;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: var(--fg);
-  font-weight: 800;
-}
-
-.abqd-miniInput{
-  height: 28px;
-  width: 96px;
-  border: 1px solid var(--bd2);
-  background: rgba(255,255,255,0.04);
-  color: var(--fg);
-  border-radius: 12px;
-  outline: none;
-  padding: 0 10px;
-  font-weight: 800;
-}
-
-.abqd-miniInput--date{ width: 132px; }
-
-.abqd-input{
-  height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--bd);
-  background: var(--panel);
-  border-radius: 12px;
-  color: var(--fg);
-  outline: none;
-  min-width: 220px;
-}
-
-.abqd-btn{
-  height: 36px;
-  border-radius: 12px;
-  border: 1px solid var(--bd);
-  background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(139,92,246,.12));
-  color: var(--fg);
-  font-weight: 900;
-  padding: 0 12px;
-  cursor: pointer;
-}
-.abqd-btn:hover{ border-color: rgba(139,92,246,.32); }
-
-.abqd-btn--solid{ border: 0; color: white; background: linear-gradient(135deg, var(--brand2), var(--brand)); }
-.abqd-btn--ghost{ background: transparent; }
-
-.abqd-layout{ flex: 1; min-height: 0; display:flex; }
-
-.abqd-sidebar{
-  width: 310px;
-  flex: 0 0 310px;
-  border-right: 1px solid var(--bd2);
-  background: linear-gradient(135deg, var(--panel2), var(--panel));
-  backdrop-filter: blur(14px);
-  padding: 14px;
-  overflow:auto;
-}
-
-.abqd-main{ flex: 1; min-width: 0; min-height: 0; display:flex; overflow:hidden; }
-
-.abqd-board{ flex: 1; min-width: 0; min-height: 0; display:flex; gap: 12px; padding: 14px; overflow-x: auto; overflow-y: hidden; }
-
-.abqd-col{
-  width: 330px;
-  flex: 0 0 330px;
-  min-height: 0;
-  display:flex;
-  flex-direction:column;
-  border: 1px solid var(--bd2);
-  background: var(--panel);
-  border-radius: var(--radius);
-  box-shadow: 0 16px 40px var(--shadow);
-}
-
-.abqd-colHead{ padding: 12px 12px 10px; border-bottom: 1px solid var(--bd2); display:flex; justify-content: space-between; align-items:flex-start; gap:10px; }
-.abqd-colHead b{ font-size: 13px; }
-.abqd-colHead small{ display:block; margin-top: 3px; color: var(--muted); }
-
-.abqd-count{ min-width: 30px; height: 24px; padding: 0 10px; display:flex; align-items:center; justify-content:center; border: 1px solid var(--bd); border-radius: 999px; font-weight: 900; color: var(--muted); background: rgba(255,255,255,0.04); }
-
-.abqd-colBody{ padding: 10px; overflow: auto; min-height: 0; }
-
-.abqd-card{ border: 1px solid var(--bd2); background: rgba(255,255,255,0.06); border-radius: 14px; padding: 10px 10px; margin-bottom: 10px; cursor: pointer; }
-.abqd-card:hover{ border-color: rgba(139,92,246,.30); }
-
-.abqd-cardTop{ display:flex; justify-content:space-between; gap:10px; }
-.abqd-cardTop b{ font-size: 13px; }
-.abqd-sub{ font-size: 12px; color: var(--muted); margin-top: 3px; }
-
-.abqd-row{ display:flex; align-items:center; gap:8px; flex-wrap: wrap; margin-top: 8px; }
-
-.abqd-chip{ display:inline-flex; align-items:center; gap:6px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--bd2); font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.06); }
-
-.abqd-chip--hot{ background: rgba(244,63,94,.12); border-color: rgba(244,63,94,.25); }
-.abqd-chip--warm{ background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.25); }
-.abqd-chip--cold{ background: rgba(59,130,246,.10); border-color: rgba(59,130,246,.20); }
-.abqd-chip--weak{ background: rgba(156,163,175,.10); border-color: rgba(156,163,175,.18); }
-
-.abqd-chip--good{ background: var(--ok); }
-.abqd-chip--warn{ background: var(--warn); }
-.abqd-chip--bad{ background: var(--bad); }
-
-/* Deal panel (centered + 50% wider) */
-.abqd-drawerOverlay{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 880;
-  display:flex;
-  align-items: stretch;
-  justify-content: center;
-  padding: 12px;
-  background: rgba(0,0,0,.14);
-  backdrop-filter: blur(10px);
-}
-
-.abqd-drawer{
-  width: min(780px, calc(100vw - 24px));
-  height: 100%;
-  border: 1px solid var(--bd2);
-  border-radius: 22px;
-  background: linear-gradient(135deg, var(--panel2), var(--panel));
-  backdrop-filter: blur(14px);
-  box-shadow: 0 30px 120px rgba(0,0,0,.42);
-  overflow: hidden;
-  padding: 0;
-  display:flex;
-  flex-direction: column;
-}
-
-.abqd-drawerHead{
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  padding: 14px;
-  border-bottom: 1px solid var(--bd2);
-  background: linear-gradient(135deg, var(--panel2), var(--panel));
-  backdrop-filter: blur(14px);
-}
-
-.abqd-drawerBody{ padding: 14px; overflow:auto; min-height: 0; }
-
-.abqd-drawerTopRow{ display:flex; justify-content: space-between; align-items: center; gap: 10px; }
-
-.abqd-section{ margin-bottom: 14px; }
-.abqd-sectionTitle{ font-weight: 900; font-size: 12px; letter-spacing: 0.2px; }
-.abqd-sectionHint{ font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-.abqd-fieldLabel{ font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
-
-.abqd-textarea{ width: 100%; min-height: 120px; padding: 10px 12px; border: 1px solid var(--bd); background: var(--panel); color: var(--fg); border-radius: 12px; outline: none; resize: vertical; }
-
-.abqd-smallInput{ width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--bd); background: var(--panel); color: var(--fg); border-radius: 12px; outline: none; }
-
-.abqd-divider{ height: 1px; background: var(--bd2); margin: 12px 0; }
-
-.abqd-toastStack{ position: fixed; top: 12px; right: 12px; width: 340px; z-index: 1000; display:flex; flex-direction:column; gap: 10px; pointer-events: none; }
-
-.abqd-toast{ pointer-events: none; border-radius: 14px; border: 1px solid var(--bd2); background: var(--panel2); padding: 10px 12px; box-shadow: 0 18px 50px var(--shadow); }
-.abqd-toast b{ display:block; font-size: 13px; }
-.abqd-toast p{ margin: 4px 0 0; font-size: 12px; color: var(--muted); }
-
-.abqd-toast--ok{ border-color: rgba(16,185,129,.25); }
-.abqd-toast--warn{ border-color: rgba(245,158,11,.25); }
-.abqd-toast--bad{ border-color: rgba(244,63,94,.25); }
-
-/* Modal */
-.abqd-modalOverlay{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 900;
-  display:flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  background: rgba(0,0,0,.22);
-  backdrop-filter: blur(10px);
-}
-
-.abqd-modal{
-  width: min(1060px, calc(100vw - 24px));
-  height: min(900px, calc(100% - 24px));
-  border-radius: 22px;
-  border: 1px solid var(--bd2);
-  background: linear-gradient(135deg, var(--panel2), var(--panel));
-  box-shadow: 0 30px 120px rgba(0,0,0,.45);
-  overflow: hidden;
-  display:flex;
-  flex-direction: column;
-}
-
-.abqd-modalHead{
-  padding: 14px;
-  border-bottom: 1px solid var(--bd2);
-  display:flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.abqd-modalBody{ padding: 14px; overflow:auto; min-height: 0; }
-
-.abqd-detailsGrid{
-  display:grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 14px;
-}
-
-@media (max-width: 980px){
-  .abqd-detailsGrid{ grid-template-columns: 1fr; }
-}
-
-@media (max-width: 1100px){
-  .abqd-sidebar{ display:none; }
-  .abqd-drawer{ width: min(680px, calc(100vw - 24px)); }
-}
-
-@media (max-width: 880px){
-  .abqd-drawerOverlay{ display:none; }
-  .abqd-input{ min-width: 160px; }
-}
-`;
-
-// -------------------------
-// UI COMPONENTS
-// -------------------------
-function Chip({ tone, children, title }) {
-  return (
-    <span
-      title={title}
-      className={cx(
-        "abqd-chip",
-        tone === "hot" && "abqd-chip--hot",
-        tone === "warm" && "abqd-chip--warm",
-        tone === "cold" && "abqd-chip--cold",
-        tone === "weak" && "abqd-chip--weak",
-        tone === "good" && "abqd-chip--good",
-        tone === "warn" && "abqd-chip--warn",
-        tone === "bad" && "abqd-chip--bad"
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
-function Button({ variant = "ghost", onClick, children, title, disabled, style }) {
-  return (
-    <button
-      className={cx("abqd-btn", variant === "solid" && "abqd-btn--solid", variant === "ghost" && "abqd-btn--ghost")}
-      onClick={onClick}
-      title={title}
-      disabled={disabled}
-      style={disabled ? { opacity: 0.55, cursor: "not-allowed", ...(style || {}) } : style}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Sidebar({ plugins, activePluginIds, onTogglePlugin, pushToast, plan }) {
-  return (
-    <aside className="abqd-sidebar">
-      <div className="abqd-section">
-        <div className="abqd-sectionTitle">Плагины</div>
-        <div className="abqd-sectionHint">Список инструментов. В демо — включаем фильтром.</div>
-        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
-          {plugins.map((p) => {
-            const unlocked = isPluginUnlockedForPlan(p, plan);
-            const active = activePluginIds.includes(p.id);
-            return (
-              <div
-                key={p.id}
-                title={pluginHoverTitle(p)}
-                className={cx("abqd-card")}
-                style={{
-                  marginBottom: 0,
-                  cursor: unlocked ? "pointer" : "not-allowed",
-                  opacity: unlocked ? 1 : 0.65,
-                }}
-                onClick={() => {
-                  if (!unlocked) {
-                    pushToast("warn", "Плагин заблокирован", `Нужен тариф: ${pluginMinPlanText(p)}`);
-                    return;
-                  }
-                  onTogglePlugin(p.id);
-                }}
-              >
-                <div className="abqd-cardTop">
-                  <b>
-                    {p.icon} {p.title}
-                  </b>
-                  <Chip>{unlocked ? (active ? "ON" : "OFF") : pluginMinPlanText(p)}</Chip>
-                </div>
-                <div className="abqd-sub">{p.desc}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function DealCard({ deal, selected, onSelect }) {
-  const s = scoreLabel(deal.score);
-  const due = dueTone(deal.nextTaskAt);
-  return (
-    <div
-      className={cx("abqd-card")}
-      style={selected ? { borderColor: "rgba(139,92,246,.45)" } : undefined}
-      onClick={onSelect}
-    >
-      <div className="abqd-cardTop">
-        <b>{deal.company}</b>
-        <Chip tone={s.tone} title={`Скор: ${deal.score}`}>
-          {s.text}
-        </Chip>
-      </div>
-      <div className="abqd-sub">{deal.contact}</div>
-      <div className="abqd-row">
-        <Chip title={deal.id}>{deal.id}</Chip>
-        <Chip title="Сумма">{formatMoney(deal.amount, deal.currency)}</Chip>
-        {due !== "none" && (
-          <Chip tone={due === "good" ? "good" : due === "warn" ? "warn" : "bad"} title="Следующая задача">
-            📌 {deal.nextTaskAt}
-          </Chip>
-        )}
-      </div>
-      <div className="abqd-row" style={{ marginTop: 10 }}>
-        {(deal.tags || []).slice(0, 3).map((t) => (
-          <Chip key={t}>#{t}</Chip>
-        ))}
-      </div>
+const getThemeStyles = (theme) => ({
+  dark: {
+    bg: 'bg-[#161922]', panel: 'bg-[#212631]', panelBorder: 'border-white/5',
+    sidebar: 'bg-[#1C212B]', card: 'bg-[#262C3A]', cardHover: 'hover:bg-[#2D3446]',
+    text: 'text-slate-200', textMuted: 'text-slate-400', input: 'bg-white/5 border-white/10'
+  },
+  light: {
+    bg: 'bg-[#F8FAFC]', panel: 'bg-white', panelBorder: 'border-slate-200',
+    sidebar: 'bg-[#F1F5F9]', card: 'bg-white', cardHover: 'hover:bg-slate-50',
+    text: 'text-slate-900', textMuted: 'text-slate-500', input: 'bg-slate-100 border-slate-200'
+  }
+}[theme]);
+
+// ==========================================
+// 3. UI КОМПОНЕНТЫ (Переиспользуемые)
+// ==========================================
+
+const Badge = ({ children, className = "" }) => (
+  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all duration-300 ${className}`}>{children}</span>
+);
+
+const ResponsiveLogo = ({ className = "w-10 h-10" }) => (
+  <div className={`${className} relative flex items-center justify-center transition-transform hover:scale-105 duration-300`}>
+    <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl shadow-lg flex items-center justify-center">
+      <Zap className="text-white w-5 h-5 fill-current" />
     </div>
-  );
-}
+  </div>
+);
 
-function StageColumn({ stage, deals, selectedId, onSelectDeal }) {
-  return (
-    <div className="abqd-col">
-      <div className="abqd-colHead">
-        <div style={{ minWidth: 0 }}>
-          <b>{stage.title}</b>
-          <small>{stage.hint}</small>
-        </div>
-        <div className="abqd-count">{deals.length}</div>
-      </div>
-      <div className="abqd-colBody">
-        {deals.map((d) => (
-          <DealCard key={d.id} deal={d} selected={d.id === selectedId} onSelect={() => onSelectDeal(d.id)} />
-        ))}
-      </div>
-    </div>
-  );
-}
+// ==========================================
+// 4. КОМПОНЕНТЫ АРХИТЕКТУРЫ
+// ==========================================
 
-function HeaderDealPanel({ deal, draft, setDraft, missingForStage, onMoveStage, onSave, onClose, saving, pushToast }) {
-  if (!deal || !draft) return null;
+// --- Модальное окно редактирования сделки (С ИЗОЛЯЦИЕЙ СОСТОЯНИЯ) ---
+const DealEditorModal = ({ deal, stages, themeStyles, onSave, onClose, onDelete, onCallAI, isSyncing }) => {
+  const [draft, setDraft] = useState(deal);
 
-  return (
-    <div className="abqd-row" style={{ marginTop: 0, gap: 10 }}>
-      <span className="abqd-pill abqd-pill--wide" title="Выбранная сделка" style={{ gap: 10 }}>
-        <span style={{ fontWeight: 900 }}>{deal.company}</span>
-        <span style={{ color: "var(--muted)", fontSize: 12 }}>· {deal.id}</span>
-        <span style={{ color: "var(--muted)", fontSize: 12 }}>· {deal.contact}</span>
-        <Button onClick={onClose} title="Закрыть сделку" variant="ghost">
-          ✕
-        </Button>
-      </span>
-
-      <span className="abqd-pill abqd-pill--wide" title="Статус">
-        <span style={{ fontWeight: 900 }}>{stageTitleByKey[draft.stage] || draft.stage}</span>
-        <select className="abqd-select" value={draft.stage} onChange={(e) => setDraft((p) => ({ ...p, stage: e.target.value }))}>
-          {demoStages.map((s) => (
-            <option key={s.key} value={s.key}>
-              {s.title}
-            </option>
-          ))}
-        </select>
-        <Button
-          variant="solid"
-          onClick={() => {
-            if (missingForStage.length) {
-              pushToast(
-                "warn",
-                "Нужны поля",
-                `Для этапа «${stageTitleByKey[draft.stage]}» заполните: ${missingForStage.map(fieldLabelHuman).join(", ")}`
-              );
-              return;
-            }
-            onMoveStage();
-          }}
-          title="Применить этап"
-        >
-          Переместить
-        </Button>
-      </span>
-
-      <span className="abqd-pill abqd-pill--wide" title="Качество данных" style={{ gap: 10 }}>
-        <span style={{ fontWeight: 900 }}>⭐</span>
-        <input
-          className="abqd-miniInput"
-          type="number"
-          min={0}
-          max={100}
-          value={Number(draft.score ?? 0)}
-          onChange={(e) => setDraft((p) => ({ ...p, score: clamp(e.target.value || 0, 0, 100) }))}
-          title="Оценка (0–100)"
-        />
-
-        <span style={{ fontWeight: 900 }}>📌</span>
-        <input
-          className="abqd-miniInput abqd-miniInput--date"
-          value={draft.nextTaskAt || ""}
-          onChange={(e) => setDraft((p) => ({ ...p, nextTaskAt: e.target.value }))}
-          placeholder="ГГГГ-ММ-ДД"
-          title="Дата следующего шага (ГГГГ-ММ-ДД)"
-        />
-
-        <Button variant="solid" onClick={onSave} disabled={saving} title="Сохранить изменения">
-          {saving ? "Сохранение…" : "Сохранить"}
-        </Button>
-      </span>
-    </div>
-  );
-}
-
-function DealDetailsContent({ deal, draft, setDraft, plan, onClose, onSavePatch, pushToast }) {
-  const [saving, setSaving] = useState(false);
-  const [aiBusy, setAiBusy] = useState(false);
-
+  // Кастомный хук для автосохранения локального состояния
   useEffect(() => {
-    setSaving(false);
-    setAiBusy(false);
-  }, [deal?.id]);
+    if (JSON.stringify(draft) === JSON.stringify(deal)) return;
+    const timer = setTimeout(() => onSave(draft), 600); // Debounce 600ms
+    return () => clearTimeout(timer);
+  }, [draft, deal, onSave]);
 
-  const onField = (key, value) => {
-    setDraft((prev) => ({
-      ...prev,
-      fields: {
-        ...(prev.fields || {}),
-        [key]: value,
-      },
-    }));
-  };
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await onSavePatch(deal.id, pickPatchFromDraft(draft));
-      pushToast("ok", "Сохранено", "Изменения применены");
-    } catch (e) {
-      pushToast("bad", "Ошибка", e?.message || "Не удалось сохранить");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const aiSuggestNext = async () => {
-    setAiBusy(true);
-    try {
-      const prompt = `Ты — помощник CRM. Дай 3 короткие следующие задачи (Next Action) для сделки.
-
-Данные: ${JSON.stringify(
-        {
-          company: draft.company,
-          stage: draft.stage,
-          amount: draft.amount,
-          fields: draft.fields,
-          tags: draft.tags,
-        },
-        null,
-        2
-      )}
-
-Формат: буллеты, без воды, по делу.`;
-      const text = await callGemini(prompt, false);
-      pushToast("ok", "AI подсказки", text || "Пустой ответ");
-    } catch (e) {
-      pushToast("bad", "AI ошибка", e?.message || "");
-    } finally {
-      setAiBusy(false);
-    }
+  const togglePlugin = (pluginId) => {
+    const plugins = draft.plugins || [];
+    setDraft({ ...draft, plugins: plugins.includes(pluginId) ? plugins.filter(id => id !== pluginId) : [...plugins, pluginId] });
   };
 
   return (
-    <>
-      <div className="abqd-detailsGrid">
-        <div>
-          <div className="abqd-section">
-            <div className="abqd-sectionTitle">Контакты</div>
-            <div className="abqd-fieldLabel">Email</div>
-            <input className="abqd-smallInput" value={draft.email || ""} onChange={(e) => setDraft((p) => ({ ...p, email: e.target.value }))} />
-            <div className="abqd-fieldLabel">Телефон</div>
-            <input className="abqd-smallInput" value={draft.phone || ""} onChange={(e) => setDraft((p) => ({ ...p, phone: e.target.value }))} />
-          </div>
-
-          <div className="abqd-section">
-            <div className="abqd-sectionTitle">Поля этапов</div>
-            <div className="abqd-sectionHint">Минимум для перевода по воронке.</div>
-
-            <div className="abqd-fieldLabel">Бюджет</div>
-            <input className="abqd-smallInput" value={draft.fields?.budget || ""} onChange={(e) => onField("budget", e.target.value)} />
-
-            <div className="abqd-fieldLabel">Срок</div>
-            <input className="abqd-smallInput" value={draft.fields?.deadline || ""} onChange={(e) => onField("deadline", e.target.value)} />
-
-            <div className="abqd-fieldLabel">ЛПР</div>
-            <input className="abqd-smallInput" value={draft.fields?.decisionMaker || ""} onChange={(e) => onField("decisionMaker", e.target.value)} />
-
-            <div className="abqd-fieldLabel">ИНН</div>
-            <input className="abqd-smallInput" value={draft.fields?.inn || ""} onChange={(e) => onField("inn", e.target.value)} />
-
-            <div className="abqd-fieldLabel">Юр\. название</div>
-            <input className="abqd-smallInput" value={draft.fields?.legalName || ""} onChange={(e) => onField("legalName", e.target.value)} />
-
-            <div className="abqd-fieldLabel">Причина потери</div>
-            <input className="abqd-smallInput" value={draft.fields?.lostReason || ""} onChange={(e) => onField("lostReason", e.target.value)} />
-          </div>
-        </div>
-
-        <div>
-          <div className="abqd-section">
-            <div className="abqd-sectionTitle">Заметка</div>
-            <div className="abqd-sectionHint">Комфортно писать — поле увеличено.</div>
-            <textarea className="abqd-textarea" value={draft.fields?.note || ""} onChange={(e) => onField("note", e.target.value)} />
-          </div>
-
-          <div className="abqd-divider" />
-
-          <div className="abqd-section">
-            <div className="abqd-sectionTitle">Действия</div>
-            <div className="abqd-row" style={{ marginTop: 10 }}>
-              <Button variant="solid" onClick={save} disabled={saving}>
-                {saving ? "Сохранение…" : "Сохранить"}
-              </Button>
-              <Button onClick={() => pushToast("ok", "Открыть конструктор", "https://app.abqd.ru/constructor/")}>⌁ Конструктор</Button>
-              <Button
-                onClick={aiSuggestNext}
-                disabled={aiBusy || !isPluginUnlockedForPlan(pluginCatalog.find((p) => p.id === "ai_agent"), plan)}
-              >
-                {aiBusy ? "AI…" : "🤖 Следующий шаг"}
-              </Button>
-              <Button onClick={onClose} title="Закрыть карточку">
-                ✕ Закрыть
-              </Button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#0B0E14]/70 backdrop-blur-lg animate-in fade-in duration-300">
+      <div className="absolute inset-0 cursor-pointer" onClick={onClose} />
+      <aside className={`relative w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col rounded-[40px] border shadow-2xl animate-in zoom-in-95 duration-300 ${themeStyles.panel} ${themeStyles.panelBorder}`}>
+        
+        {/* Header Модалки */}
+        <div className="p-8 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-[0_8px_20px_rgba(99,102,241,0.3)]">
+              <Target size={28} />
             </div>
-            {!apiKey && (
-              <div className="abqd-sectionHint" style={{ marginTop: 10 }}>
-                AI работает в демо-режиме без API ключа.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function SideDrawer({ deal, draft, setDraft, plan, onClose, onSavePatch, pushToast, topPx }) {
-  return (
-    <div
-      className="abqd-drawerOverlay"
-      style={{ top: topPx, height: `calc(100vh - ${topPx}px)` }}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <aside className="abqd-drawer" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
-        <div className="abqd-drawerHead">
-          <div className="abqd-drawerTopRow">
-            <div style={{ minWidth: 0 }}>
-              <div className="abqd-sectionTitle">{deal.company}</div>
-              <div className="abqd-sectionHint">
-                {deal.id} · {deal.contact}
+            <div className="text-left">
+              <input 
+                value={draft.company} onChange={(e) => setDraft({...draft, company: e.target.value})} 
+                className={`font-black text-2xl bg-transparent outline-none focus:text-indigo-400 w-full tracking-tight transition-colors ${themeStyles.text}`} 
+                placeholder="Название компании" 
+              />
+              <div className="flex items-center gap-2 text-xs font-bold opacity-40 mt-1 uppercase tracking-widest">
+                  <span>{draft.id}</span><span>·</span>
+                  <input value={draft.contact} onChange={(e) => setDraft({...draft, contact: e.target.value})} className="bg-transparent outline-none focus:text-indigo-400" />
               </div>
             </div>
-            <Button onClick={onClose} title="Закрыть">
-              ✕
-            </Button>
           </div>
-          <div className="abqd-sectionHint" style={{ marginTop: 8 }}>
-            Подробные поля сделки (статус/качество — в шапке сверху).
+          <div className="flex items-center gap-2">
+            {isSyncing ? <Cloud className="text-indigo-400 animate-pulse mr-2" size={20} /> : <Check className="text-emerald-400 mr-2" size={20} />}
+            <button onClick={() => onDelete(draft.id)} className="p-4 hover:bg-rose-500/10 text-rose-500 rounded-3xl transition-all"><Trash2 size={20} /></button>
+            <button onClick={onClose} className="p-4 hover:bg-white/10 rounded-3xl transition-all"><X size={20} className="opacity-40" /></button>
           </div>
         </div>
 
-        <div className="abqd-drawerBody">
-          <DealDetailsContent
-            deal={deal}
-            draft={draft}
-            setDraft={setDraft}
-            plan={plan}
-            onClose={onClose}
-            onSavePatch={onSavePatch}
-            pushToast={pushToast}
-          />
+        {/* Тело Модалки */}
+        <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+          
+          <div className="space-y-4 text-left">
+              <h3 className="text-xs font-black uppercase tracking-widest opacity-30 flex items-center gap-2"><Zap size={14} /> Инструменты обслуживания</h3>
+              <div className="flex flex-wrap gap-3">
+                {PLUGINS.map(p => {
+                  const isActive = draft.plugins?.includes(p.id);
+                  return (
+                    <button key={p.id} onClick={() => togglePlugin(p.id)}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all duration-300 ${isActive ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.1)]' : `${themeStyles.input} ${themeStyles.textMuted} opacity-60 hover:opacity-100`}`}>
+                      {p.icon}<span>{p.title}</span>{isActive && <CheckCircle2 size={12} className="ml-1" />}
+                    </button>
+                  );
+                })}
+              </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-30 px-1">Этап сделки</label>
+                <select value={draft.stage} onChange={(e) => setDraft({...draft, stage: e.target.value})} className={`w-full p-4 rounded-[20px] text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text} focus:ring-4 focus:ring-indigo-500/10`}>
+                  {stages.map(s => <option key={s.key} value={s.key} className="bg-[#1C212B]">{s.title}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-30 px-1">Бюджет сделки</label>
+                <input type="number" value={draft.amount} onChange={(e) => setDraft({...draft, amount: parseFloat(e.target.value) || 0})} className={`w-full p-4 rounded-[20px] text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text} focus:ring-4 focus:ring-indigo-500/10`} />
+              </div>
+          </div>
+
+          <div className="space-y-6 text-left">
+              <h3 className="text-xs font-black uppercase tracking-widest opacity-30 flex items-center gap-2"><User size={14} /> Контактная информация</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`flex items-center gap-3 p-5 rounded-[24px] border ${themeStyles.input}`}><Mail size={18} className="text-indigo-400 opacity-40" /><input value={draft.email || ""} onChange={(e) => setDraft({...draft, email: e.target.value})} placeholder="Email адрес" className="bg-transparent text-sm w-full outline-none font-semibold" /></div>
+                <div className={`flex items-center gap-3 p-5 rounded-[24px] border ${themeStyles.input}`}><Phone size={18} className="text-indigo-400 opacity-40" /><input value={draft.phone || ""} onChange={(e) => setDraft({...draft, phone: e.target.value})} placeholder="Телефон" className="bg-transparent text-sm w-full outline-none font-semibold" /></div>
+              </div>
+          </div>
+
+          <div className="space-y-6 text-left">
+              <div className="flex justify-between items-center">
+              <h3 className="text-xs font-black uppercase tracking-widest opacity-30 flex items-center gap-2">Заметки и Аналитика</h3>
+              <button onClick={() => onCallAI(draft, setDraft)} className="text-[10px] font-black uppercase tracking-tighter bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-full border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-2"><Zap size={10} className="fill-current" /> AI Помощник</button>
+              </div>
+              <textarea 
+              value={draft.fields.note || ""} onChange={(e) => setDraft({...draft, fields: {...draft.fields, note: e.target.value}})} 
+              placeholder="Описание сделки, детали звонков, договоренности..." 
+              className={`w-full h-52 p-6 rounded-[32px] text-sm leading-relaxed border outline-none resize-none transition-all ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500/50 focus:ring-8 focus:ring-indigo-500/5`} 
+              />
+          </div>
+        </div>
+
+        <div className="p-8 border-t border-white/5 flex gap-4">
+          <button onClick={onClose} className="w-full h-14 rounded-[24px] bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-all active:scale-[0.98] shadow-lg shadow-black/20">Готово</button>
         </div>
       </aside>
     </div>
   );
-}
+};
 
-function DealModal({ deal, draft, setDraft, plan, onClose, onSavePatch, pushToast, topPx }) {
-  return (
-    <div className="abqd-modalOverlay" style={{ top: topPx, height: `calc(100vh - ${topPx}px)` }}>
-      <div className="abqd-modal" role="dialog" aria-modal="true">
-        <div className="abqd-modalHead">
-          <div style={{ minWidth: 0 }}>
-            <div className="abqd-sectionTitle">{deal.company}</div>
-            <div className="abqd-sectionHint">
-              {deal.id} · {deal.contact}
-            </div>
-          </div>
-          <Button onClick={onClose} title="Закрыть">
-            ✕
-          </Button>
-        </div>
+// ==========================================
+// 5. ГЛАВНЫЙ КОМПОНЕНТ ПРИЛОЖЕНИЯ
+// ==========================================
 
-        <div className="abqd-modalBody">
-          <div className="abqd-sectionHint" style={{ marginBottom: 12 }}>
-            Подробные поля сделки (статус/качество — в шапке сверху).
-          </div>
-
-          <DealDetailsContent
-            deal={deal}
-            draft={draft}
-            setDraft={setDraft}
-            plan={plan}
-            onClose={onClose}
-            onSavePatch={onSavePatch}
-            pushToast={pushToast}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Toasts({ toasts }) {
-  if (!toasts.length) return null;
-  return (
-    <div className="abqd-toastStack">
-      {toasts.map((t) => (
-        <div
-          key={t.id}
-          className={cx(
-            "abqd-toast",
-            t.tone === "ok" && "abqd-toast--ok",
-            t.tone === "warn" && "abqd-toast--warn",
-            t.tone === "bad" && "abqd-toast--bad"
-          )}
-        >
-          <b>{t.title}</b>
-          <p>{t.text}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// -------------------------
-// TESTS
-// -------------------------
-function runUnitTests() {
-  const assert = (name, cond) => {
-    if (!cond) throw new Error(`Test failed: ${name}`);
-  };
-
-  assert("planTitle(pro)", planTitle("pro") === "Pro");
-  assert("planTitle(unknown)", planTitle("zzz") === "Free");
-
-  const p = pluginCatalog.find((x) => x.id === "calendar");
-  assert("plugin unlocked for starter", isPluginUnlockedForPlan(p, "starter") === true);
-  assert("plugin locked for free", isPluginUnlockedForPlan(p, "free") === false);
-
-  assert("dueTone empty", dueTone("") === "none");
-  assert("dueTone malformed", dueTone("2026/01/01") === "none");
-
-  const d0 = deepCopy(demoDealsSeed[0]);
-  assert("missing for qual budget+deadline", requiredMissingForStage(d0, "qual").length === 2);
-  d0.fields.budget = "100";
-  d0.fields.deadline = "2026-02-01";
-  assert("missing for qual none", requiredMissingForStage(d0, "qual").length === 0);
-
-  const d1 = deepCopy(demoDealsSeed[0]);
-  d1.stage = "contract";
-  assert("missing for contract inn+legalName", requiredMissingForStage(d1, "contract").length === 2);
-
-  const search = createSearchString(d0);
-  assert("search includes company", search.includes("sova"));
-  assert("search includes id", search.includes("d-1001"));
-
-  const money = formatMoney(1000, "RUB");
-  assert("formatMoney returns string", typeof money === "string" && money.length > 0);
-
-  const d2 = deepCopy(demoDealsSeed[0]);
-  d2.fields.budget = "   ";
-  assert("gates trim whitespace", requiredMissingForStage(d2, "qual").includes("budget") === true);
-
-  const patch = pickPatchFromDraft(deepCopy(demoDealsSeed[0]));
-  assert("pickPatchFromDraft contains fields", typeof patch.fields === "object");
-
-  assert("clamp upper", clamp(120, 0, 100) === 100);
-  assert("clamp lower", clamp(-2, 0, 100) === 0);
-  assert("effectivePanelMode forces modal", effectivePanelMode("side", true) === "modal");
-}
-
-// -------------------------
-// APP
-// -------------------------
 export default function App() {
-  const [theme, setTheme] = useStoredTheme();
-  const { toasts, push } = useToasts();
+  const [theme, setTheme] = useState('dark');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+const [deals, setDeals] = useState(INITIAL_DEALS);
+  const [stages, setStages] = useState(INITIAL_STAGES);
+  const [selectedId, setSelectedId] = useState(null);
+  
+  // Состояния фильтров
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentRole, setCurrentRole] = useState("novice");
+  const [activePluginsFilter, setActivePluginsFilter] = useState([]);
+  
+  // Состояния UI
+  const [toasts, setToasts] = useState([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [crmHydrated, setCrmHydrated] = useState(false);
+  const [draggedDealId, setDraggedDealId] = useState(null);
+  const [dragOverStage, setDragOverStage] = useState(null);
+  const [editingStageKey, setEditingStageKey] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
 
-  const [plan, setPlan] = useState("pro");
-  const [role, setRole] = useState("hunter");
-  const [query, setQuery] = useState("");
-  const [savingHeader, setSavingHeader] = useState(false);
+  const themeStyles = useMemo(() => getThemeStyles(theme), [theme]);
 
-  const [panelMode, setPanelMode] = useStoredEnum("abqd_crm_deal_panel", "side", ["side", "modal"]);
-  const isSmall = useMediaQuery("(max-width: 880px)");
-
-  const headerRef = useRef(null);
-  const headerH = useElementHeight(headerRef, 74);
-
-  const [activePluginIds, setActivePluginIds] = useState(["constructor"]);
-  const [deals, setDeals] = useState(() => demoDealsSeed.map((d) => ({ ...d })));
-  const [selectedId, setSelectedId] = useState(() => demoDealsSeed[0]?.id || "");
-
-  const selectedDeal = useMemo(() => deals.find((d) => d.id === selectedId) || null, [deals, selectedId]);
-  const [draft, setDraft] = useState(() => (selectedDeal ? deepCopy(selectedDeal) : null));
-
-  useEffect(() => {
-    if (selectedDeal) setDraft(deepCopy(selectedDeal));
-    else setDraft(null);
-  }, [selectedDeal?.id]);
-
-  useEffect(() => {
-    try {
-      runUnitTests();
-      console.info("ABQD CRM tests: OK");
-    } catch (e) {
-      console.error(e);
-      push("bad", "Tests failed", e?.message || "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // --- Toasts Logic ---
+  const addToast = useCallback((type, title, message) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, type, title, message }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
   }, []);
 
+  
+  // --- ABQD_CRM_SYNC_v1 ---
+  const CRM_API = "https://api.abqd.ru";
+
+  useEffect(() => {
+    const token = localStorage.getItem("abqd_token") || "";
+    if (!token) { setCrmHydrated(true); return; }
+
+    let alive = true;
+    setIsSyncing(true);
+
+    fetch(CRM_API + "/api/v1/crm/state", {
+      headers: { authorization: "Bearer " + token }
+    })
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(data => {
+        if (!alive) return;
+        const st = data?.state;
+        if (st?.stages?.length) setStages(st.stages);
+        if (st?.deals?.length) setDeals(st.deals);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!alive) return;
+        setIsSyncing(false);
+        setCrmHydrated(true);
+      });
+
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!crmHydrated) return;
+    const token = localStorage.getItem("abqd_token") || "";
+    if (!token) return;
+
+    const t = setTimeout(() => {
+      setIsSyncing(true);
+      fetch(CRM_API + "/api/v1/crm/state", {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer " + token
+        },
+        body: JSON.stringify({ stages, deals })
+      })
+        .catch(() => {})
+        .finally(() => setIsSyncing(false));
+    }, 800);
+
+    return () => clearTimeout(t);
+  }, [stages, deals, crmHydrated]);
+// --- AI Logic ---
+  const handleCallAI = async (currentDraft, setDraftFunction) => {
+    addToast("info", "AI думает", "Генерация инсайтов...");
+    setTimeout(() => {
+      setDraftFunction(prev => ({
+        ...prev,
+        fields: { ...prev.fields, note: (prev.fields.note || "") + "\n\n[AI]: Рекомендуется проверить активность плагинов для ускорения сделки." }
+      }));
+    }, 800);
+  };
+
+  // --- CRUD Сделок ---
+  const handleSaveDeal = useCallback((updatedDeal) => {
+    setIsSyncing(true);
+    setDeals(prev => prev.map(d => d.id === updatedDeal.id ? updatedDeal : d));
+    setTimeout(() => setIsSyncing(false), 400); // Имитация сети
+  }, []);
+
+  const handleAddDeal = (stageKey) => {
+    const newId = `D-${Math.floor(Math.random() * 9000) + 1000}`;
+    const newDeal = {
+      id: newId, company: "Новая сделка", contact: "Контакт", stage: stageKey,
+      amount: 0, currency: "RUB", score: 50, phone: "", email: "", fields: { budget: "", deadline: "", note: "" },
+      tags: [], nextTaskAt: new Date().toISOString().split('T')[0], plugins: []
+    };
+    setDeals(prev => [newDeal, ...prev]);
+    setSelectedId(newId);
+  };
+
+  const handleDeleteDeal = (id) => {
+    setDeals(prev => prev.filter(d => d.id !== id));
+    setSelectedId(null);
+    addToast("warn", "Сделка удалена", "Данные стерты.");
+  };
+
+  const handleMoveStage = (dealId, newStage) => {
+    const dealToMove = deals.find(d => d.id === dealId);
+    if (!dealToMove) return;
+    const stageInfo = stages.find(s => s.key === newStage);
+    const missing = stageInfo.gates.filter(g => !dealToMove.fields[g]);
+    
+    setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: newStage } : d));
+    
+    if (missing.length > 0) addToast("warn", "Нужны данные", `Для этапа "${stageInfo.title}" не хватает: ${missing.join(", ")}`);
+  };
+
+  const handleRenameStage = (key, newTitle) => {
+    if (!newTitle.trim()) { setEditingStageKey(null); return; }
+    setStages(prev => prev.map(s => s.key === key ? { ...s, title: newTitle } : s));
+    setEditingStageKey(null);
+  };
+
+  // --- Вычисляемые данные (Мемоизация) ---
   const filteredDeals = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return deals.filter((d) => {
-      if (activePluginIds.length) {
-        const has = (d.plugins || []).some((pid) => activePluginIds.includes(pid));
-        if (!has) return false;
-      }
-      if (role === "farmer" && d.stage === "inbox") return false;
-      if (!q) return true;
-      return createSearchString(d).includes(q);
+    return deals.filter(d => {
+      const matchesSearch = d.company.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRole = currentRole === "novice" || d.stage !== "inbox";
+      const matchesPlugins = activePluginsFilter.length === 0 || d.plugins?.some(p => activePluginsFilter.includes(p));
+      return matchesSearch && matchesRole && matchesPlugins;
     });
-  }, [deals, query, activePluginIds, role]);
+  }, [deals, searchQuery, currentRole, activePluginsFilter]);
 
   const dealsByStage = useMemo(() => {
-    const map = Object.fromEntries(demoStages.map((s) => [s.key, []]));
-    filteredDeals.forEach((d) => ((map[d.stage] ||= []).push(d)));
+    const map = {};
+    stages.forEach(s => map[s.key] = []);
+    filteredDeals.forEach(d => map[d.stage]?.push(d));
     return map;
-  }, [filteredDeals]);
+  }, [filteredDeals, stages]);
 
-  const missingForSelectedStage = useMemo(() => (draft ? requiredMissingForStage(draft, draft.stage) : []), [draft]);
-
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
-
-  const togglePlugin = (pluginId) => {
-    setActivePluginIds((prev) => (prev.includes(pluginId) ? prev.filter((x) => x !== pluginId) : [...prev, pluginId]));
-  };
-
-  const savePatch = async (dealId, patch) => {
-    await mockApi.saveDealPatch(dealId, patch);
-    setDeals((prev) =>
-      prev.map((d) => {
-        if (d.id !== dealId) return d;
-        const fields = patch.fields ? { ...(d.fields || {}), ...(patch.fields || {}) } : d.fields;
-        return { ...d, ...patch, fields };
-      })
-    );
-  };
-
-  const moveStage = async (dealId, toStageKey, patchFromDraft) => {
-    const base = deals.find((x) => x.id === dealId);
-    if (!base) return;
-
-    const merged = patchFromDraft
-      ? { ...base, ...patchFromDraft, fields: { ...(base.fields || {}), ...(patchFromDraft.fields || {}) } }
-      : base;
-
-    const missing = requiredMissingForStage(merged, toStageKey);
-    const res = await mockApi.moveStage(dealId, toStageKey, missing);
-    if (!res.ok && res.code === "GATES") {
-      push("warn", "Нужны поля", `Для этапа «${stageTitleByKey[toStageKey]}» заполните: ${res.missing.map(fieldLabelHuman).join(", ")}`);
-      return;
-    }
-
-    setDeals((prev) =>
-      prev.map((d) => {
-        if (d.id !== dealId) return d;
-        const fields = patchFromDraft?.fields ? { ...(d.fields || {}), ...(patchFromDraft.fields || {}) } : d.fields;
-        return { ...d, ...(patchFromDraft || {}), fields, stage: toStageKey };
-      })
-    );
-
-    push("ok", "Этап изменён", `Сделка ${dealId} → ${stageTitleByKey[toStageKey]}`);
-  };
-
-  const headerSave = async () => {
-    if (!selectedDeal || !draft) return;
-    setSavingHeader(true);
-    try {
-      await savePatch(selectedDeal.id, pickPatchFromDraft(draft));
-      push("ok", "Сохранено", "Изменения применены");
-    } catch (e) {
-      push("bad", "Ошибка", e?.message || "Не удалось сохранить");
-    } finally {
-      setSavingHeader(false);
-    }
-  };
-
-  const headerMove = async () => {
-    if (!selectedDeal || !draft) return;
-    await moveStage(selectedDeal.id, draft.stage, pickPatchFromDraft(draft));
-  };
-
-  const panelModeEffective = effectivePanelMode(panelMode, isSmall);
+  const selectedDeal = useMemo(() => deals.find(d => d.id === selectedId), [deals, selectedId]);
 
   return (
-    <div className="abqd-root" data-theme={theme}>
-      <style>{css}</style>
-
-      <header ref={headerRef} className="abqd-header">
-        <div className="abqd-left">
-          <div className="abqd-brand">
-            <div className="abqd-logo" />
-            <div className="abqd-title">
-              <b>ABQD CRM</b>
-              <span>Full-screen Kanban · plugins · gates</span>
-            </div>
-          </div>
-
-          <HeaderDealPanel
-            deal={selectedDeal}
-            draft={draft}
-            setDraft={setDraft}
-            missingForStage={missingForSelectedStage}
-            onMoveStage={headerMove}
-            onSave={headerSave}
-            onClose={() => setSelectedId("")}
-            saving={savingHeader}
-            pushToast={push}
-          />
-        </div>
-
-        <div className="abqd-headerTools">
-          <input className="abqd-input" placeholder="Поиск по сделкам…" value={query} onChange={(e) => setQuery(e.target.value)} />
-
-          <span className="abqd-pill" title="Тариф (демо)">
-            <span style={{ fontWeight: 900 }}>{planTitle(plan)}</span>
-            <select className="abqd-select" value={plan} onChange={(e) => setPlan(e.target.value)}>
-              <option value="free">Free</option>
-              <option value="starter">Start</option>
-              <option value="pro">Pro</option>
-              <option value="business">Business</option>
-            </select>
-          </span>
-
-          <span className="abqd-pill" title="Роль (демо)">
-            <span style={{ fontWeight: 900 }}>{roleDefs[role]?.icon}</span>
-            <select className="abqd-select" value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="hunter">Hunter</option>
-              <option value="farmer">Farmer</option>
-            </select>
-          </span>
-
-          <Button onClick={() => setPanelMode(panelMode === "side" ? "modal" : "side")} title="Переключить режим карточки" variant="ghost">
-            {panelModeEffective === "modal" ? "🗔" : "🗖"}
-          </Button>
-
-          <Button onClick={toggleTheme} title="Сменить тему" variant="ghost">
-            {theme === "dark" ? "🌙" : "☀️"}
-          </Button>
-        </div>
-      </header>
-
-      <div className="abqd-layout">
-        <Sidebar plan={plan} plugins={pluginCatalog} activePluginIds={activePluginIds} onTogglePlugin={togglePlugin} pushToast={push} />
-
-        <main className="abqd-main">
-          <div className="abqd-board">
-            {demoStages.map((s) => (
-              <StageColumn key={s.key} stage={s} deals={dealsByStage[s.key] || []} selectedId={selectedId} onSelectDeal={(id) => setSelectedId(id)} />
-            ))}
-          </div>
-
-          {selectedDeal && draft && panelModeEffective === "side" && (
-            <SideDrawer
-              deal={selectedDeal}
-              draft={draft}
-              setDraft={setDraft}
-              plan={plan}
-              onClose={() => setSelectedId("")}
-              onSavePatch={savePatch}
-              pushToast={push}
-              topPx={headerH}
-            />
-          )}
-        </main>
-      </div>
-
-      {selectedDeal && draft && panelModeEffective === "modal" && (
-        <DealModal
-          deal={selectedDeal}
-          draft={draft}
-          setDraft={setDraft}
-          plan={plan}
-          onClose={() => setSelectedId("")}
-          onSavePatch={savePatch}
-          pushToast={push}
-          topPx={headerH}
-        />
+    <div className={`flex w-full transition-colors duration-500 font-sans ${themeStyles.bg} ${themeStyles.text}`} style={ { height: '100vh', paddingBottom: '5vh', boxSizing: 'border-box' } }>
+      
+      {/* SIDEBAR */}
+      {isSidebarOpen && (
+        <div data-abqd-sidebar-overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm sm:hidden" onClick={() => setIsSidebarOpen(false)} />
       )}
 
-      <Toasts toasts={toasts} />
+      <aside className={`fixed sm:relative inset-y-0 left-0 sm:inset-auto z-50 sm:z-40 w-72 ${isSidebarCollapsed ? 'sm:w-20' : 'sm:w-64'} border-r flex flex-col p-4 transition-all duration-300 ease-in-out transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0 ${themeStyles.sidebar} ${themeStyles.panelBorder}`}>
+
+        <div data-abqd-sidebar-close className="sm:hidden flex justify-end mb-2">
+          <button onClick={() => setIsSidebarOpen(false)} className={`p-2 rounded-xl border ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-slate-100 border-slate-200'}`} aria-label="Закрыть меню">
+            <X size={18} />
+          </button>
+        </div>
+
+        <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className={`hidden sm:flex absolute -right-3 top-10 z-50 w-6 h-6 rounded-full border flex items-center justify-center transition-all shadow-xl ${theme === 'dark' ? 'bg-[#2D3446] border-white/10 text-white hover:text-indigo-400' : 'bg-white border-slate-200 text-slate-400 hover:text-indigo-500'}`}>
+          {isSidebarCollapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
+        </button>
+
+        <div className="space-y-1 flex-1 overflow-y-auto no-scrollbar pt-2">
+          {!isSidebarCollapsed && <p className={`text-[10px] font-bold uppercase tracking-wider px-2 mb-6 ${themeStyles.textMuted} opacity-50 text-left`}>Фильтр плагинов</p>}
+          {PLUGINS.map(p => (
+            <button key={p.id} onClick={() => { setActivePluginsFilter(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id]); setIsSidebarOpen(false); }}
+              className={`w-full flex items-center rounded-2xl transition-all duration-300 group mb-1 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-3'} ${activePluginsFilter.includes(p.id) ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : `hover:bg-white/5 ${themeStyles.textMuted} border border-transparent`}`}>
+              <div className={`${activePluginsFilter.includes(p.id) ? 'text-indigo-400' : 'group-hover:text-indigo-400 transition-colors'}`}>{p.icon}</div>
+              {!isSidebarCollapsed && <span className="text-sm font-semibold truncate text-left">{p.title}</span>}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-auto pb-4 flex justify-center border-t border-white/5 pt-4">
+           <button onClick={() => { setTheme(theme === 'dark' ? 'light' : 'dark'); setIsSidebarOpen(false); }} className="p-3 rounded-2xl hover:bg-white/5 transition-all group flex items-center justify-center">
+              {theme === 'dark' ? <Sun size={20} className="text-amber-500/40 group-hover:text-amber-400 transition-colors duration-300" /> : <Moon size={20} className="text-indigo-500/50 group-hover:text-indigo-500 transition-colors duration-300" />}
+           </button>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
+        
+        {/* HEADER */}
+        <header className={`h-16 border-b flex items-center justify-between px-6 z-10 transition-colors ${themeStyles.panel} ${themeStyles.panelBorder} backdrop-blur-md bg-opacity-80`}>
+          <div className="flex items-center gap-3 flex-1 max-w-xl">
+            <button data-abqd-burger onClick={() => setIsSidebarOpen(true)} className={`sm:hidden p-2 rounded-xl border ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-slate-100 border-slate-200'}`} aria-label="Открыть меню">
+              <PanelLeftOpen size={18} />
+            </button>
+            <div className="relative w-full">
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30 ${themeStyles.textMuted}`} />
+              <input type="text" placeholder="Поиск по сделкам..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full h-10 pl-10 pr-4 rounded-2xl text-sm border focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all ${themeStyles.input} ${themeStyles.text}`} />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+             {isSyncing && (
+               <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-400 animate-pulse mr-4 bg-indigo-500/5 px-3 py-1 rounded-full border border-indigo-500/10">
+                 <Cloud size={14} /> <span>Синхронизация</span>
+               </div>
+             )}
+            <div className={`flex items-center gap-1 p-1 rounded-2xl border ${themeStyles.panelBorder} ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`}>
+              {Object.keys(ROLES).map(k => (
+                <button key={k} onClick={() => setCurrentRole(k)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${currentRole === k ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : `opacity-40 hover:opacity-100 ${themeStyles.text}`}`}>
+                  {ROLES[k].title}
+                </button>
+              ))}
+            </div>
+          </div>
+        </header>
+
+        {/* BOARD */}
+        <div className="flex-1 overflow-x-auto flex p-8 gap-8 scrollbar-hide">
+          {stages.map(stage => (
+            <div key={stage.key} onDragOver={(e) => { e.preventDefault(); setDragOverStage(stage.key); }} onDrop={(e) => { e.preventDefault(); handleMoveStage(e.dataTransfer.getData("dealId"), stage.key); setDragOverStage(null); }} onDragLeave={() => setDragOverStage(null)}
+              className={`flex-none w-[300px] flex flex-col group/col rounded-3xl transition-all duration-200 border-2 ${dragOverStage === stage.key ? 'border-indigo-500/40 bg-indigo-500/5 shadow-2xl shadow-indigo-500/10 scale-[1.01]' : 'border-transparent'}`}>
+              
+              <div className="flex items-center justify-between mb-6 px-1">
+                <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                  <div className={`w-2 h-2 rounded-full ${stage.color} shadow-[0_0_10px_currentColor]`} />
+                  {editingStageKey === stage.key ? (
+                    <input autoFocus value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onBlur={() => handleRenameStage(stage.key, renameValue)} onKeyDown={(e) => e.key === 'Enter' && handleRenameStage(stage.key, renameValue)} className={`bg-transparent font-bold text-sm uppercase outline-none border-b border-indigo-500 w-full ${themeStyles.text}`} />
+                  ) : (
+                    <h3 onClick={() => { setEditingStageKey(stage.key); setRenameValue(stage.title); }} className={`font-bold text-sm uppercase tracking-[0.1em] truncate cursor-pointer hover:text-indigo-400 transition-colors ${themeStyles.textMuted}`}>{stage.title}</h3>
+                  )}
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${theme === 'dark' ? 'bg-white/5 text-slate-500' : 'bg-slate-200 text-slate-500'}`}>{dealsByStage[stage.key]?.length || 0}</span>
+                </div>
+                <button onClick={() => handleAddDeal(stage.key)} className="opacity-0 group-hover/col:opacity-100 p-2 bg-indigo-500/10 text-indigo-400 rounded-xl hover:bg-indigo-500/20 transition-all"><Plus size={16} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-4 pb-6 px-1 custom-scrollbar">
+                {dealsByStage[stage.key]?.map(deal => {
+                  const score = getScoreInfo(deal.score);
+                  const isDragged = draggedDealId === deal.id;
+                  return (
+                    <div key={deal.id} draggable onDragStart={(e) => { setDraggedDealId(deal.id); e.dataTransfer.setData("dealId", deal.id); setTimeout(()=>e.target.style.opacity='0.5',0); }} onDragEnd={(e) => { e.target.style.opacity='1'; setDraggedDealId(null); setDragOverStage(null); }} onClick={() => setSelectedId(deal.id)}
+                      className={`group p-5 rounded-[24px] border cursor-grab active:cursor-grabbing transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${selectedId === deal.id ? 'border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20 shadow-[0_8px_30px_rgba(99,102,241,0.15)]' : isDragged ? 'border-indigo-500/50 bg-indigo-500/10 ring-2 ring-indigo-500/20' : `${themeStyles.card} ${themeStyles.panelBorder} ${themeStyles.cardHover} shadow-sm`}`}>
+                      <div className="flex justify-between items-start mb-3 text-left"><h4 className={`font-bold text-sm truncate pr-2 ${themeStyles.text}`}>{deal.company}</h4><Badge className={score.color}>{deal.score}</Badge></div>
+                      <div className="flex items-center justify-between text-[11px] mb-4 text-left"><span className={themeStyles.textMuted}>{deal.contact}</span><span className="font-black text-indigo-400 tracking-tighter">{formatMoney(deal.amount)}</span></div>
+                      
+                      <div className="flex items-center gap-2 pt-3 border-t border-white/5">
+                        <div className="flex -space-x-1.5 overflow-hidden">
+                          {deal.plugins?.length > 0 ? deal.plugins.map(pid => {
+                              const p = PLUGINS.find(item => item.id === pid);
+                              return p ? <div key={pid} className="w-6 h-6 rounded-full bg-[#1C212B] border border-white/5 flex items-center justify-center text-indigo-400 shadow-sm" title={p.title}>{p.icon}</div> : null;
+                            }) : <span className="text-[9px] opacity-20 uppercase font-bold tracking-tighter">Нет инструментов</span>}
+                        </div>
+                        <div className="flex-1" />
+                        <GripVertical size={12} className={`${themeStyles.textMuted} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                      </div>
+                    </div>
+                  );
+                })}
+                <button onClick={() => handleAddDeal(stage.key)} className={`w-full py-4 rounded-[24px] border-2 border-dashed ${themeStyles.panelBorder} opacity-20 hover:opacity-100 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all text-[11px] font-bold flex items-center justify-center gap-2 ${themeStyles.textMuted}`}><Plus size={14} /> Добавить сделку</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* MODAL EDITOR */}
+        {selectedDeal && (
+          <DealEditorModal 
+            deal={selectedDeal} 
+            stages={stages} 
+            themeStyles={themeStyles} 
+            isSyncing={isSyncing}
+            onSave={handleSaveDeal} 
+            onClose={() => setSelectedId(null)} 
+            onDelete={handleDeleteDeal}
+            onCallAI={handleCallAI}
+          />
+        )}
+
+        {/* TOASTS */}
+        <div className="fixed top-20 right-8 z-[200] space-y-4 pointer-events-none">
+          {toasts.map(t => (
+            <div key={t.id} className={`flex items-start gap-4 p-5 rounded-[28px] shadow-2xl border backdrop-blur-xl animate-in slide-in-from-right duration-500 pointer-events-auto min-w-[280px] ${theme === 'dark' ? 'bg-[#1C212B]/90 border-white/10' : 'bg-white/90 border-slate-200'}`}>
+              <div className={`mt-0.5 ${t.type === 'success' ? 'text-emerald-400' : t.type === 'error' ? 'text-rose-400' : 'text-indigo-400'}`}>{t.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}</div>
+              <div className="flex-1 text-left"><p className="font-black text-xs uppercase tracking-wider">{t.title}</p><p className={`text-[11px] font-medium mt-1 ${themeStyles.textMuted}`}>{t.message}</p></div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.15); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.3); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+      `}} />
     </div>
   );
 }
