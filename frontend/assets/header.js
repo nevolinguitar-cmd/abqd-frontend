@@ -36,6 +36,10 @@
                 z-index:99999;
             }
 
+            .abqd-brand { display:flex; align-items:center; }
+            .abqd-logo { height:28px; width:auto; display:block; }
+            @media(max-width:900px){ .abqd-logo{ height:24px; } }
+
             #${ROOT_ID} nav {
                 position:absolute;
                 left:50%;
@@ -100,6 +104,10 @@
             }
 
             @media(max-width:900px){
+            .abqd-brand { display:flex; align-items:center; }
+            .abqd-logo { height:28px; width:auto; display:block; }
+            @media(max-width:900px){ .abqd-logo{ height:24px; } }
+
                 #${ROOT_ID} nav { display:none; }
             }
         `;
@@ -109,10 +117,12 @@
 
         const brand = `
             <div>
-                <a href="/">
-                    <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" height="28">
-                </a>
-            </div>
+                <a href="/" class="abqd-brand">
+<picture>
+  <source srcset="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" media="(min-width: 901px)">
+  <source srcset="https://static.tildacdn.com/tild6464-3131-4736-b938-656238643465/_abqd.png" media="(max-width: 900px)">
+  <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" alt="ABQD" class="abqd-logo">
+</picture>
         `;
 
         const links = `
