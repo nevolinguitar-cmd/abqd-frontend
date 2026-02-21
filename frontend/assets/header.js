@@ -19,7 +19,16 @@
             :root { --abqdHdrH:64px; --abqdAccent:#2a62ff; }
             body { padding-top: var(--abqdHdrH) !important; }
 
-            #${ROOT_ID} {
+            #${ROOT_ID} {#
+                #${ROOT_ID} .abqd-container {
+                    max-width: 1240px;
+                    width: 100%;
+                    margin: 0 auto;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+
                 position: fixed; top:0; left:0; right:0;
                 height: var(--abqdHdrH);
                 display:flex; align-items:center; justify-content:space-between;
