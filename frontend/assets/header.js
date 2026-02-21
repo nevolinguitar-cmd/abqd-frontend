@@ -155,8 +155,17 @@
         word-break:break-all;
       }
 
-      @media(max-width:900px){
-        .hdr-center { display:none; }
+@media(max-width:900px){
+  #abqd-header-root{
+    height:56px;
+    padding:0 20px;
+  }
+  .hdr-center{display:none!important;}
+  .hdr-right{display:none!important;}
+  .burger{display:flex!important;}
+  .abqd-logo{height:22px;}
+}
+
         .hdr-right { display:none; }
         .burger { display:flex; }
         .abqd-logo { height:24px; }
