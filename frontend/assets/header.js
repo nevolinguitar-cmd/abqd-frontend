@@ -1,4 +1,4 @@
-/* ABQD_HEADER_v31_STABLE_EMAIL */
+/* ABQD_HEADER_v35_STABLE_RESET */
 
 (() => {
     try {
@@ -8,7 +8,8 @@
         const TOKEN_KEY = "abqd_token";
         const API = "https://api.abqd.ru";
 
-        if (document.getElementById(ROOT_ID)) return;
+        const old = document.getElementById(ROOT_ID);
+        if (old) old.remove();
 
         const header = document.createElement("div");
         header.id = ROOT_ID;
