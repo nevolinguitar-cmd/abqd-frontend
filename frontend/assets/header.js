@@ -1,4 +1,4 @@
-/* ABQD_HEADER_v37_LAYOUT_FIX */
+/* ABQD_HEADER_v38_DESKTOP_OK_MOBILE_RESTORE */
 
 (() => {
   try {
@@ -36,23 +36,17 @@
         z-index:99999;
       }
 
-      .hdr-left,
-      .hdr-center,
-      .hdr-right {
-        display:flex;
-        align-items:center;
+      .hdr-left,.hdr-center,.hdr-right {
+        display:flex; align-items:center;
       }
 
-      .hdr-left { flex:0 0 auto; }
       .hdr-center { flex:1; justify-content:center; }
-      .hdr-right { flex:0 0 auto; gap:14px; }
+      .hdr-right { gap:14px; }
 
       .hdr-center nav {
-        display:flex;
-        gap:6px;
+        display:flex; gap:6px;
         background:rgba(255,255,255,.04);
-        padding:4px;
-        border-radius:99px;
+        padding:4px; border-radius:99px;
       }
 
       .hdr-center nav a {
@@ -100,19 +94,81 @@
         font-weight:700;
       }
 
-      .abqd-logo {
-        height:28px;
-        display:block;
+      .abqd-logo { height:28px; display:block; }
+
+      /* ===== MOBILE ===== */
+
+      .burger {
+        display:none;
+        width:40px;
+        height:40px;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        gap:5px;
+        cursor:pointer;
+      }
+
+      .burger span {
+        width:22px;
+        height:2px;
+        background:#fff;
+        transition:.3s;
+      }
+
+      .mobile-menu {
+        position:fixed;
+        top:0;
+        right:-100%;
+        width:100%;
+        height:100vh;
+        background:#05070a;
+        padding:100px 32px 40px;
+        display:flex;
+        flex-direction:column;
+        transition:.4s cubic-bezier(.4,0,.2,1);
+        z-index:99998;
+      }
+
+      .mobile-menu.open { right:0; }
+
+      .mobile-menu a {
+        font-size:22px;
+        font-weight:700;
+        color:#fff;
+        text-decoration:none;
+        margin-bottom:28px;
+      }
+
+      .mobile-auth {
+        margin-top:auto;
+        padding-top:30px;
+        border-top:1px solid rgba(255,255,255,.1);
+        display:flex;
+        flex-direction:column;
+        gap:16px;
+      }
+
+      .mobile-email {
+        font-size:14px;
+        opacity:.6;
+        word-break:break-all;
       }
 
       @media(max-width:900px){
         .hdr-center { display:none; }
+        .hdr-right { display:none; }
+        .burger { display:flex; }
         .abqd-logo { height:24px; }
       }
     `;
     document.head.appendChild(style);
 
     const token = localStorage.getItem(TOKEN_KEY);
+
+    const mobileMenu = document.createElement("div");
+    mobileMenu.className = "mobile-menu";
+    document.body.appendChild(mobileMenu);
 
     header.innerHTML = `
       <div class="hdr-left">
@@ -142,15 +198,44 @@
             : `<a class="abqd-login" href="/auth/">Войти</a>`
         }
       </div>
+
+      <div class="burger" id="burger">
+        <span></span><span></span><span></span>
+      </div>
     `;
+
+    mobileMenu.innerHTML = `
+      <a href="/dashboard/">Кабинет</a>
+      <a href="/constructor/">Конструктор</a>
+      <a href="/calendar/">Календарь</a>
+      <a href="/account/">Аккаунт</a>
+      <div class="mobile-auth">
+        ${
+          token
+            ? `<div class="mobile-email">загрузка...</div>
+               <a href="#" class="abqd-logout">Выйти</a>`
+            : `<a class="abqd-login" href="/auth/">Войти</a>`
+        }
+      </div>
+    `;
+
+    const burger = document.getElementById("burger");
+    burger.onclick = () => {
+      mobileMenu.classList.toggle("open");
+      document.body.style.overflow =
+        mobileMenu.classList.contains("open") ? "hidden" : "";
+    };
 
     if (!token) return;
 
-    document.querySelector(".abqd-logout").onclick = (e) => {
-      e.preventDefault();
-      localStorage.removeItem(TOKEN_KEY);
-      location.reload();
-    };
+    const logoutButtons = document.querySelectorAll(".abqd-logout");
+    logoutButtons.forEach(btn => {
+      btn.onclick = e => {
+        e.preventDefault();
+        localStorage.removeItem(TOKEN_KEY);
+        location.reload();
+      };
+    });
 
     fetch(API + "/api/v1/auth/me", {
       headers: { authorization: "Bearer " + token }
@@ -158,7 +243,8 @@
     .then(r => r.ok ? r.json() : null)
     .then(user => {
       if (!user) return;
-      document.querySelector(".abqd-email").textContent = user.email;
+      document.querySelectorAll(".abqd-email,.mobile-email")
+        .forEach(el => el.textContent = user.email);
     });
 
   } catch(e){ console.error(e); }
