@@ -1,4 +1,4 @@
-/* ABQD_HEADER_v23_CENTERED */
+/* ABQD_HEADER_v21_STABLE_EMAIL */
 
 (() => {
     try {
@@ -20,33 +20,22 @@
             body { padding-top: var(--abqdHdrH) !important; }
 
             #${ROOT_ID} {
-                position: fixed;
-                top:0; left:0; right:0;
+                position: fixed; top:0; left:0; right:0;
                 height: var(--abqdHdrH);
-                background: linear-gradient(to bottom, rgba(5,7,10,.92), rgba(5,7,10,.82));
+                display:flex; align-items:center; justify-content:space-between;
+                padding:0 24px;
+                background:linear-gradient(to bottom, rgba(5,7,10,.9), rgba(5,7,10,.8));
                 backdrop-filter: blur(24px);
                 border-bottom:1px solid rgba(255,255,255,.12);
+                color:#fff; font:500 14px Inter,system-ui;
                 z-index:99999;
             }
 
-            #${ROOT_ID} .abqd-wrap {
-                max-width: 1240px;
-                height:100%;
-                margin:0 auto;
-                padding:0 24px;
-                display:flex;
-                align-items:center;
-                justify-content:space-between;
-                color:#fff;
-                font:500 14px Inter,system-ui;
-            }
-
             #${ROOT_ID} nav {
-                display:flex;
-                gap:8px;
+                position:absolute; left:50%; transform:translateX(-50%);
+                display:flex; gap:8px;
                 background:rgba(255,255,255,.04);
-                padding:4px;
-                border-radius:99px;
+                padding:4px; border-radius:99px;
             }
 
             #${ROOT_ID} nav a {
@@ -63,9 +52,7 @@
             }
 
             .abqd-auth {
-                display:flex;
-                align-items:center;
-                gap:14px;
+                display:flex; align-items:center; gap:14px;
             }
 
             .abqd-email {
@@ -109,14 +96,6 @@
 
         const token = localStorage.getItem(TOKEN_KEY);
 
-        const brand = `
-            <div>
-                <a href="/">
-                    <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" height="28">
-                </a>
-            </div>
-        `;
-
         const links = `
             <nav>
                 <a href="/dashboard/">Кабинет</a>
@@ -126,26 +105,33 @@
             </nav>
         `;
 
-        let authHTML;
-
-        if (!token) {
-            authHTML = `<a class="abqd-login" href="/auth/">Войти</a>`;
-        } else {
-            authHTML = `
-                <span class="abqd-email">загрузка...</span>
-                <a href="#" class="abqd-logout">Выйти</a>
-            `;
-        }
-
-        header.innerHTML = `
-            <div class="abqd-wrap">
-                ${brand}
-                ${links}
-                <div class="abqd-auth">${authHTML}</div>
+        const brand = `
+            <div>
+                <a href="/">
+                    <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" height="28">
+                </a>
             </div>
         `;
 
-        if (!token) return;
+        if (!token) {
+            header.innerHTML = `
+                ${brand}
+                ${links}
+                <div class="abqd-auth">
+                    <a class="abqd-login" href="/auth/">Войти</a>
+                </div>
+            `;
+            return;
+        }
+
+        header.innerHTML = `
+            ${brand}
+            ${links}
+            <div class="abqd-auth">
+                <span class="abqd-email">загрузка...</span>
+                <a href="#" class="abqd-logout">Выйти</a>
+            </div>
+        `;
 
         document.querySelector(".abqd-logout").onclick = (e) => {
             e.preventDefault();
