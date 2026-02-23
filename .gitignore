@@ -34,3 +34,12 @@ _bk_*/
 *.before_restore
 *.swp
 .DS_Store
+
+# ABQD local backups / snapshots
+*.snap.*
+*.bak.*
+*.BROKEN.*
+*.pre_fix.*
+*.pre_rollback.*
+apps/crm/dist-calendar/
+apps/crm/calendar-standalone/
