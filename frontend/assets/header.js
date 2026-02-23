@@ -258,3 +258,59 @@
 
   } catch(e){ console.error(e); }
 })();
+
+/* --- ABQD_HEADER_MOBILE_TWEAKS_v1 • email gray + button borders + desktop no-burger --- */
+(function(){
+  try{
+    if (location.pathname.startsWith("/auth")) return;
+    if (document.getElementById("abqdHeaderMobileTweaks_v1")) return;
+
+    const s = document.createElement("style");
+    s.id = "abqdHeaderMobileTweaks_v1";
+    s.textContent = `
+/* Ensure Montserrat in header + menus */
+#abqd-header-root, #abqd-header-menu, #abqd-header-root-mobile-menu,
+#abqdHeaderRoot_v2, #abqdMenuWrap_v2 {
+  font-family: "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial !important;
+}
+
+/* Desktop: force-hide burger (do NOT affect mobile) */
+@media (min-width: 901px){
+  #abqd-header-root .abqd-burger,
+  #abqdHeaderRoot_v2 .abqdBurger_v2,
+  #abqd-header-root .abqdIconBtn_v2 { display: none !important; }
+}
+
+/* Mobile email: weak gray */
+#abqd-mob-who, #abqd-m-email, #abqdEmail_v2{
+  color: rgba(255,255,255,.55) !important;
+  font-weight: 600 !important;
+}
+
+/* Mobile menu links: add subtle borders + consistent padding */
+@media (max-width: 900px){
+  #abqd-header-root-mobile-menu a.abqd-menu-link,
+  #abqd-header-menu a.menu-link,
+  #abqdMenuNav_v2 a.abqdNavLink_v2{
+    border: 1px solid rgba(255,255,255,.12) !important;
+    background: rgba(255,255,255,.03) !important;
+  }
+}
+
+/* Mobile buttons (logout/login): framed */
+#abqd-mob-lo, #abqd-m-logout, #abqdLogout_v2{
+  border: 1px solid rgba(255,255,255,.14) !important;
+  background: rgba(255,255,255,.05) !important;
+  border-radius: 14px !important;
+}
+
+/* Make bottom auth block look neat (if present) */
+#abqd-header-root-mobile-menu > div[style*="border-top"],
+#abqdMenuBottom_v2,
+#abqd-header-menu .bottom{
+  border-top: 1px solid rgba(255,255,255,.10) !important;
+}
+    `;
+    document.head.appendChild(s);
+  }catch(_){}
+})();
