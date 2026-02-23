@@ -1,351 +1,357 @@
-/* ABQD Header — STABLE_v6 • desktop no-burger • mobile menu with email+status+logout • 2026-02-23 */
+/* * ABQD Header — Technical Specification
+ * Версия: ABQD_HEADER_UNIFIED_GLASS_v5_PREMIUM
+ * Особенности:
+ * - Условный рендер DOM (до вставки)
+ * - Mobile Auth inside Burger (Premium Widget Card)
+ * - Desktop Minimal Profile (Ghost Logout)
+ * - Ultimate Tactile Animations & Glow Effects
+ */
+
 (() => {
-  "use strict";
-  if (location.pathname.startsWith("/auth")) return;
+    try {
+        // 1. ПРОВЕРКА ИСКЛЮЧЕНИЙ
+        if (location.pathname.startsWith("/auth")) return;
 
-  // --- cleanup old variants (to avoid double UI / broken padding) ---
-  const OLD_IDS = [
-    "abqd-header-root", "abqd-header-root-mobile-menu", "abqd-header-styles",
-    "abqdHeaderRoot_v2", "abqdMenuWrap_v2", "abqdHeaderCss_v2",
-    "abqdHeaderMobileTweaks_v1"
-  ];
-  OLD_IDS.forEach(id => { try{ document.getElementById(id)?.remove(); }catch(_){ } });
+        const ROOT_ID = "abqd-header-root";
+        const MENU_ID = `${ROOT_ID}-mobile-menu`;
 
-  const ROOT_ID = "abqd_header_v6";
-  const MENU_ID = "abqd_header_menu_v6";
-  const STYLE_ID = "abqd_header_style_v6";
-  const SPACER_ID = "abqd_header_spacer_v6";
-  if (document.getElementById(ROOT_ID)) return;
+        // FIX: правильная защита от двойной инициализации
+        if (window.__abqd_header_initialized) return;
+        window.__abqd_header_initialized = true;
 
-  const API = "https://api.abqd.ru";
-  const TOKEN_KEY = "abqd_token";
-  const LOGO_PNG = "https://static.tildacdn.com/tild3532-3636-4132-b064-346663353861/_abqd.png";
+        // 2. КОНФИГУРАЦИЯ
+        const CONFIG = {
+            API: "https://api.abqd.ru",
+            TOKEN_KEY: "abqd_token",
+            // фиксируем бренд на эталонный PNG (самый надёжный вариант)
+            LOGO: {
+                SVG: "https://static.tildacdn.com/tild3532-3636-4132-b064-346663353861/_abqd.png",
+                PNG: "https://static.tildacdn.com/tild3532-3636-4132-b064-346663353861/_abqd.png"
+            },
+            LINKS: [
+                { name: "Кабинет", href: "/dashboard/?view=kanban" },
+                { name: "Конструктор", href: "/constructor/" },
+                { name: "Календарь", href: "/calendar/?theme=light" },
+                { name: "Аккаунт", href: "/account/" }
+            ]
+        };
 
-  const LINKS = [
-    { name: "Кабинет", href: "/dashboard/" },
-    { name: "Конструктор", href: "/constructor/" },
-    { name: "Календарь", href: "/calendar/" },
-    { name: "Аккаунт", href: "/account/" },
-  ];
+        // 3. ИНЪЕКЦИЯ СТИЛЕЙ (CRM SAFE) — обновляем даже если style уже был
+        let style = document.getElementById("abqd-header-styles");
+        if (!style) {
+            style = document.createElement("style");
+            style.id = "abqd-header-styles";
+            document.head.appendChild(style);
+        }
 
-  const el = (tag, attrs, html) => {
-    const n = document.createElement(tag);
-    if (attrs) Object.keys(attrs).forEach(k => {
-      if (k === "class") n.className = attrs[k];
-      else if (k === "text") n.textContent = attrs[k];
-      else n.setAttribute(k, attrs[k]);
-    });
-    if (html != null) n.innerHTML = html;
-    return n;
-  };
+        style.textContent = `
+            :root {
+                --abqdHdrH: 64px;
+                --abqdAccent: rgba(42, 98, 255, 0.15);
+                --abqdAccentHover: rgba(42, 98, 255, 0.25);
+                --abqdAccentBorder: rgba(42, 98, 255, 0.4);
+            }
 
-  function ensureFont(){
-    if (document.getElementById("abqdMontserratFont")) return;
-    const l = document.createElement("link");
-    l.id = "abqdMontserratFont";
-    l.rel = "stylesheet";
-    l.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap";
-    document.head.appendChild(l);
-  }
+            html, body { scroll-padding-top: var(--abqdHdrH) !important; }
+            body { padding-top: var(--abqdHdrH) !important; }
 
-  const norm = (p) => (p.endsWith("/") ? p : (p + "/"));
-  const isActive = (href) => norm(location.pathname).startsWith(norm(new URL(href, location.origin).pathname));
+            /* Корневой контейнер: Глубокое стекло и тень */
+            #${ROOT_ID} {
+                position: fixed; top: 0; left: 0; right: 0; height: var(--abqdHdrH);
+                z-index: 99999; isolation: isolate;
+                display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+                background: linear-gradient(135deg, rgba(5,7,12,0.85) 0%, rgba(10,14,24,0.7) 100%);
+                backdrop-filter: blur(32px) saturate(180%); -webkit-backdrop-filter: blur(32px) saturate(180%);
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+                color: #fff;
+                font: 500 14px/1.2 "Montserrat", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                font-feature-settings: "cv11", "ss01";
+                box-sizing: border-box;
+            }
+            #${ROOT_ID} *, #${MENU_ID}, #${MENU_ID} * { box-sizing: border-box; }
 
-  const getToken = () => { try{ return localStorage.getItem(TOKEN_KEY) || ""; }catch(_){ return ""; } };
-  const clearAuth = () => {
-    ["abqd_token","abqd_last_order_id","abqd_last_payment_id","abqd_last_payment_status","abqd_access_cache"]
-      .forEach(k => { try{ localStorage.removeItem(k); }catch(_){ } });
-  };
+            /* Логотип: Фиксация и левитация */
+            #${ROOT_ID} .abqd-brand { display: flex; align-items: center; z-index: 100001; outline: none; flex-shrink: 0; }
+            #${ROOT_ID} .abqd-brand picture { display: flex; align-items: center; }
+            #${ROOT_ID} .abqd-brand img {
+                height: 28px; width: auto; object-fit: contain; display: block;
+                transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            #${ROOT_ID} .abqd-brand:hover img {
+                transform: scale(1.04) translateY(-1px);
+                filter: drop-shadow(0 8px 20px rgba(255,255,255,0.2)) brightness(1.15);
+            }
+            #${ROOT_ID} .abqd-brand:active img { transform: scale(0.96); }
 
-  async function fetchMe(token){
-    try{
-      const r = await fetch(`${API}/api/v1/auth/me`, { headers:{ authorization:"Bearer "+token } });
-      if (r.status === 401) return { unauthorized:true };
-      if (!r.ok) return null;
-      return await r.json().catch(()=>null);
-    }catch(_){ return null; }
-  }
-  async function fetchStatus(token){
-    try{
-      const r = await fetch(`${API}/api/v1/access/status`, { headers:{ authorization:"Bearer "+token } });
-      if (r.status === 401) return { unauthorized:true };
-      if (!r.ok) return null;
-      return await r.json().catch(()=>null);
-    }catch(_){ return null; }
-  }
+            /* Навигация Desktop: Объемные пилюли */
+            #${ROOT_ID} .abqd-nav {
+                position: absolute; left: 50%; transform: translateX(-50%);
+                display: flex; gap: 6px;
+                background: rgba(255,255,255,0.02);
+                padding: 6px; border-radius: 99px;
+                border: 1px solid rgba(255,255,255,0.05);
+                box-shadow: inset 0 0 0 1px rgba(255,255,255,0.01), 0 8px 20px -6px rgba(0,0,0,0.3);
+            }
+            #${ROOT_ID} .abqd-nav a {
+                padding: 8px 20px; border-radius: 99px; color: rgba(255,255,255,0.5); font-size: 13.5px;
+                text-decoration: none; font-weight: 500; letter-spacing: 0.01em;
+                transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            #${ROOT_ID} .abqd-nav a:hover {
+                color: #fff; background: rgba(255,255,255,0.08);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+            #${ROOT_ID} .abqd-nav a:active { transform: scale(0.96); }
 
-  function lockScroll(on){
-    document.documentElement.classList.toggle("abqdNoScroll", !!on);
-  }
+            /* Правый блок */
+            #${ROOT_ID} .abqd-right { display: flex; align-items: center; gap: 14px; z-index: 100001; }
+            #${ROOT_ID} .abqd-desktop-auth { display: flex; align-items: center; gap: 14px; }
 
-  function injectStyles(){
-    if (document.getElementById(STYLE_ID)) return;
-    const s = el("style", { id: STYLE_ID }, `
-:root{ --abqdH: 64px; }
-html.abqdNoScroll{ overflow:hidden !important; }
+            /* Статус и Профиль: Свечение бейджа */
+            #${ROOT_ID} .abqd-status {
+                font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+                padding: 6px 14px; border-radius: 99px; background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); font-weight: 700;
+                transition: opacity 0.4s ease;
+            }
+            #${ROOT_ID} .abqd-status.active {
+                color: #4ade80; background: rgba(74, 222, 128, 0.08);
+                border-color: rgba(74, 222, 128, 0.2);
+                box-shadow: 0 0 16px rgba(74, 222, 128, 0.15);
+            }
+            #${ROOT_ID} .abqd-who {
+                font-size: 13.5px; color: rgba(255,255,255,0.8); max-width: 150px;
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                transition: opacity 0.3s ease; font-weight: 500;
+            }
 
-#${ROOT_ID}, #${ROOT_ID} *{ box-sizing:border-box; }
-#${ROOT_ID}{
-  position: fixed; top:0; left:0; right:0;
-  z-index: 99999; isolation:isolate;
-  height: calc(var(--abqdH) + env(safe-area-inset-top));
-  padding-top: env(safe-area-inset-top);
-  display:flex; align-items:center; justify-content:space-between;
-  padding-left: 16px; padding-right: 16px;
-  background: linear-gradient(to bottom, rgba(5,7,10,.90), rgba(5,7,10,.76));
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  border-bottom: 1px solid rgba(255,255,255,.10);
-  font: 600 14px/1.2 "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  color: rgba(255,255,255,.92);
-}
-#${SPACER_ID}{ height: calc(var(--abqdH) + env(safe-area-inset-top)); }
+            /* Кнопки Desktop: Тактильность */
+            #${ROOT_ID} .abqd-btn-auth {
+                padding: 10px 24px; border-radius: 99px;
+                background: linear-gradient(180deg, var(--abqdAccent) 0%, rgba(42,98,255,0.05) 100%);
+                color: #fff; text-decoration: none; font-weight: 600; font-size: 13.5px; letter-spacing: 0.01em;
+                border: 1px solid var(--abqdAccentBorder);
+                box-shadow: 0 4px 20px rgba(42, 98, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+                transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            #${ROOT_ID} .abqd-btn-auth:hover {
+                background: linear-gradient(180deg, var(--abqdAccentHover) 0%, rgba(42,98,255,0.1) 100%);
+                box-shadow: 0 6px 24px rgba(42, 98, 255, 0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+                transform: translateY(-1px) scale(1.02);
+            }
+            #${ROOT_ID} .abqd-btn-auth:active { transform: scale(0.96); }
 
-#${ROOT_ID} .brand{ display:flex; align-items:center; text-decoration:none; color:inherit; }
-#${ROOT_ID} .brand img{ height:18px; width:auto; display:block; opacity:.95; }
+            #${ROOT_ID} .abqd-btn-logout {
+                font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; font-weight: 500;
+                padding: 8px 16px; background: transparent; border-radius: 99px;
+                border: 1px solid rgba(255,255,255,0.1);
+                transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            #${ROOT_ID} .abqd-btn-logout:hover {
+                color: #fff; background: rgba(255,255,255,0.05);
+                border-color: rgba(255,255,255,0.2);
+                transform: translateY(-1px);
+            }
+            #${ROOT_ID} .abqd-btn-logout:active { transform: scale(0.96); }
 
-#${ROOT_ID} .nav{
-  position:absolute; left:50%; transform:translateX(-50%);
-  display:flex; gap:4px;
-  padding:4px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.04);
-}
-#${ROOT_ID} .nav a{
-  text-decoration:none;
-  padding:8px 16px;
-  border-radius:999px;
-  color: rgba(255,255,255,.62);
-  font-weight:700;
-  transition:.18s;
-}
-#${ROOT_ID} .nav a.active{ color:#fff; background: rgba(255,255,255,.10); }
-#${ROOT_ID} .nav a:hover{ color:#fff; background: rgba(255,255,255,.08); }
+            /* Бургер: Утонченные линии */
+            #${ROOT_ID} .abqd-burger {
+                display: none; width: 44px; height: 44px; border-radius: 14px;
+                background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+                cursor: pointer; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+                transition: all 0.3s ease;
+            }
+            #${ROOT_ID} .abqd-burger:hover { background: rgba(255,255,255,0.08); }
+            #${ROOT_ID} .abqd-burger span { width: 22px; height: 1.5px; background: #fff; border-radius: 2px; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
-#${ROOT_ID} .right{ display:flex; align-items:center; gap:10px; }
-#${ROOT_ID} .who{ max-width: 180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color: rgba(255,255,255,.70); font-weight:600; }
-#${ROOT_ID} .status{
-  font-size:10px; letter-spacing:.08em; text-transform:uppercase;
-  padding:6px 10px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.04);
-  color: rgba(255,255,255,.60);
-}
-#${ROOT_ID} .btn{
-  height:36px; padding:0 14px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.90);
-  text-decoration:none;
-  display:inline-flex; align-items:center; justify-content:center;
-  font-weight:700;
-}
-#${ROOT_ID} .btn:hover{ background: rgba(255,255,255,.12); }
+            /* FIX: Мобильное меню через transform (без iOS полосы) */
+            #${MENU_ID} {
+                position: fixed; top: 0; right: 0; width: 100%; height: 100vh; height: 100dvh;
+                background: rgba(5,7,12,0.95); z-index: 99998; display: flex; flex-direction: column;
+                padding: 120px 24px 40px; overflow-y: auto;
+                font-family: "Montserrat", "Inter", system-ui, -apple-system, sans-serif;
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                transform: translateX(110%);
+                opacity: 0; visibility: hidden; pointer-events: none;
+                transition: transform 0.5s cubic-bezier(0.25, 1, 0.25, 1), opacity 0.25s ease, visibility 0.25s ease;
+            }
+            #${MENU_ID}.open {
+                transform: translateX(0);
+                opacity: 1; visibility: visible; pointer-events: auto;
+            }
 
-#${ROOT_ID} .burger{
-  width:44px; height:44px; border-radius:14px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.06);
-  display:none; place-items:center;
-}
-#${ROOT_ID} .burger span{
-  width:18px; height:2px; background: rgba(255,255,255,.88);
-  border-radius:2px; position:relative; display:block;
-}
-#${ROOT_ID} .burger span::before, #${ROOT_ID} .burger span::after{
-  content:""; position:absolute; left:0; width:18px; height:2px;
-  background: rgba(255,255,255,.88); border-radius:2px;
-}
-#${ROOT_ID} .burger span::before{ top:-6px; }
-#${ROOT_ID} .burger span::after{ top:6px; }
+            #${MENU_ID} .abqd-menu-links { display: flex; flex-direction: column; gap: 8px; }
+            #${MENU_ID} a.abqd-menu-link {
+                font-size: 24px; font-weight: 600; color: rgba(255, 255, 255, 0.6); text-decoration: none;
+                padding: 12px 16px; border-radius: 16px;
+                opacity: 0; transform: translateX(30px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            #${MENU_ID}.open a.abqd-menu-link { opacity: 1; transform: translateX(0); }
+            #${MENU_ID} a.abqd-menu-link:active { background: rgba(255,255,255,0.05); color: #fff; transform: scale(0.98); }
 
-/* Mobile menu overlay — no black stripe bug */
-#${MENU_ID}{ position:fixed; inset:0; z-index:99998; pointer-events:none; }
-#${MENU_ID} .backdrop{ position:absolute; inset:0; background: rgba(0,0,0,.45); opacity:0; transition:opacity .22s ease; }
-#${MENU_ID} .panel{
-  position:absolute; inset:0;
-  padding-top: calc(env(safe-area-inset-top) + 72px);
-  padding-left: 20px; padding-right: 20px;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 18px);
-  background: rgba(5,7,10,.96);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  transform: translateX(110%);
-  opacity:0; visibility:hidden;
-  transition: transform .22s ease, opacity .18s ease, visibility 0s linear .22s;
-  display:flex; flex-direction:column;
-}
-#${MENU_ID}.open{ pointer-events:auto; }
-#${MENU_ID}.open .backdrop{ opacity:1; }
-#${MENU_ID}.open .panel{
-  transform: translateX(0);
-  opacity:1; visibility:visible;
-  transition: transform .22s ease, opacity .18s ease, visibility 0s;
-}
+            /* Мобильная карточка профиля */
+            #${MENU_ID} .abqd-mob-auth-card {
+                display: flex; align-items: center; justify-content: space-between;
+                background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+                padding: 16px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); gap: 16px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+            #${MENU_ID} .abqd-mob-auth-btn {
+                font-size: 16px; color: #fff; text-decoration: none; font-weight: 600;
+                padding: 16px 24px; border-radius: 18px; display: block; text-align: center;
+                background: linear-gradient(180deg, var(--abqdAccent) 0%, rgba(42,98,255,0.05) 100%);
+                border: 1px solid var(--abqdAccentBorder);
+                box-shadow: 0 4px 20px rgba(42, 98, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+                transition: 0.3s;
+            }
+            #${MENU_ID} .abqd-mob-auth-btn:active { transform: scale(0.97); }
 
-#${MENU_ID} .top{
-  position: fixed; top:0; left:0; right:0;
-  height: calc(var(--abqdH) + env(safe-area-inset-top));
-  padding-top: env(safe-area-inset-top);
-  display:flex; align-items:center; justify-content:flex-end;
-  padding-right: 16px;
-}
-#${MENU_ID} .close{
-  width:44px; height:44px; border-radius:14px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.90);
-  font-size: 26px; line-height: 1;
-}
+            /* Адаптация */
+            @media (max-width: 900px) {
+                #${ROOT_ID} { padding: 0 16px; }
+                #${ROOT_ID} .abqd-brand img { height: 28px; }
+                #${ROOT_ID} .abqd-nav { display: none; }
+                #${ROOT_ID} .abqd-desktop-auth { display: none; }
+                #${ROOT_ID} .abqd-burger { display: flex; }
+                #${ROOT_ID}.menu-open .abqd-burger span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+                #${ROOT_ID}.menu-open .abqd-burger span:nth-child(2) { opacity: 0; transform: scale(0); }
+                #${ROOT_ID}.menu-open .abqd-burger span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+            }
+        `;
 
-#${MENU_ID} a.link{
-  display:block;
-  font-size: 22px;
-  font-weight: 700;
-  color: rgba(255,255,255,.92);
-  text-decoration:none;
-  padding: 14px 12px;
-  border-radius: 16px;
-  background: rgba(255,255,255,.03);
-  border: 1px solid rgba(255,255,255,.12);
-  margin-bottom: 10px;
-}
-#${MENU_ID} a.link.active{
-  background: rgba(255,255,255,.08);
-  border-color: rgba(255,255,255,.16);
-}
+        // 4. ФУНКЦИЯ УСЛОВНОГО РЕНДЕРА
+        const renderUI = () => {
+            const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+            const isAuth = !!token;
+            const currentPath = encodeURIComponent(location.pathname + location.search);
 
-#${MENU_ID} .bottom{
-  margin-top:auto;
-  border-top: 1px solid rgba(255,255,255,.10);
-  padding-top: 14px;
-}
-#${MENU_ID} .email{
-  font-size: 14px;
-  font-weight: 600;
-  color: rgba(255,255,255,.55); /* слабые серые */
-  word-break: break-all;
-  margin-bottom: 6px;
-}
-#${MENU_ID} .mstatus{
-  font-size: 12px;
-  color: rgba(255,255,255,.45); /* ещё слабее */
-  margin-bottom: 12px;
-}
-#${MENU_ID} .logout{
-  width:100%;
-  height:44px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.05);
-  color: rgba(255,255,255,.92);
-  font-weight: 800;
-}
+            let headerEl = document.getElementById(ROOT_ID);
+            let mobileMenuEl = document.getElementById(MENU_ID);
 
-@media (max-width: 900px){
-  #${ROOT_ID} .nav{ display:none; }
-  #${ROOT_ID} .desktopAuth{ display:none; }
-  #${ROOT_ID} .burger{ display:grid; }
-}
-@media (min-width: 901px){
-  /* на десктопе гамбургер вообще не нужен */
-  #${ROOT_ID} .burger{ display:none !important; }
-}
-    `);
-    document.head.appendChild(s);
-  }
+            if (!headerEl) {
+                headerEl = document.createElement("div");
+                headerEl.id = ROOT_ID;
+                document.body.prepend(headerEl);
+            }
 
-  function mount(){
-    const header = el("div", { id: ROOT_ID });
-    const spacer = el("div", { id: SPACER_ID });
-    const menu = el("div", { id: MENU_ID, "aria-hidden":"true" });
+            if (!mobileMenuEl) {
+                mobileMenuEl = document.createElement("div");
+                mobileMenuEl.id = MENU_ID;
+                document.body.prepend(mobileMenuEl);
+            }
 
-    document.body.prepend(header);
-    header.insertAdjacentElement("afterend", spacer);
-    document.body.prepend(menu);
-    return { header, menu };
-  }
+            const desktopAuthHTML = isAuth
+                ? `
+                    <span id="abqd-st" class="abqd-status" style="opacity: 0;"></span>
+                    <span id="abqd-who" class="abqd-who"></span>
+                    <a id="abqd-desk-lo" class="abqd-btn-logout" href="#">Выйти</a>
+                  `
+                : `<a href="/auth/?next=${currentPath}" class="abqd-btn-auth">Войти</a>`;
 
-  function render(nodes, state){
-    const { header, menu } = nodes;
-    const token = state.token;
-    const isAuth = !!token;
-    const currentPath = encodeURIComponent(location.pathname + location.search);
+            const mobileAuthHTML = isAuth
+                ? `
+                    <div class="abqd-mob-auth-card">
+                        <div id="abqd-mob-who" style="font-size: 15px; color: rgba(255,255,255,0.9); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;"></div>
+                        <a id="abqd-mob-lo" href="#" style="font-size: 14px; color: rgba(255,255,255,0.6); text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; transition: 0.2s; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05);">Выйти</a>
+                    </div>
+                  `
+                : `<a href="/auth/?next=${currentPath}" class="abqd-mob-auth-btn">Войти в аккаунт</a>`;
 
-    const nav = LINKS.map(l => `<a class="${isActive(l.href) ? "active" : ""}" href="${l.href}">${l.name}</a>`).join("");
+            headerEl.innerHTML = `
+                <a href="/" class="abqd-brand">
+                    <picture>
+                        <source srcset="${CONFIG.LOGO.PNG}" media="(max-width: 900px)">
+                        <img src="${CONFIG.LOGO.SVG}" alt="ABQD">
+                    </picture>
+                </a>
+                <nav class="abqd-nav">
+                    ${CONFIG.LINKS.map(link => `<a href="${link.href}">${link.name}</a>`).join("")}
+                </nav>
+                <div class="abqd-right">
+                    <div class="abqd-desktop-auth">${desktopAuthHTML}</div>
+                    <div class="abqd-burger" id="abqd-burger-trigger">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
 
-    const desk = isAuth
-      ? `<span class="status">${state.active ? "активно" : "неактивно"}</span>
-         <span class="who">${state.email || "—"}</span>
-         <a class="btn" id="abqdDeskLo" href="#">Выйти</a>`
-      : `<a class="btn" href="/auth/?next=${currentPath}">Войти</a>`;
+            mobileMenuEl.innerHTML = `
+                <div class="abqd-menu-links">
+                    ${CONFIG.LINKS.map((link, i) => `<a class="abqd-menu-link" href="${link.href}" style="transition-delay: ${0.05 + i * 0.05}s">${link.name}</a>`).join("")}
+                </div>
+                <div style="margin-top: auto; padding-top: 40px;">
+                    ${mobileAuthHTML}
+                </div>
+            `;
 
-    header.innerHTML = `
-      <a class="brand" href="/account/" aria-label="ABQD"><img src="${LOGO_PNG}" alt="abqd"></a>
-      <nav class="nav">${nav}</nav>
-      <div class="right">
-        <div class="desktopAuth">${desk}</div>
-        <button class="burger" id="abqdBurger" type="button" aria-label="Меню"><span></span></button>
-      </div>
-    `;
+            // 5. ПРИВЯЗКА СОБЫТИЙ
+            const burger = document.getElementById("abqd-burger-trigger");
 
-    const linksMobile = LINKS.map(l =>
-      `<a class="link ${isActive(l.href) ? "active" : ""}" href="${l.href}">${l.name}</a>`
-    ).join("");
+            headerEl.classList.remove("menu-open");
+            document.body.style.overflow = "";
 
-    menu.innerHTML = `
-      <div class="backdrop" data-close="1"></div>
-      <div class="top"><button class="close" type="button" data-close="1" aria-label="Закрыть">×</button></div>
-      <div class="panel">
-        ${linksMobile}
-        <div class="bottom">
-          <div class="email" id="abqdMobEmail">${isAuth ? (state.email || "—") : "Гость"}</div>
-          <div class="mstatus" id="abqdMobStatus">${isAuth ? ("Статус: " + (state.active ? "активно" : "неактивно")) : ""}</div>
-          <button class="logout" id="abqdMobBtn" type="button">${isAuth ? "Выйти" : "Войти"}</button>
-        </div>
-      </div>
-    `;
+            burger.addEventListener("click", () => {
+                const isOpen = mobileMenuEl.classList.toggle("open");
+                headerEl.classList.toggle("menu-open");
+                document.body.style.overflow = isOpen ? "hidden" : "";
+            });
 
-    const openMenu = () => { menu.classList.add("open"); menu.setAttribute("aria-hidden","false"); lockScroll(true); };
-    const closeMenu = () => { menu.classList.remove("open"); menu.setAttribute("aria-hidden","true"); lockScroll(false); };
+            if (isAuth) {
+                const handleLogout = (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem(CONFIG.TOKEN_KEY);
+                    renderUI();
+                };
 
-    header.querySelector("#abqdBurger")?.addEventListener("click", openMenu);
-    menu.querySelectorAll("[data-close='1']").forEach(x => x.addEventListener("click", closeMenu));
-    menu.querySelectorAll("a.link").forEach(a => a.addEventListener("click", () => closeMenu()));
+                document.getElementById("abqd-desk-lo").addEventListener("click", handleLogout);
+                document.getElementById("abqd-mob-lo").addEventListener("click", handleLogout);
 
-    const doLogout = (e) => { if (e) e.preventDefault(); clearAuth(); location.href = "/auth/"; };
+                syncAPI(token);
+            }
+        };
 
-    header.querySelector("#abqdDeskLo")?.addEventListener("click", doLogout);
-    menu.querySelector("#abqdMobBtn")?.addEventListener("click", () => {
-      if (isAuth) doLogout();
-      else location.href = `/auth/?next=${encodeURIComponent(location.pathname + location.search)}`;
-    });
+        // 6. ИНТЕГРАЦИЯ С API
+        const syncAPI = async (token) => {
+            try {
+                const headers = { authorization: "Bearer " + token };
+                const [rMe, rSt] = await Promise.all([
+                    fetch(`${CONFIG.API}/api/v1/auth/me`, { headers }),
+                    fetch(`${CONFIG.API}/api/v1/access/status`, { headers })
+                ]);
 
-    document.addEventListener("keydown", (e)=>{ if (e.key === "Escape") closeMenu(); }, { once:false });
-  }
+                if (rMe.status === 401 || rSt.status === 401) {
+                    localStorage.removeItem(CONFIG.TOKEN_KEY);
+                    renderUI();
+                    return;
+                }
 
-  async function run(){
-    ensureFont();
-    injectStyles();
-    const nodes = mount();
+                if (rMe.ok && rSt.ok) {
+                    const user = await rMe.json();
+                    const status = await rSt.json();
+                    const active = !!(status.paid_active || status.trial_active);
 
-    const token = getToken();
-    render(nodes, { token, email:"", active:false });
+                    const stEl = document.getElementById("abqd-st");
+                    const whoEl = document.getElementById("abqd-who");
+                    const mobWhoEl = document.getElementById("abqd-mob-who");
 
-    if (!token) return;
+                    if (stEl) {
+                        stEl.textContent = active ? "активно" : "неактивно";
+                        if (active) stEl.classList.add("active");
+                        stEl.style.opacity = "1";
+                    }
+                    if (whoEl) whoEl.textContent = user.email;
+                    if (mobWhoEl) mobWhoEl.textContent = user.email;
+                }
+            } catch (e) {
+                // не спамим логи в проде
+            }
+        };
 
-    const [me, st] = await Promise.all([fetchMe(token), fetchStatus(token)]);
-    if ((me && me.unauthorized) || (st && st.unauthorized)){
-      clearAuth();
-      render(nodes, { token:"", email:"", active:false });
-      return;
+        renderUI();
+
+    } catch (e) {
+        // hard fail не должен валить страницу
     }
-
-    const email = me?.email ? String(me.email) : "";
-    const active = !!(st && (st.paid_active || st.trial_active));
-    render(nodes, { token, email, active });
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
-  else run();
 })();
