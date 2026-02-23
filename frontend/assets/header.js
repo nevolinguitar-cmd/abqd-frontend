@@ -1,316 +1,351 @@
-/* ABQD_HEADER_v38_DESKTOP_OK_MOBILE_RESTORE */
-
+/* ABQD Header — STABLE_v6 • desktop no-burger • mobile menu with email+status+logout • 2026-02-23 */
 (() => {
-  try {
-    if (location.pathname.startsWith("/auth")) return;
+  "use strict";
+  if (location.pathname.startsWith("/auth")) return;
 
-    const ROOT_ID = "abqd-header-root";
-    const TOKEN_KEY = "abqd_token";
-    const API = "https://api.abqd.ru";
+  // --- cleanup old variants (to avoid double UI / broken padding) ---
+  const OLD_IDS = [
+    "abqd-header-root", "abqd-header-root-mobile-menu", "abqd-header-styles",
+    "abqdHeaderRoot_v2", "abqdMenuWrap_v2", "abqdHeaderCss_v2",
+    "abqdHeaderMobileTweaks_v1"
+  ];
+  OLD_IDS.forEach(id => { try{ document.getElementById(id)?.remove(); }catch(_){ } });
 
-    const old = document.getElementById(ROOT_ID);
-    if (old) old.remove();
+  const ROOT_ID = "abqd_header_v6";
+  const MENU_ID = "abqd_header_menu_v6";
+  const STYLE_ID = "abqd_header_style_v6";
+  const SPACER_ID = "abqd_header_spacer_v6";
+  if (document.getElementById(ROOT_ID)) return;
 
-    const header = document.createElement("div");
-    header.id = ROOT_ID;
-    document.body.prepend(header);
+  const API = "https://api.abqd.ru";
+  const TOKEN_KEY = "abqd_token";
+  const LOGO_PNG = "https://static.tildacdn.com/tild3532-3636-4132-b064-346663353861/_abqd.png";
 
-    const style = document.createElement("style");
-    style.textContent = `
-      :root { --hdrH:64px; --accent:#2a62ff; }
+  const LINKS = [
+    { name: "Кабинет", href: "/dashboard/" },
+    { name: "Конструктор", href: "/constructor/" },
+    { name: "Календарь", href: "/calendar/" },
+    { name: "Аккаунт", href: "/account/" },
+  ];
 
-      body { padding-top:var(--hdrH)!important; }
+  const el = (tag, attrs, html) => {
+    const n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(k => {
+      if (k === "class") n.className = attrs[k];
+      else if (k === "text") n.textContent = attrs[k];
+      else n.setAttribute(k, attrs[k]);
+    });
+    if (html != null) n.innerHTML = html;
+    return n;
+  };
 
-      #${ROOT_ID} {
-        position:fixed;
-        top:0; left:0; right:0;
-        height:var(--hdrH);
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        padding:0 48px;
-        background:linear-gradient(to bottom, rgba(5,7,10,.92), rgba(5,7,10,.82));
-        backdrop-filter:blur(24px);
-        border-bottom:1px solid rgba(255,255,255,.12);
-        font:500 14px Inter,system-ui;
-        z-index:99999;
-      }
-
-      .hdr-left,.hdr-center,.hdr-right {
-        display:flex; align-items:center;
-      }
-
-      .hdr-center { flex:1; justify-content:center; }
-      .hdr-right { gap:14px; }
-
-      .hdr-center nav {
-        display:flex; gap:6px;
-        background:rgba(255,255,255,.04);
-        padding:4px; border-radius:99px;
-      }
-
-      .hdr-center nav a {
-        padding:8px 18px;
-        border-radius:99px;
-        text-decoration:none;
-        color:rgba(255,255,255,.65);
-        font-weight:600;
-      }
-
-      .hdr-center nav a:hover {
-        background:rgba(255,255,255,.08);
-        color:#fff;
-      }
-
-      .abqd-email {
-        font-size:13px;
-        color:rgba(255,255,255,.65);
-        max-width:180px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-      }
-
-      .abqd-logout {
-        padding:6px 14px;
-        border-radius:99px;
-        background:rgba(255,255,255,.05);
-        color:rgba(255,255,255,.75);
-        text-decoration:none;
-        font-weight:600;
-      }
-
-      .abqd-logout:hover {
-        background:rgba(255,255,255,.15);
-        color:#fff;
-      }
-
-      .abqd-login {
-        padding:10px 22px;
-        border-radius:99px;
-        background:var(--accent);
-        color:#fff;
-        text-decoration:none;
-        font-weight:700;
-      }
-
-      .abqd-logo { height:28px; display:block; }
-
-      /* ===== MOBILE ===== */
-
-      .burger {
-        display:none;
-        width:40px;
-        height:40px;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-        gap:5px;
-        cursor:pointer;
-      }
-
-      .burger span {
-        width:22px;
-        height:2px;
-        background:#fff;
-        transition:.3s;
-      }
-
-      .mobile-menu {
-        position:fixed;
-        top:0;
-        right:-100%;
-        width:100%;
-        height:100vh;
-        background:#05070a;
-        padding:100px 32px 40px;
-        display:flex;
-        flex-direction:column;
-        transition:.4s cubic-bezier(.4,0,.2,1);
-        z-index:99998;
-      }
-
-      .mobile-menu.open { right:0; }
-
-      .mobile-menu a {
-        font-size:22px;
-        font-weight:700;
-        color:#fff;
-        text-decoration:none;
-        margin-bottom:28px;
-      }
-
-      .mobile-auth {
-        margin-top:auto;
-        padding-top:30px;
-        border-top:1px solid rgba(255,255,255,.1);
-        display:flex;
-        flex-direction:column;
-        gap:16px;
-      }
-
-      .mobile-email {
-        font-size:14px;
-        opacity:.6;
-        word-break:break-all;
-      }
-
-@media(max-width:900px){
-  #abqd-header-root{
-    height:56px;
-    padding:0 20px;
+  function ensureFont(){
+    if (document.getElementById("abqdMontserratFont")) return;
+    const l = document.createElement("link");
+    l.id = "abqdMontserratFont";
+    l.rel = "stylesheet";
+    l.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap";
+    document.head.appendChild(l);
   }
-  .hdr-center{display:none!important;}
-  .hdr-right{display:none!important;}
-  .burger{display:flex!important;}
-  .abqd-logo{height:22px;}
+
+  const norm = (p) => (p.endsWith("/") ? p : (p + "/"));
+  const isActive = (href) => norm(location.pathname).startsWith(norm(new URL(href, location.origin).pathname));
+
+  const getToken = () => { try{ return localStorage.getItem(TOKEN_KEY) || ""; }catch(_){ return ""; } };
+  const clearAuth = () => {
+    ["abqd_token","abqd_last_order_id","abqd_last_payment_id","abqd_last_payment_status","abqd_access_cache"]
+      .forEach(k => { try{ localStorage.removeItem(k); }catch(_){ } });
+  };
+
+  async function fetchMe(token){
+    try{
+      const r = await fetch(`${API}/api/v1/auth/me`, { headers:{ authorization:"Bearer "+token } });
+      if (r.status === 401) return { unauthorized:true };
+      if (!r.ok) return null;
+      return await r.json().catch(()=>null);
+    }catch(_){ return null; }
+  }
+  async function fetchStatus(token){
+    try{
+      const r = await fetch(`${API}/api/v1/access/status`, { headers:{ authorization:"Bearer "+token } });
+      if (r.status === 401) return { unauthorized:true };
+      if (!r.ok) return null;
+      return await r.json().catch(()=>null);
+    }catch(_){ return null; }
+  }
+
+  function lockScroll(on){
+    document.documentElement.classList.toggle("abqdNoScroll", !!on);
+  }
+
+  function injectStyles(){
+    if (document.getElementById(STYLE_ID)) return;
+    const s = el("style", { id: STYLE_ID }, `
+:root{ --abqdH: 64px; }
+html.abqdNoScroll{ overflow:hidden !important; }
+
+#${ROOT_ID}, #${ROOT_ID} *{ box-sizing:border-box; }
+#${ROOT_ID}{
+  position: fixed; top:0; left:0; right:0;
+  z-index: 99999; isolation:isolate;
+  height: calc(var(--abqdH) + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+  display:flex; align-items:center; justify-content:space-between;
+  padding-left: 16px; padding-right: 16px;
+  background: linear-gradient(to bottom, rgba(5,7,10,.90), rgba(5,7,10,.76));
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  font: 600 14px/1.2 "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color: rgba(255,255,255,.92);
+}
+#${SPACER_ID}{ height: calc(var(--abqdH) + env(safe-area-inset-top)); }
+
+#${ROOT_ID} .brand{ display:flex; align-items:center; text-decoration:none; color:inherit; }
+#${ROOT_ID} .brand img{ height:18px; width:auto; display:block; opacity:.95; }
+
+#${ROOT_ID} .nav{
+  position:absolute; left:50%; transform:translateX(-50%);
+  display:flex; gap:4px;
+  padding:4px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+}
+#${ROOT_ID} .nav a{
+  text-decoration:none;
+  padding:8px 16px;
+  border-radius:999px;
+  color: rgba(255,255,255,.62);
+  font-weight:700;
+  transition:.18s;
+}
+#${ROOT_ID} .nav a.active{ color:#fff; background: rgba(255,255,255,.10); }
+#${ROOT_ID} .nav a:hover{ color:#fff; background: rgba(255,255,255,.08); }
+
+#${ROOT_ID} .right{ display:flex; align-items:center; gap:10px; }
+#${ROOT_ID} .who{ max-width: 180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color: rgba(255,255,255,.70); font-weight:600; }
+#${ROOT_ID} .status{
+  font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  padding:6px 10px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.60);
+}
+#${ROOT_ID} .btn{
+  height:36px; padding:0 14px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.90);
+  text-decoration:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-weight:700;
+}
+#${ROOT_ID} .btn:hover{ background: rgba(255,255,255,.12); }
+
+#${ROOT_ID} .burger{
+  width:44px; height:44px; border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  display:none; place-items:center;
+}
+#${ROOT_ID} .burger span{
+  width:18px; height:2px; background: rgba(255,255,255,.88);
+  border-radius:2px; position:relative; display:block;
+}
+#${ROOT_ID} .burger span::before, #${ROOT_ID} .burger span::after{
+  content:""; position:absolute; left:0; width:18px; height:2px;
+  background: rgba(255,255,255,.88); border-radius:2px;
+}
+#${ROOT_ID} .burger span::before{ top:-6px; }
+#${ROOT_ID} .burger span::after{ top:6px; }
+
+/* Mobile menu overlay — no black stripe bug */
+#${MENU_ID}{ position:fixed; inset:0; z-index:99998; pointer-events:none; }
+#${MENU_ID} .backdrop{ position:absolute; inset:0; background: rgba(0,0,0,.45); opacity:0; transition:opacity .22s ease; }
+#${MENU_ID} .panel{
+  position:absolute; inset:0;
+  padding-top: calc(env(safe-area-inset-top) + 72px);
+  padding-left: 20px; padding-right: 20px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 18px);
+  background: rgba(5,7,10,.96);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transform: translateX(110%);
+  opacity:0; visibility:hidden;
+  transition: transform .22s ease, opacity .18s ease, visibility 0s linear .22s;
+  display:flex; flex-direction:column;
+}
+#${MENU_ID}.open{ pointer-events:auto; }
+#${MENU_ID}.open .backdrop{ opacity:1; }
+#${MENU_ID}.open .panel{
+  transform: translateX(0);
+  opacity:1; visibility:visible;
+  transition: transform .22s ease, opacity .18s ease, visibility 0s;
 }
 
-        .hdr-right { display:none; }
-        .burger { display:flex; }
-        .abqd-logo { height:24px; }
-      }
-    `;
-    document.head.appendChild(style);
+#${MENU_ID} .top{
+  position: fixed; top:0; left:0; right:0;
+  height: calc(var(--abqdH) + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+  display:flex; align-items:center; justify-content:flex-end;
+  padding-right: 16px;
+}
+#${MENU_ID} .close{
+  width:44px; height:44px; border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.90);
+  font-size: 26px; line-height: 1;
+}
 
-    const token = localStorage.getItem(TOKEN_KEY);
+#${MENU_ID} a.link{
+  display:block;
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(255,255,255,.92);
+  text-decoration:none;
+  padding: 14px 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.12);
+  margin-bottom: 10px;
+}
+#${MENU_ID} a.link.active{
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.16);
+}
 
-    const mobileMenu = document.createElement("div");
-    mobileMenu.className = "mobile-menu";
-    document.body.appendChild(mobileMenu);
+#${MENU_ID} .bottom{
+  margin-top:auto;
+  border-top: 1px solid rgba(255,255,255,.10);
+  padding-top: 14px;
+}
+#${MENU_ID} .email{
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,.55); /* слабые серые */
+  word-break: break-all;
+  margin-bottom: 6px;
+}
+#${MENU_ID} .mstatus{
+  font-size: 12px;
+  color: rgba(255,255,255,.45); /* ещё слабее */
+  margin-bottom: 12px;
+}
+#${MENU_ID} .logout{
+  width:100%;
+  height:44px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.92);
+  font-weight: 800;
+}
+
+@media (max-width: 900px){
+  #${ROOT_ID} .nav{ display:none; }
+  #${ROOT_ID} .desktopAuth{ display:none; }
+  #${ROOT_ID} .burger{ display:grid; }
+}
+@media (min-width: 901px){
+  /* на десктопе гамбургер вообще не нужен */
+  #${ROOT_ID} .burger{ display:none !important; }
+}
+    `);
+    document.head.appendChild(s);
+  }
+
+  function mount(){
+    const header = el("div", { id: ROOT_ID });
+    const spacer = el("div", { id: SPACER_ID });
+    const menu = el("div", { id: MENU_ID, "aria-hidden":"true" });
+
+    document.body.prepend(header);
+    header.insertAdjacentElement("afterend", spacer);
+    document.body.prepend(menu);
+    return { header, menu };
+  }
+
+  function render(nodes, state){
+    const { header, menu } = nodes;
+    const token = state.token;
+    const isAuth = !!token;
+    const currentPath = encodeURIComponent(location.pathname + location.search);
+
+    const nav = LINKS.map(l => `<a class="${isActive(l.href) ? "active" : ""}" href="${l.href}">${l.name}</a>`).join("");
+
+    const desk = isAuth
+      ? `<span class="status">${state.active ? "активно" : "неактивно"}</span>
+         <span class="who">${state.email || "—"}</span>
+         <a class="btn" id="abqdDeskLo" href="#">Выйти</a>`
+      : `<a class="btn" href="/auth/?next=${currentPath}">Войти</a>`;
 
     header.innerHTML = `
-      <div class="hdr-left">
-        <a href="/">
-          <picture>
-            <source srcset="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" media="(min-width:901px)">
-            <source srcset="https://static.tildacdn.com/tild6464-3131-4736-b938-656238643465/_abqd.png" media="(max-width:900px)">
-            <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" class="abqd-logo">
-          </picture>
-        </a>
-      </div>
-
-      <div class="hdr-center">
-        <nav>
-          <a href="/dashboard/">Кабинет</a>
-          <a href="/constructor/">Конструктор</a>
-          <a href="/calendar/">Календарь</a>
-          <a href="/account/">Аккаунт</a>
-        </nav>
-      </div>
-
-      <div class="hdr-right">
-        ${
-          token
-            ? `<span class="abqd-email">загрузка...</span>
-               <a href="#" class="abqd-logout">Выйти</a>`
-            : `<a class="abqd-login" href="/auth/">Войти</a>`
-        }
-      </div>
-
-      <div class="burger" id="burger">
-        <span></span><span></span><span></span>
+      <a class="brand" href="/account/" aria-label="ABQD"><img src="${LOGO_PNG}" alt="abqd"></a>
+      <nav class="nav">${nav}</nav>
+      <div class="right">
+        <div class="desktopAuth">${desk}</div>
+        <button class="burger" id="abqdBurger" type="button" aria-label="Меню"><span></span></button>
       </div>
     `;
 
-    mobileMenu.innerHTML = `
-      <a href="/dashboard/">Кабинет</a>
-      <a href="/constructor/">Конструктор</a>
-      <a href="/calendar/">Календарь</a>
-      <a href="/account/">Аккаунт</a>
-      <div class="mobile-auth">
-        ${
-          token
-            ? `<div class="mobile-email">загрузка...</div>
-               <a href="#" class="abqd-logout">Выйти</a>`
-            : `<a class="abqd-login" href="/auth/">Войти</a>`
-        }
+    const linksMobile = LINKS.map(l =>
+      `<a class="link ${isActive(l.href) ? "active" : ""}" href="${l.href}">${l.name}</a>`
+    ).join("");
+
+    menu.innerHTML = `
+      <div class="backdrop" data-close="1"></div>
+      <div class="top"><button class="close" type="button" data-close="1" aria-label="Закрыть">×</button></div>
+      <div class="panel">
+        ${linksMobile}
+        <div class="bottom">
+          <div class="email" id="abqdMobEmail">${isAuth ? (state.email || "—") : "Гость"}</div>
+          <div class="mstatus" id="abqdMobStatus">${isAuth ? ("Статус: " + (state.active ? "активно" : "неактивно")) : ""}</div>
+          <button class="logout" id="abqdMobBtn" type="button">${isAuth ? "Выйти" : "Войти"}</button>
+        </div>
       </div>
     `;
 
-    const burger = document.getElementById("burger");
-    burger.onclick = () => {
-      mobileMenu.classList.toggle("open");
-      document.body.style.overflow =
-        mobileMenu.classList.contains("open") ? "hidden" : "";
-    };
+    const openMenu = () => { menu.classList.add("open"); menu.setAttribute("aria-hidden","false"); lockScroll(true); };
+    const closeMenu = () => { menu.classList.remove("open"); menu.setAttribute("aria-hidden","true"); lockScroll(false); };
+
+    header.querySelector("#abqdBurger")?.addEventListener("click", openMenu);
+    menu.querySelectorAll("[data-close='1']").forEach(x => x.addEventListener("click", closeMenu));
+    menu.querySelectorAll("a.link").forEach(a => a.addEventListener("click", () => closeMenu()));
+
+    const doLogout = (e) => { if (e) e.preventDefault(); clearAuth(); location.href = "/auth/"; };
+
+    header.querySelector("#abqdDeskLo")?.addEventListener("click", doLogout);
+    menu.querySelector("#abqdMobBtn")?.addEventListener("click", () => {
+      if (isAuth) doLogout();
+      else location.href = `/auth/?next=${encodeURIComponent(location.pathname + location.search)}`;
+    });
+
+    document.addEventListener("keydown", (e)=>{ if (e.key === "Escape") closeMenu(); }, { once:false });
+  }
+
+  async function run(){
+    ensureFont();
+    injectStyles();
+    const nodes = mount();
+
+    const token = getToken();
+    render(nodes, { token, email:"", active:false });
 
     if (!token) return;
 
-    const logoutButtons = document.querySelectorAll(".abqd-logout");
-    logoutButtons.forEach(btn => {
-      btn.onclick = e => {
-        e.preventDefault();
-        localStorage.removeItem(TOKEN_KEY);
-        location.reload();
-      };
-    });
+    const [me, st] = await Promise.all([fetchMe(token), fetchStatus(token)]);
+    if ((me && me.unauthorized) || (st && st.unauthorized)){
+      clearAuth();
+      render(nodes, { token:"", email:"", active:false });
+      return;
+    }
 
-    fetch(API + "/api/v1/auth/me", {
-      headers: { authorization: "Bearer " + token }
-    })
-    .then(r => r.ok ? r.json() : null)
-    .then(user => {
-      if (!user) return;
-      document.querySelectorAll(".abqd-email,.mobile-email")
-        .forEach(el => el.textContent = user.email);
-    });
-
-  } catch(e){ console.error(e); }
-})();
-
-/* --- ABQD_HEADER_MOBILE_TWEAKS_v1 • email gray + button borders + desktop no-burger --- */
-(function(){
-  try{
-    if (location.pathname.startsWith("/auth")) return;
-    if (document.getElementById("abqdHeaderMobileTweaks_v1")) return;
-
-    const s = document.createElement("style");
-    s.id = "abqdHeaderMobileTweaks_v1";
-    s.textContent = `
-/* Ensure Montserrat in header + menus */
-#abqd-header-root, #abqd-header-menu, #abqd-header-root-mobile-menu,
-#abqdHeaderRoot_v2, #abqdMenuWrap_v2 {
-  font-family: "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial !important;
-}
-
-/* Desktop: force-hide burger (do NOT affect mobile) */
-@media (min-width: 901px){
-  #abqd-header-root .abqd-burger,
-  #abqdHeaderRoot_v2 .abqdBurger_v2,
-  #abqd-header-root .abqdIconBtn_v2 { display: none !important; }
-}
-
-/* Mobile email: weak gray */
-#abqd-mob-who, #abqd-m-email, #abqdEmail_v2{
-  color: rgba(255,255,255,.55) !important;
-  font-weight: 600 !important;
-}
-
-/* Mobile menu links: add subtle borders + consistent padding */
-@media (max-width: 900px){
-  #abqd-header-root-mobile-menu a.abqd-menu-link,
-  #abqd-header-menu a.menu-link,
-  #abqdMenuNav_v2 a.abqdNavLink_v2{
-    border: 1px solid rgba(255,255,255,.12) !important;
-    background: rgba(255,255,255,.03) !important;
+    const email = me?.email ? String(me.email) : "";
+    const active = !!(st && (st.paid_active || st.trial_active));
+    render(nodes, { token, email, active });
   }
-}
 
-/* Mobile buttons (logout/login): framed */
-#abqd-mob-lo, #abqd-m-logout, #abqdLogout_v2{
-  border: 1px solid rgba(255,255,255,.14) !important;
-  background: rgba(255,255,255,.05) !important;
-  border-radius: 14px !important;
-}
-
-/* Make bottom auth block look neat (if present) */
-#abqd-header-root-mobile-menu > div[style*="border-top"],
-#abqdMenuBottom_v2,
-#abqd-header-menu .bottom{
-  border-top: 1px solid rgba(255,255,255,.10) !important;
-}
-    `;
-    document.head.appendChild(s);
-  }catch(_){}
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
+  else run();
 })();
