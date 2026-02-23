@@ -621,7 +621,77 @@ export default function App() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   }, []);
 
-  const handleCallAI = async (currentDraft, setDraftFunction) => {
+  
+  // --- ABQD_CRM_API_SYNC_v1 ---
+  const API_BASE = "https://api.abqd.ru";
+  const syncHydratedRef = useRef(false);
+  const syncTimerRef = useRef(null);
+
+  const getToken = () => (typeof window !== "undefined" ? (localStorage.getItem("abqd_token") || "") : "");
+  const authHeaders = () => {
+    const token = getToken();
+    return token
+      ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+      : { "Content-Type": "application/json" };
+  };
+
+  const loadCrmState = useCallback(async () => {
+    try {
+      setIsSyncing(true);
+      const r = await fetch(`${API_BASE}/api/v1/crm/state`, { method: "GET", headers: authHeaders() });
+      if (!r.ok) throw new Error(`GET crm/state ${r.status}`);
+      const data = await r.json();
+      const state = data?.state ?? data;
+
+      if (state?.stages && Array.isArray(state.stages)) setStages(state.stages);
+      if (state?.deals && Array.isArray(state.deals)) setDeals(state.deals);
+    } catch (e) {
+      console.error(e);
+      addToast("error", "Синхронизация", "Не удалось загрузить CRM state");
+    } finally {
+      syncHydratedRef.current = true;
+      setIsSyncing(false);
+    }
+  }, [addToast]);
+
+  const pushCrmState = useCallback(async (payload) => {
+    try {
+      setIsSyncing(true);
+      const body = { state: payload, ...payload }; // совместимость: API может ожидать state или плоский объект
+      const r = await fetch(`${API_BASE}/api/v1/crm/state`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error(`PUT crm/state ${r.status}`);
+    } catch (e) {
+      console.error(e);
+      addToast("error", "Синхронизация", "Не удалось сохранить CRM state");
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => {
+    loadCrmState();
+  }, [loadCrmState]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onFocus = () => loadCrmState();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [loadCrmState]);
+
+  useEffect(() => {
+    if (!syncHydratedRef.current) return;
+    const payload = { version: 1, updatedAt: new Date().toISOString(), stages, deals };
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = setTimeout(() => pushCrmState(payload), 800);
+    return () => { if (syncTimerRef.current) clearTimeout(syncTimerRef.current); };
+  }, [stages, deals, pushCrmState]);
+  // --- end ABQD_CRM_API_SYNC_v1 ---
+const handleCallAI = async (currentDraft, setDraftFunction) => {
     addToast("info", "AI думает", "Анализируем контекст сделки...");
     setTimeout(() => {
       setDraftFunction(prev => ({
