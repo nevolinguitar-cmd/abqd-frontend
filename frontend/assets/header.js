@@ -36,6 +36,10 @@
             ]
         };
 
+        // --- ABQD_REMOVE_CALENDAR_v1 ---
+        CONFIG.LINKS = (CONFIG.LINKS || []).filter(l => l && l.name !== "Календарь");
+
+
         // 3. ИНЪЕКЦИЯ СТИЛЕЙ (CRM SAFE) — обновляем даже если style уже был
         let style = document.getElementById("abqd-header-styles");
         if (!style) {
@@ -354,4 +358,45 @@
     } catch (e) {
         // hard fail не должен валить страницу
     }
+})();
+
+/* --- ABQD_FONT_MONTSERRAT_BOLD_v1 ---
+   Safe override: loads Montserrat 700 and forces it in header only
+*/
+(() => {
+  try {
+    const linkId = "abqd-font-montserrat-700";
+    if (!document.getElementById(linkId)) {
+      const l = document.createElement("link");
+      l.id = linkId;
+      l.rel = "stylesheet";
+      l.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap";
+      document.head.appendChild(l);
+    }
+
+    const stId = "abqd-header-font-override";
+    let st = document.getElementById(stId);
+    if (!st) {
+      st = document.createElement("style");
+      st.id = stId;
+      document.head.appendChild(st);
+    }
+
+    st.textContent = `
+      /* apply only to header + mobile menu */
+      #abqd-header-root, #abqd-header-root-mobile-menu{
+        font-family: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+        font-weight: 700 !important;
+      }
+      #abqd-header-root .abqd-nav a,
+      #abqd-header-root .abqd-btn-auth,
+      #abqd-header-root .abqd-btn-logout,
+      #abqd-header-root .abqd-who,
+      #abqd-header-root .abqd-status,
+      #abqd-header-root-mobile-menu a.abqd-menu-link,
+      #abqd-header-root-mobile-menu .abqd-mob-auth-btn{
+        font-weight: 700 !important;
+      }
+    `;
+  } catch (_) {}
 })();
