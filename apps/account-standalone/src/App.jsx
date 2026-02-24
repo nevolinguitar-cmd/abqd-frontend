@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import { Shield, Key, CreditCard, Clock, User, CheckCircle2, Sun, Moon } from 'lucide-react';
 
+import useAccountData from "./useAccountData";
+
 export default function App() {
-  // Моковые данные (в реальности будут приходить с бэкенда)
-  const userData = {
-    email: 'hello@abqd.ru',
-    status: 'Активно',
-    plan: 'Full',
-    paidUntil: new Date('2026-10-14T21:30:02'),
-    startDate: new Date('2025-10-14T00:00:00'), // Для расчета шкалы
-  };
+  // Данные из API (персональные)
+  const { loading, userData } = useAccountData();
 
   // Состояния
   const [isDarkTheme, setIsDarkTheme] = useState(true); // Состояние темы
@@ -26,20 +22,19 @@ export default function App() {
 
   // Расчет остатка подписки для светящегося кластера (без ошибок и отрицательных значений)
   const calculateProgress = () => {
-    const now = new Date().getTime();
-    const start = userData.startDate.getTime();
+    if (!userData?.paidUntil) return { remainingPercentage: 0, daysLeft: null };
+
+    const now = Date.now();
+    const start = (userData.startDate || new Date()).getTime();
     const end = userData.paidUntil.getTime();
-    
-    const totalMs = Math.max(0, end - start);
+
+    const totalMs = Math.max(1, end - start);
     const remainingMs = Math.max(0, end - now);
-    
-    // Процент оставшегося времени (от 0 до 100)
-    let remainingPercentage = totalMs > 0 ? (remainingMs / totalMs) * 100 : 0;
+
+    let remainingPercentage = (remainingMs / totalMs) * 100;
     remainingPercentage = Math.max(0, Math.min(remainingPercentage, 100));
-    
-    // Точное количество оставшихся дней
+
     const daysLeft = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
-    
     return { remainingPercentage, daysLeft };
   };
 
@@ -154,7 +149,7 @@ export default function App() {
                 <div>
                   <div className={`text-xs uppercase font-semibold mb-1 transition-colors ${t.textLabel}`}>Оплачено до</div>
                   <div className={`font-medium transition-colors ${t.textHighlight}`}>
-                    {userData.paidUntil.toLocaleDateString('ru-RU')} <span className={`text-xs sm:text-sm sm:ml-1 block sm:inline transition-colors ${t.textLabel}`}>{userData.paidUntil.toLocaleTimeString('ru-RU')}</span>
+                    {((userData.paidUntil) ? userData.paidUntil.toLocaleDateString('ru-RU') : '—')} <span className={`text-xs sm:text-sm sm:ml-1 block sm:inline transition-colors ${t.textLabel}`}>{((userData.paidUntil) ? userData.paidUntil.toLocaleTimeString('ru-RU') : '—')}</span>
                   </div>
                 </div>
               </div>
@@ -188,7 +183,7 @@ export default function App() {
                 
                 <div className={`flex justify-between text-[10px] sm:text-xs transition-colors ${t.textLabel}`}>
                   <span>Сегодня</span>
-                  <span>{userData.paidUntil.toLocaleDateString('ru-RU')}</span>
+                  <span>{((userData.paidUntil) ? userData.paidUntil.toLocaleDateString('ru-RU') : '—')}</span>
                 </div>
               </div>
 
@@ -302,8 +297,8 @@ export default function App() {
               
               <p className={`text-sm mb-6 leading-relaxed min-h-[60px] transition-colors ${t.textMuted}`}>
                 {autoRenew 
-                  ? `Ваша подписка будет автоматически продлена ${userData.paidUntil.toLocaleDateString('ru-RU')}. Вы можете отменить автопродление в любой момент.`
-                  : `Подписка будет активна до ${userData.paidUntil.toLocaleDateString('ru-RU')}, после чего доступ будет приостановлен. Новых списаний не будет.`
+                  ? `Ваша подписка будет автоматически продлена ${((userData.paidUntil) ? userData.paidUntil.toLocaleDateString('ru-RU') : '—')}. Вы можете отменить автопродление в любой момент.`
+                  : `Подписка будет активна до ${((userData.paidUntil) ? userData.paidUntil.toLocaleDateString('ru-RU') : '—')}, после чего доступ будет приостановлен. Новых списаний не будет.`
                 }
               </p>
 
