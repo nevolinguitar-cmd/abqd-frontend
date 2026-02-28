@@ -96,6 +96,48 @@ export default function App() {
     iconPurple: isDarkTheme ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600',
   };
 
+  // --- ABQD_RENEW_CURRENT_PLAN_v1 ---
+  const [isPayingRenew, setIsPayingRenew] = useState(false);
+
+  async function renewCurrentPlan(){
+    try{
+      setIsPayingRenew(true);
+      const API = "https://api.abqd.ru";
+      const token = localStorage.getItem("abqd_token") || "";
+      if (!token){
+        window.location.href = "/auth/?next=%2Faccount%2F";
+        return;
+      }
+      const planRaw = String(userData?.plan || "").toLowerCase();
+      const plan = planRaw.includes("full") ? "full" : (planRaw.includes("pro") ? "pro" : "full");
+      const return_url = window.location.origin + "/pay/return/?next=%2Faccount%2F";
+
+      const r = await fetch(API + "/api/v1/payments/create", {
+        method: "POST",
+        headers: { "content-type":"application/json", authorization:"Bearer " + token },
+        body: JSON.stringify({ plan, return_url })
+      });
+
+      const j = await r.json().catch(()=>null);
+      if (r.status === 401){
+        window.location.href = "/auth/?next=%2Faccount%2F";
+        return;
+      }
+      const url = j && j.confirmation_url;
+      if (!url){
+        alert("Не удалось начать оплату (нет confirmation_url).");
+        setIsPayingRenew(false);
+        return;
+      }
+      window.location.href = url;
+    } catch(e){
+      console.warn(e);
+      alert("Ошибка запуска оплаты: " + String(e));
+      setIsPayingRenew(false);
+    }
+  }
+  // --- end ABQD_RENEW_CURRENT_PLAN_v1 ---
+
   return (
     <div className={`min-h-screen font-sans selection:bg-blue-500/30 transition-colors duration-300 ${t.bgRoot}`}>
       
@@ -188,9 +230,7 @@ export default function App() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <button className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 px-4 rounded-xl transition-colors shadow-lg shadow-blue-900/20">
-                  Продлить тариф
-                </button></div>
+                <button className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 px-4 rounded-xl transition-colors shadow-lg shadow-blue-900/20" type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); renewCurrentPlan(); }} disabled={isPayingRenew}>{isPayingRenew ? "Переходим к оплате…" : "Продлить тариф"}</button></div>
             </div>
 
             {/* Профиль пользователя */}
