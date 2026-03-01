@@ -1,26 +1,21 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Search, Moon, Sun, Plus, CheckCircle2, AlertCircle, Clock, Zap, Bot, 
-  Calendar as CalendarIcon, BarChart3, X, User, CreditCard, Target, Mail, Phone, 
-  GripVertical, Edit2, Trash2, PanelLeftClose, PanelLeftOpen, Cloud, Check, PlusCircle,
-  GripHorizontal, LayoutDashboard, CalendarDays, ChevronLeft, ChevronRight,
-  Users, Video, Briefcase, Bell, Globe, Link2, Settings, Lock, RefreshCw
+  BarChart3, X, User, Target, Phone, Trash2, PanelLeftClose, PanelLeftOpen, Cloud, 
+  Check, PlusCircle, GripHorizontal, LayoutDashboard, CalendarDays, ChevronLeft, 
+  ChevronRight, Users, Video, Briefcase, Bell, Globe, Link2, Settings, Lock, 
+  RefreshCw, TrendingUp, Activity, PieChart, ArrowUpRight, ArrowDownRight, 
+  ShieldAlert, Download, Filter, Sparkles, Send, BrainCircuit, ChevronDown, Flag
 } from 'lucide-react';
 
 /**
  * ABQD CRM — Универсальный Dashboard
- * Обновление: Удалена лишняя кнопка фильтра из шапки календаря для чистоты интерфейса.
+ * Обновление: Аналитика полностью привязана к реальным данным карточек (Синхронизация).
  */
 
 // ==========================================
 // 1. КОНСТАНТЫ И ДАННЫЕ
 // ==========================================
-
-const PLUGINS = [
-  { id: "ai_agent", title: "AI агент", icon: <Bot className="w-4 h-4" />, desc: "Next Action и резюме" },
-  { id: "calendar", title: "Календарь", icon: <CalendarIcon className="w-4 h-4" />, desc: "Встречи и слоты" },
-  { id: "analytics", title: "Аналитика", icon: <BarChart3 className="w-4 h-4" />, desc: "Конверсия воронки" },
-];
 
 const INITIAL_STAGES = [
   { key: "inbox", title: "Входящие", color: "bg-slate-400", gates: [] },
@@ -35,10 +30,17 @@ const ROLES = {
   worker: { title: "Рабочие", desc: "Ведение текущих сделок" },
 };
 
+const MARKETING_SOURCES_LIST = ['Telegram Ads', 'SEO / Сайт', 'Холодный обзвон', 'Рефералка', 'Личные связи', 'Неизвестно'];
+
 const getTodayDateStr = () => new Date().toISOString().split('T')[0];
 const getTomorrowDateStr = () => {
   const d = new Date();
   d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
+};
+const getPastDateStr = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 2); // Имитация просроченной задачи
   return d.toISOString().split('T')[0];
 };
 
@@ -46,12 +48,20 @@ const INITIAL_DEALS = [
   {
     id: "D-1001", company: "SOVA Studio", contact: "Анастасия", stage: "inbox", 
     amount: 180000, currency: "RUB", score: 78, phone: "+7 900 111-22-33", email: "hello@sova.studio", 
-    fields: { budget: "180k", deadline: "", note: "Интерес к CRM-системе." }, tags: ["warm"], nextTaskAt: getTodayDateStr(), plugins: ["ai_agent"]
+    source: "Telegram Ads",
+    fields: { budget: "180k", deadline: "", note: "Интерес к CRM-системе." }, tags: ["warm"], nextTaskAt: getTodayDateStr()
   },
   {
     id: "D-1002", company: "Nord Realty", contact: "Алексей", stage: "qual", 
     amount: 320000, currency: "RUB", score: 85, phone: "+7 900 444-55-66", email: "info@nord.re", 
-    fields: { budget: "300k+", deadline: "март", note: "Нужен календарь встреч." }, tags: ["hot"], nextTaskAt: getTomorrowDateStr(), plugins: ["calendar", "analytics"]
+    source: "SEO / Сайт",
+    fields: { budget: "300k+", deadline: "март", note: "Нужен календарь встреч." }, tags: ["hot"], nextTaskAt: getPastDateStr()
+  },
+  {
+    id: "D-1003", company: "TechFlow", contact: "Иван", stage: "won", 
+    amount: 450000, currency: "RUB", score: 92, phone: "+7 999 123-45-67", email: "ivan@techflow.ru", 
+    source: "Рефералка",
+    fields: { budget: "450k", deadline: "февраль", note: "Оплата получена." }, tags: ["hot", "closed"], nextTaskAt: ""
   }
 ];
 
@@ -94,7 +104,8 @@ const getThemeStyles = (theme) => ({
     input: 'bg-[#141120] border-[#2a253a]',
     accentGradient: 'bg-indigo-500', 
     accentText: 'text-indigo-400',
-    calendarCellHover: 'hover:bg-[#1a1725]/50'
+    calendarCellHover: 'hover:bg-[#1a1725]/50',
+    chartBar: 'bg-indigo-500/20 border-indigo-500/50'
   },
   light: {
     bg: 'bg-[#F8FAFC]', panel: 'bg-white', panelBorder: 'border-slate-200',
@@ -102,7 +113,8 @@ const getThemeStyles = (theme) => ({
     text: 'text-slate-900', textMuted: 'text-slate-500', input: 'bg-slate-100 border-slate-200',
     accentGradient: 'bg-indigo-500',
     accentText: 'text-indigo-600',
-    calendarCellHover: 'hover:bg-slate-50'
+    calendarCellHover: 'hover:bg-slate-50',
+    chartBar: 'bg-indigo-100 border-indigo-300'
   }
 }[theme]);
 
@@ -110,191 +122,465 @@ const Badge = ({ children, className = "" }) => (
   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all duration-300 ${className}`}>{children}</span>
 );
 
-const ResponsiveLogo = ({ className = "w-10 h-10" }) => (
-  <div className={`${className} relative flex items-center justify-center transition-transform hover:scale-105 duration-300`}>
-    <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg flex items-center justify-center">
-      <Zap className="text-white w-5 h-5 fill-current" />
-    </div>
-  </div>
-);
-
 // ==========================================
-// 3. ПОДКОМПОНЕНТЫ КАЛЕНДАРЯ (ИНТЕГРАЦИИ И СЕТКА)
+// 3. КОМПОНЕНТ АНАЛИТИКИ (MANAGEMENT DASHBOARD)
 // ==========================================
 
-function IntegrationSection({ isSyncing, connections, onOpenSettings, themeStyles, theme }) {
+const AnalyticsView = ({ deals, themeStyles, theme, stages }) => {
+  const [accessRole, setAccessRole] = useState('owner'); 
+  
+  const [isAiHQOpen, setIsAiHQOpen] = useState(false);
+  const [isMarketingOpen, setIsMarketingOpen] = useState(false);
+  
+  const [reflectionText, setReflectionText] = useState('');
+  const [aiResponse, setAiResponse] = useState(null);
+  const [isAiThinking, setIsAiThinking] = useState(false);
+
+  // --- ДИНАМИЧЕСКИЕ МЕТРИКИ НА ОСНОВЕ РЕАЛЬНЫХ СДЕЛОК ---
+  const metrics = useMemo(() => {
+    const totalDeals = deals.length || 1; 
+    const wonDeals = deals.filter(d => d.stage === 'won');
+    const inboxDeals = deals.filter(d => d.stage === 'inbox');
+    
+    // Считаем реальную выручку
+    const totalRevenue = wonDeals.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+    const avgCheck = wonDeals.length > 0 ? totalRevenue / wonDeals.length : 0;
+    const winRate = (wonDeals.length / totalDeals) * 100;
+    
+    // Считаем просроченные задачи
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const overdueCount = deals.filter(d => {
+      if(d.stage === 'won') return false; // Завершенные сделки не просрочены
+      if(!d.nextTaskAt) return false;
+      const taskDate = new Date(d.nextTaskAt);
+      return taskDate < today;
+    }).length;
+
+    return {
+      totalRevenue,
+      avgCheck,
+      newLeads: inboxDeals.length,
+      winRate: winRate.toFixed(1),
+      wonCount: wonDeals.length,
+      overdueCount
+    };
+  }, [deals]);
+
+  // --- ДИНАМИЧЕСКАЯ ВОРОНКА ---
+  const funnelStages = useMemo(() => {
+    const totalDealsCount = deals.length || 1;
+    return stages.map(stage => {
+      const count = deals.filter(d => d.stage === stage.key).length;
+      const sharePct = deals.length > 0 ? Math.round((count / totalDealsCount) * 100) : 0;
+      return { 
+        key: stage.key, 
+        label: stage.title, 
+        count: count, 
+        conv: `${sharePct}%`, // Доля от всех сделок
+        color: stage.color 
+      };
+    });
+  }, [deals, stages]);
+
+  // --- ДИНАМИЧЕСКИЙ МАРКЕТИНГ ---
+  const marketingSources = useMemo(() => {
+    const sourcesMap = {};
+    deals.forEach(d => {
+      const s = d.source || 'Неизвестно';
+      if (!sourcesMap[s]) sourcesMap[s] = { name: s, leads: 0, won: 0, revenue: 0 };
+      sourcesMap[s].leads += 1;
+      if (d.stage === 'won') {
+        sourcesMap[s].won += 1;
+        sourcesMap[s].revenue += (Number(d.amount) || 0);
+      }
+    });
+
+    return Object.values(sourcesMap)
+      .sort((a, b) => b.leads - a.leads) // Сортируем по количеству лидов
+      .map(src => {
+        // Качество (Скор) - процент перехода из источника в оплату
+        const quality = src.leads > 0 ? Math.round((src.won / src.leads) * 100) : 0;
+        return {
+          source: src.name,
+          leads: src.leads,
+          cac: 'Считается...', // CAC требует расходов, которых нет в CRM-карточке
+          revenue: src.revenue,
+          quality: quality
+        };
+      });
+  }, [deals]);
+
+  const targetRevenue = 1000000; // Цель продаж (План)
+  const revenueProgress = Math.min((metrics.totalRevenue / targetRevenue) * 100, 100);
+  const showFinancials = accessRole === 'owner' || accessRole === 'manager';
+
+  const handleAiBrainstorm = () => {
+    if (!reflectionText.trim()) return;
+    setIsAiThinking(true);
+    
+    setTimeout(() => {
+      const activeDeals = deals.filter(d => d.stage !== 'won' && d.stage !== 'lost');
+      const hotDeals = activeDeals.filter(d => d.score >= 80).sort((a,b) => b.amount - a.amount);
+      const totalActiveAmount = activeDeals.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+      
+      const response = `Я проанализировал вашу воронку на данный момент. Сейчас в работе ${activeDeals.length} активных сделок на общую сумму ${formatMoney(totalActiveAmount)}.
+
+💡 **Стратегический ответ на ваш запрос:**
+Вы написали: "${reflectionText.length > 30 ? reflectionText.substring(0, 30) + '...' : reflectionText}". 
+Опираясь на реальные данные, я вижу точки роста.
+
+🚀 **Что делать прямо сейчас (Action Plan):**
+1. **Быстрые деньги:** У вас ${hotDeals.length} "горячих" сделок. Самая крупная сейчас — это **${hotDeals[0]?.company || 'Нет горячих сделок'}** на сумму ${formatMoney(hotDeals[0]?.amount || 0)}. Свяжитесь с ними сегодня!
+2. **Дисциплина:** В системе числится ${metrics.overdueCount} просроченных задач. Рекомендую поручить менеджеру разобрать их до конца дня.
+3. **Маркетинг:** Обратите внимание, что источник "${marketingSources[0]?.source || 'Неизвестно'}" принес больше всего лидов (${marketingSources[0]?.leads || 0}). Возможно, стоит усилить туда бюджет.`;
+      
+      setAiResponse(response);
+      setIsAiThinking(false);
+    }, 2000);
+  };
+
   return (
-    <div className={`rounded-3xl p-6 shadow-2xl border ${themeStyles.panel} ${themeStyles.panelBorder} transition-colors`}>
-      <h3 className={`text-[11px] font-black uppercase tracking-[0.2em] mb-5 flex items-center justify-between ${themeStyles.textMuted}`}>
-        Интеграции
-        {isSyncing && <RefreshCw size={12} className={`animate-spin ${themeStyles.accentText}`} />}
-      </h3>
-      <div className="space-y-3">
-        <div className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${theme === 'dark' ? 'bg-[#141120] border-[#2a253a]' : 'bg-blue-50 border-blue-100'}`}>
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl shadow-sm border ${themeStyles.panel} ${theme === 'dark' ? 'border-[#2a253a]' : 'border-blue-200'}`}>
-              <Users size={16} className={theme === 'dark' ? 'text-white' : 'text-blue-600'} />
-            </div>
-            <span className={`text-xs font-black tracking-tight ${themeStyles.text}`}>CRM Dashboard</span>
-          </div>
-          <div className="w-2 h-2 rounded-full bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+    <div className="flex flex-col h-full p-4 sm:p-8 overflow-y-auto custom-scrollbar gap-6">
+      
+      {/* HEADER АНАЛИТИКИ */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className={`text-2xl font-black tracking-tight ${themeStyles.text}`}>Управление и Аналитика</h2>
+          <p className={`text-xs font-medium mt-1 ${themeStyles.textMuted}`}>Данные синхронизированы с вашими реальными карточками сделок.</p>
         </div>
-        
-        {/* GOOGLE CALENDAR */}
-        <button onClick={() => onOpenSettings('google')} className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all group ${connections.google ? (theme === 'dark' ? 'bg-[#141120] border-[#3b82f6]/50 text-white' : 'bg-blue-50 border-blue-300 text-blue-700') : (theme === 'dark' ? 'bg-transparent border-[#2a253a] text-slate-400 hover:border-indigo-500/50' : 'bg-transparent border-slate-200 text-slate-500 hover:border-blue-400')}`}>
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 flex items-center justify-center rounded-xl border transition-all ${connections.google ? (theme === 'dark' ? 'bg-white/5 border-[#3b82f6]/30' : 'bg-white border-blue-200') : (theme === 'dark' ? 'bg-white/5 border-[#2a253a] group-hover:scale-110' : 'bg-slate-50 border-slate-200 group-hover:scale-110')}`}>
-              <img src="https://www.google.com/favicon.ico" alt="G" className={`w-4 h-4 ${connections.google ? '' : 'grayscale group-hover:grayscale-0 transition-all'}`} />
-            </div>
-            <span className={`text-xs font-bold transition-colors ${connections.google ? '' : `group-hover:${themeStyles.text}`}`}>Google Calendar</span>
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${themeStyles.panelBorder} ${themeStyles.panel}`}>
+            <ShieldAlert size={14} className={themeStyles.textMuted} />
+            <select 
+              value={accessRole} onChange={(e) => setAccessRole(e.target.value)}
+              className={`text-xs font-bold bg-transparent outline-none cursor-pointer ${themeStyles.text}`}
+            >
+              <option value="owner" className={theme === 'dark' ? 'bg-[#1b1828]' : ''}>Role: Owner (Владелец)</option>
+              <option value="manager" className={theme === 'dark' ? 'bg-[#1b1828]' : ''}>Role: Manager (РОП)</option>
+              <option value="sales" className={theme === 'dark' ? 'bg-[#1b1828]' : ''}>Role: Sales (Сотрудник)</option>
+            </select>
           </div>
-          {connections.google ? (
-            <div className="flex items-center gap-2">
-              <Check size={16} className="text-[#3b82f6]" />
-              <div className="p-1 hover:bg-black/10 rounded-md transition-colors"><Settings size={14} className={`${themeStyles.textMuted} hover:text-[#3b82f6]`} /></div>
-            </div>
-          ) : <Link2 size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
-        </button>
-
-        {/* YANDEX CALENDAR */}
-        <button onClick={() => onOpenSettings('yandex')} className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all group ${connections.yandex ? (theme === 'dark' ? 'bg-[#141120] border-amber-500/50 text-white' : 'bg-amber-50 border-amber-300 text-amber-700') : (theme === 'dark' ? 'bg-transparent border-[#2a253a] text-slate-400 hover:border-amber-500/50' : 'bg-transparent border-slate-200 text-slate-500 hover:border-amber-400')}`}>
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 flex items-center justify-center rounded-xl border transition-all ${connections.yandex ? (theme === 'dark' ? 'bg-white/5 border-amber-500/30' : 'bg-white border-amber-200') : (theme === 'dark' ? 'bg-white/5 border-[#2a253a] group-hover:scale-110' : 'bg-slate-50 border-slate-200 group-hover:scale-110')}`}>
-               <img src="https://yandex.ru/favicon.ico" alt="Y" className={`w-4 h-4 ${connections.yandex ? '' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all'}`} />
-            </div>
-            <span className={`text-xs font-bold transition-colors ${connections.yandex ? '' : `group-hover:${themeStyles.text}`}`}>Yandex Calendar</span>
-          </div>
-          {connections.yandex ? (
-            <div className="flex items-center gap-2">
-              <Check size={16} className="text-amber-500" />
-              <div className="p-1 hover:bg-black/10 rounded-md transition-colors"><Settings size={14} className={`${themeStyles.textMuted} hover:text-amber-500`} /></div>
-            </div>
-          ) : <Link2 size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
-        </button>
+          {showFinancials && (
+            <button className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${theme === 'dark' ? 'border-[#2a253a] hover:bg-white/5 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
+              <Download size={14} /> Экспорт
+            </button>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
 
-function AgendaSection({ leads, yandexEvents, onOpenDeal, themeStyles, theme }) {
-  const allEvents = [...leads, ...yandexEvents].sort((a, b) => a.day - b.day);
-
-  return (
-    <div className={`rounded-3xl p-6 shadow-2xl border ${themeStyles.panel} ${themeStyles.panelBorder} transition-colors`}>
-      <h3 className={`font-black flex items-center gap-3 mb-6 tracking-tight ${themeStyles.text}`}>
-        <Briefcase size={20} className={theme === 'dark' ? 'text-indigo-500' : 'text-indigo-600'} />
-        Ближайшие дела
-      </h3>
-      <div className="space-y-6">
-        {allEvents.length > 0 ? allEvents.slice(0, 5).map((item, idx) => (
-          <div key={idx} onClick={() => { if (item.client && onOpenDeal) onOpenDeal(item.id); }} className="flex gap-4 group cursor-pointer">
-            <div className="flex flex-col items-center">
-              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-[11px] font-black transition-all shadow-sm border ${item.client ? (theme === 'dark' ? 'bg-[#141120] border-[#2a253a] text-white group-hover:border-indigo-500 group-hover:text-indigo-400' : 'bg-white border-slate-200 text-slate-700 group-hover:border-indigo-500 group-hover:text-indigo-600') : (theme === 'dark' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500 group-hover:border-amber-500' : 'bg-amber-50 border-amber-200 text-amber-600')}`}>
-                {item.day}
-              </div>
-              <div className={`w-0.5 flex-1 mt-2 rounded-full ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-200'}`} />
+      {/* KPI CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className={`p-6 rounded-3xl border shadow-sm ${themeStyles.panelBorder} ${themeStyles.panel} relative overflow-hidden group`}>
+          <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity ${themeStyles.accentText}`}><Target size={64} /></div>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${themeStyles.textMuted}`}>Выручка (Оплачено)</p>
+          <div className="flex items-end gap-3">
+            <h3 className={`text-2xl font-black tracking-tighter ${showFinancials ? themeStyles.text : themeStyles.textMuted}`}>
+              {showFinancials ? formatMoney(metrics.totalRevenue) : 'Скрыто'}
+            </h3>
+          </div>
+          {showFinancials && (
+            <div className="mt-4 h-1.5 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden" title={`Цель: ${formatMoney(targetRevenue)}`}>
+              <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${revenueProgress}%` }} />
             </div>
-            <div className="pt-1 flex-1 pb-2 min-w-0">
-              <div className={`text-sm font-black leading-none transition-colors truncate ${themeStyles.text} ${theme === 'dark' ? 'group-hover:text-indigo-400' : 'group-hover:text-indigo-600'}`}>
-                {item.client || item.title}
+          )}
+        </div>
+
+        <div className={`p-6 rounded-3xl border shadow-sm ${themeStyles.panelBorder} ${themeStyles.panel}`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${themeStyles.textMuted}`}>Новые Лиды (Входящие)</p>
+          <div className="flex items-end gap-3">
+            <h3 className={`text-2xl font-black tracking-tighter ${themeStyles.text}`}>{metrics.newLeads}</h3>
+            {metrics.newLeads > 0 && <span className="flex items-center text-xs font-bold text-emerald-500 mb-1"><TrendingUp size={12} className="mr-1"/></span>}
+          </div>
+          <p className={`text-xs font-medium mt-3 ${themeStyles.textMuted}`}>Сделок в первом статусе</p>
+        </div>
+
+        <div className={`p-6 rounded-3xl border shadow-sm ${themeStyles.panelBorder} ${themeStyles.panel}`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${themeStyles.textMuted}`}>Win Rate (Успех)</p>
+          <div className="flex items-end gap-3">
+            <h3 className={`text-2xl font-black tracking-tighter ${themeStyles.text}`}>{metrics.winRate}%</h3>
+          </div>
+          <p className={`text-xs font-medium mt-3 ${themeStyles.textMuted}`}>Оплачено: {metrics.wonCount} из {deals.length}</p>
+        </div>
+
+        <div className={`p-6 rounded-3xl border shadow-sm ${themeStyles.panelBorder} ${themeStyles.panel}`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${themeStyles.textMuted}`}>Средний Чек</p>
+          <div className="flex items-end gap-3">
+            <h3 className={`text-2xl font-black tracking-tighter ${showFinancials ? themeStyles.text : themeStyles.textMuted}`}>
+              {showFinancials ? formatMoney(metrics.avgCheck) : 'Скрыто'}
+            </h3>
+          </div>
+          <p className={`text-xs font-medium mt-3 ${themeStyles.textMuted}`}>На основе успешных сделок</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* ВОРОНКА (FUNNEL) */}
+        <div className={`col-span-1 lg:col-span-2 p-6 rounded-3xl border shadow-sm ${themeStyles.panelBorder} ${themeStyles.panel}`}>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className={`font-black tracking-tight flex items-center gap-2 ${themeStyles.text}`}><Filter size={18} className={themeStyles.accentText} /> Воронка продаж</h3>
+              <p className={`text-xs mt-1 ${themeStyles.textMuted}`}>Распределение ваших текущих сделок по этапам</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            {funnelStages.map((stage, idx) => {
+              // Ищем максимум для расчета ширины полоски
+              const maxCount = Math.max(...funnelStages.map(s => s.count)) || 1;
+              const widthPct = Math.max((stage.count / maxCount) * 100, 5); 
+              
+              return (
+                <div key={stage.key} className="flex items-center gap-4">
+                  <div className={`w-32 sm:w-40 text-right text-xs font-bold ${themeStyles.textMuted} truncate`}>{stage.label}</div>
+                  <div className="flex-1 flex items-center gap-3">
+                    <div className="flex-1 h-8 bg-black/5 dark:bg-white/5 rounded-r-xl overflow-hidden flex items-center">
+                      <div 
+                        style={{ width: `${widthPct}%` }} 
+                        className={`h-full ${stage.color} opacity-80 rounded-r-xl flex items-center justify-end pr-3 transition-all duration-1000`}
+                      >
+                        <span className="text-[10px] font-black text-white/90 drop-shadow-md">{stage.count}</span>
+                      </div>
+                    </div>
+                    <div className={`w-12 text-xs font-black ${themeStyles.text}`}>{stage.conv}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ДИСЦИПЛИНА КОМАНДЫ */}
+        <div className={`col-span-1 p-6 rounded-3xl border shadow-sm flex flex-col ${themeStyles.panelBorder} ${themeStyles.panel}`}>
+          <div className="mb-6">
+            <h3 className={`font-black tracking-tight flex items-center gap-2 ${themeStyles.text}`}><Activity size={18} className="text-rose-500" /> Дисциплина</h3>
+            <p className={`text-xs mt-1 ${themeStyles.textMuted}`}>Проверка дат в карточках</p>
+          </div>
+          
+          <div className="flex-1 flex flex-col justify-center space-y-5">
+            <div className={`p-4 rounded-2xl border transition-colors ${metrics.overdueCount > 0 ? (theme === 'dark' ? 'bg-[#141120] border-rose-500/50' : 'bg-rose-50 border-rose-200') : themeStyles.input}`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-xs font-bold ${metrics.overdueCount > 0 ? (theme === 'dark' ? 'text-rose-400' : 'text-rose-600') : themeStyles.text}`}>Просроченные задачи</span>
+                <span className={`text-lg font-black ${metrics.overdueCount > 0 ? (theme === 'dark' ? 'text-rose-400' : 'text-rose-600') : themeStyles.text}`}>{metrics.overdueCount}</span>
               </div>
-              <div className={`text-[10px] mt-2 flex items-center gap-1.5 uppercase tracking-widest font-black ${themeStyles.textMuted}`}>
-                {item.client ? (
-                  <>{item.type === 'phone' ? <Phone size={10} className="text-emerald-500 shrink-0" /> : <Video size={10} className="text-blue-500 shrink-0" />} <span className="truncate">{item.action}</span></>
-                ) : (
-                  <><img src="https://yandex.ru/favicon.ico" alt="Y" className="w-3 h-3 shrink-0" /> <span className="truncate">{item.time} (YANDEX)</span></>
+              <p className={`text-[10px] font-medium mt-1 ${metrics.overdueCount > 0 ? (theme === 'dark' ? 'text-rose-500/70' : 'text-rose-500') : themeStyles.textMuted}`}>Сделки с прошедшей датой контакта</p>
+            </div>
+
+            <div className={`p-4 rounded-2xl border ${themeStyles.input}`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-xs font-bold ${themeStyles.text}`}>Всего активных</span>
+                <span className={`text-lg font-black ${themeStyles.text}`}>{deals.length - metrics.wonCount}</span>
+              </div>
+              <p className={`text-[10px] font-medium mt-1 ${themeStyles.textMuted}`}>Сделок в работе сейчас</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* МАРКЕТИНГ И ИСТОЧНИКИ (Выпадающий блок) */}
+      <div className={`rounded-3xl border shadow-lg relative transition-all duration-500 ease-in-out ${themeStyles.panelBorder} ${themeStyles.panel} ${isMarketingOpen ? 'ring-2 ring-emerald-500/50' : `hover:border-emerald-500/50 ${theme === 'dark' ? 'bg-[#1b1828]/80' : 'bg-white'}`}`}>
+        
+        <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500 opacity-90`} />
+
+        <button 
+          onClick={() => setIsMarketingOpen(!isMarketingOpen)}
+          className="w-full p-6 sm:p-8 flex items-center justify-between text-left focus:outline-none group cursor-pointer"
+        >
+          <div className="flex items-center gap-4 sm:gap-5">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-500 shadow-inner ${theme === 'dark' ? 'bg-[#141120] text-emerald-400' : 'bg-emerald-50 text-emerald-600'} ${isMarketingOpen ? 'rotate-12 scale-110 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'group-hover:scale-105'}`}>
+              <PieChart size={24} />
+            </div>
+            <div>
+              <h3 className={`text-lg sm:text-xl font-black tracking-tight flex items-center gap-2 ${themeStyles.text}`}>
+                Качество маркетинга (ROI / CAC)
+              </h3>
+              <p className={`text-xs sm:text-sm mt-1 font-medium ${themeStyles.textMuted}`}>
+                Откуда приходят ваши реальные сделки и деньги.
+              </p>
+            </div>
+          </div>
+          <div className={`p-3 rounded-full border transition-all duration-500 shrink-0 ${isMarketingOpen ? 'rotate-180 bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : `${themeStyles.panelBorder} ${themeStyles.textMuted} group-hover:bg-black/5 dark:group-hover:bg-white/5`}`}>
+            <ChevronDown size={20} />
+          </div>
+        </button>
+
+        {isMarketingOpen && (
+          <div className="animate-in slide-in-from-top-4 fade-in duration-500">
+            <div className={`w-full h-px ${themeStyles.panelBorder}`} />
+            
+            <div className="p-6 sm:p-8 overflow-x-auto custom-scrollbar">
+              <table className="w-full min-w-[600px] text-left border-collapse">
+                <thead>
+                  <tr className={`border-b ${themeStyles.panelBorder}`}>
+                    <th className={`pb-3 text-[10px] font-black uppercase tracking-widest ${themeStyles.textMuted}`}>Источник</th>
+                    <th className={`pb-3 text-[10px] font-black uppercase tracking-widest ${themeStyles.textMuted}`}>Всего Лидов</th>
+                    <th className={`pb-3 text-[10px] font-black uppercase tracking-widest ${themeStyles.textMuted}`}>Принесли выручки</th>
+                    <th className={`pb-3 text-[10px] font-black uppercase tracking-widest ${themeStyles.textMuted}`}>Конверсия в оплату</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {marketingSources.map((src, idx) => (
+                    <tr key={idx} className={`border-b last:border-0 transition-colors ${themeStyles.panelBorder} hover:bg-black/5 dark:hover:bg-white/5`}>
+                      <td className={`py-4 text-sm font-bold ${themeStyles.text}`}>{src.source}</td>
+                      <td className={`py-4 text-sm font-medium ${themeStyles.text}`}>{src.leads}</td>
+                      <td className={`py-4 text-sm font-black ${showFinancials && src.revenue > 0 ? 'text-emerald-500' : themeStyles.textMuted}`}>{showFinancials ? formatMoney(src.revenue) : '***'}</td>
+                      <td className="py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${src.quality > 50 ? 'bg-emerald-500' : src.quality > 20 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${src.quality}%` }} />
+                          </div>
+                          <span className={`text-xs font-bold ${themeStyles.textMuted}`}>{src.quality}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* AI-ШТАБ СТРАТЕГИИ */}
+      <div className={`rounded-3xl border shadow-lg relative transition-all duration-500 ease-in-out ${themeStyles.panelBorder} ${themeStyles.panel} ${isAiHQOpen ? 'ring-2 ring-indigo-500/50' : `hover:border-indigo-500/50 ${theme === 'dark' ? 'bg-[#1b1828]/80' : 'bg-white'}`}`}>
+        
+        <div className={`absolute top-0 left-0 w-full h-1.5 ${themeStyles.accentGradient} opacity-90`} />
+        
+        <button 
+          onClick={() => setIsAiHQOpen(!isAiHQOpen)}
+          className="w-full p-6 sm:p-8 flex items-center justify-between text-left focus:outline-none group cursor-pointer"
+        >
+          <div className="flex items-center gap-4 sm:gap-5">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-500 shadow-inner ${theme === 'dark' ? 'bg-[#141120] text-indigo-400' : 'bg-indigo-50 text-indigo-600'} ${isAiHQOpen ? 'rotate-12 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.3)]' : 'group-hover:scale-105'}`}>
+              <Sparkles size={24} />
+            </div>
+            <div>
+              <h3 className={`text-lg sm:text-xl font-black tracking-tight flex items-center gap-2 ${themeStyles.text}`}>
+                Штаб стратегии (AI-Аналитик)
+                {!isAiHQOpen && <span className="hidden sm:inline-flex relative flex h-2 w-2 ml-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span></span>}
+              </h3>
+              <p className={`text-xs sm:text-sm mt-1 font-medium ${themeStyles.textMuted}`}>
+                {isAiHQOpen 
+                  ? "Свернуть панель стратегии" 
+                  : "Обсудите с ИИ вашу реальную воронку и получите план действий."}
+              </p>
+            </div>
+          </div>
+          <div className={`p-3 rounded-full border transition-all duration-500 shrink-0 ${isAiHQOpen ? 'rotate-180 bg-indigo-500/10 border-indigo-500/30 text-indigo-500' : `${themeStyles.panelBorder} ${themeStyles.textMuted} group-hover:bg-black/5 dark:group-hover:bg-white/5`}`}>
+            <ChevronDown size={20} />
+          </div>
+        </button>
+
+        {isAiHQOpen && (
+          <div className="animate-in slide-in-from-top-4 fade-in duration-500">
+            <div className={`w-full h-px ${themeStyles.panelBorder}`} />
+            
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 p-6 sm:p-8 pt-6">
+              <div className="flex flex-col gap-4">
+                <textarea 
+                  value={reflectionText}
+                  onChange={(e) => setReflectionText(e.target.value)}
+                  placeholder="Например: У нас много зависших сделок. Что мы можем сделать с текущей базой прямо сейчас, чтобы закрыть план продаж?"
+                  className={`w-full h-32 sm:h-40 p-5 rounded-2xl text-sm leading-relaxed border outline-none resize-none transition-all shadow-inner ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10`}
+                />
+                <button 
+                  onClick={handleAiBrainstorm}
+                  disabled={isAiThinking || !reflectionText.trim()}
+                  className={`flex items-center justify-center gap-3 w-full py-4 rounded-2xl text-white font-black text-sm tracking-wide transition-all active:scale-[0.98] ${isAiThinking || !reflectionText.trim() ? 'opacity-50 cursor-not-allowed bg-slate-500' : themeStyles.accentGradient + ' shadow-[0_8px_20px_rgba(99,102,241,0.25)] hover:shadow-[0_12px_25px_rgba(99,102,241,0.35)] hover:-translate-y-0.5'}`}
+                >
+                  {isAiThinking ? <RefreshCw size={20} className="animate-spin" /> : <Send size={20} />}
+                  {isAiThinking ? 'Анализирую ваши данные...' : 'Получить action-plan'}
+                </button>
+              </div>
+
+              <div className={`p-6 sm:p-8 rounded-3xl border flex flex-col transition-all ${theme === 'dark' ? 'bg-[#141120]/80 border-indigo-500/20 shadow-[inset_0_0_30px_rgba(99,102,241,0.03)]' : 'bg-indigo-50/50 border-indigo-100 shadow-[inset_0_0_30px_rgba(99,102,241,0.05)]'}`}>
+                {!aiResponse && !isAiThinking && (
+                  <div className="flex-1 flex flex-col items-center justify-center opacity-40 text-center min-h-[150px]">
+                    <BrainCircuit size={48} className={`mb-4 ${themeStyles.textMuted}`} />
+                    <p className={`text-sm font-bold leading-relaxed ${themeStyles.textMuted}`}>
+                      Опишите ситуацию слева, и я<br/>
+                      проанализирую карточки на доске.
+                    </p>
+                  </div>
+                )}
+                
+                {isAiThinking && (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center min-h-[150px]">
+                    <div className="relative mb-5">
+                       <Bot size={48} className={`animate-bounce ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                       <Sparkles size={20} className="absolute -top-2 -right-2 text-amber-400 animate-pulse" />
+                    </div>
+                    <p className={`text-sm font-black tracking-wide ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}>Изучаю ваши метрики и сделки...</p>
+                  </div>
+                )}
+                
+                {aiResponse && !isAiThinking && (
+                  <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 animate-in slide-in-from-bottom-4 fade-in duration-500">
+                    <div className={`flex items-center gap-3 mb-5 pb-4 border-b ${theme === 'dark' ? 'border-white/10' : 'border-black/5'}`}>
+                      <div className="p-2 rounded-lg bg-indigo-500/10">
+                        <Bot size={20} className={themeStyles.accentText} />
+                      </div>
+                      <span className={`text-xs font-black uppercase tracking-[0.2em] ${themeStyles.text}`}>Решение ИИ-Стратега</span>
+                    </div>
+                    <div className={`text-sm whitespace-pre-wrap leading-relaxed ${themeStyles.text}`}>
+                      {aiResponse.split('\n').map((line, i) => {
+                        if (line.includes('**')) {
+                          const parts = line.split('**');
+                          return (
+                            <p key={i} className="mb-3">
+                              {parts.map((part, j) => j % 2 === 1 ? <strong key={j} className={`font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{part}</strong> : part)}
+                            </p>
+                          );
+                        }
+                        return <p key={i} className="mb-3">{line}</p>;
+                      })}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
           </div>
-        )) : (
-          <div className={`text-xs italic text-center py-4 ${themeStyles.textMuted}`}>Событий не найдено</div>
         )}
       </div>
+
     </div>
   );
-}
+};
 
-function ApiSettingsModal({ type, isActive, onClose, onSave, onDisconnect, themeStyles, theme }) {
-  const isGoogle = type === 'google';
-  
-  return (
-    <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="absolute inset-0 cursor-pointer hidden sm:block" onClick={onClose} />
-      <aside className={`relative w-full max-w-md h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col rounded-none sm:rounded-[2rem] border-0 sm:border shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 ${themeStyles.panel} ${themeStyles.panelBorder}`}>
-        <div className={`p-4 sm:p-6 border-b flex items-center justify-between shrink-0 ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
-          <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 flex items-center justify-center rounded-2xl border ${isGoogle ? (theme === 'dark' ? 'bg-[#141120] border-[#3b82f6]/30' : 'bg-blue-50 border-blue-200') : (theme === 'dark' ? 'bg-[#141120] border-amber-500/30' : 'bg-amber-50 border-amber-200')}`}>
-              {isGoogle ? <img src="https://www.google.com/favicon.ico" alt="G" className="w-6 h-6" /> : <img src="https://yandex.ru/favicon.ico" alt="Y" className="w-6 h-6" />}
-            </div>
-            <div>
-              <h2 className={`text-xl font-black ${themeStyles.text}`}>Настройка API</h2>
-              <p className={`text-xs font-bold uppercase tracking-wider mt-1 ${themeStyles.textMuted}`}>{isGoogle ? 'Google Calendar' : 'Yandex Calendar'}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'bg-[#141120] hover:bg-white/10 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'}`}><X size={16} /></button>
-        </div>
 
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar">
-          <div>
-            <label className={`text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 ${themeStyles.textMuted}`}><Lock size={10} /> Client ID</label>
-            <input type="text" className={`w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500 ${theme === 'dark' ? 'placeholder-slate-600' : 'placeholder-slate-300'}`} placeholder={isGoogle ? "xxxx.apps.googleusercontent.com" : "ID приложения Яндекс OAuth"} defaultValue={isActive ? "a1b2c3d4e5f6g7h8.apps.yandex.ru" : ""} />
-          </div>
-          <div>
-            <label className={`text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 ${themeStyles.textMuted}`}><Lock size={10} /> {isGoogle ? 'Client Secret' : 'OAuth Token'}</label>
-            <input type="password" className={`w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500 ${theme === 'dark' ? 'placeholder-slate-600' : 'placeholder-slate-300'}`} placeholder="••••••••••••••••" defaultValue={isActive ? "1234567890" : ""} />
-          </div>
-          {!isGoogle && (
-            <div>
-              <label className={`text-[10px] font-bold uppercase tracking-wider mb-2 block ${themeStyles.textMuted}`}>CalDAV URL (Опционально)</label>
-              <input type="text" className={`w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500 ${theme === 'dark' ? 'placeholder-slate-600' : 'placeholder-slate-300'}`} defaultValue="https://caldav.yandex.ru" />
-            </div>
-          )}
-        </div>
-
-        <div className={`p-4 sm:p-6 border-t flex items-center gap-3 shrink-0 ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
-          {isActive ? (
-            <>
-              <button onClick={onSave} className={`flex-1 px-4 py-3 rounded-xl font-bold text-xs transition-colors ${theme === 'dark' ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-800'}`}>ОБНОВИТЬ КЛЮЧИ</button>
-              <button onClick={onDisconnect} className={`px-4 py-3 rounded-xl font-bold text-xs transition-colors border ${theme === 'dark' ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border-rose-500/20' : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200'}`}>ОТКЛЮЧИТЬ</button>
-            </>
-          ) : (
-            <button onClick={onSave} className={`w-full px-4 py-3 text-white rounded-xl font-bold text-xs transition-opacity shadow-lg ${themeStyles.accentGradient} hover:opacity-90`}>ПОДКЛЮЧИТЬ {isGoogle ? 'GOOGLE' : 'YANDEX'}</button>
-          )}
-        </div>
-      </aside>
-    </div>
-  );
-}
+// ==========================================
+// 4. КОМПОНЕНТЫ КАЛЕНДАРЯ
+// ==========================================
 
 const CalendarView = ({ deals, onOpenDeal, onAddDeal, themeStyles, theme, stages }) => {
-  const [viewDate, setViewDate] = useState(new Date());
-  const [activeDropdown, setActiveDropdown] = useState(null); // 'integrations' | 'agenda' | null
-  const [settingsModal, setSettingsModal] = useState(null); 
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [connections, setConnections] = useState({ google: false, yandex: false });
+  const [currentDate, setCurrentDate] = useState(new Date());
+  
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
 
-  const sync = useCallback(() => {
-    setIsSyncing(true);
-    setTimeout(() => setIsSyncing(false), 600);
-  }, []);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const startDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
-  const dealsHash = JSON.stringify(deals);
-  useEffect(() => { sync(); }, [viewDate.getMonth(), connections.yandex, connections.google, dealsHash, sync]);
+  const monthNames = [
+    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", 
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+  ];
+  const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
-  const connectSystem = (sys) => setConnections(prev => ({ ...prev, [sys]: true }));
-  const disconnectSystem = (sys) => setConnections(prev => ({ ...prev, [sys]: false }));
-  const changeMonth = (offset) => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1));
+  const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+  const handleToday = () => setCurrentDate(new Date());
 
-  // Парсим сделки из CRM в формат календаря
   const leads = useMemo(() => {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
+    const y = currentDate.getFullYear();
+    const m = currentDate.getMonth();
     return deals
       .filter(d => {
         if (!d.nextTaskAt) return false;
         const date = new Date(d.nextTaskAt);
-        return date.getMonth() === month && date.getFullYear() === year;
+        return date.getMonth() === m && date.getFullYear() === y;
       })
       .map(d => {
         const stageObj = stages.find(s => s.key === d.stage);
@@ -311,150 +597,89 @@ const CalendarView = ({ deals, onOpenDeal, onAddDeal, themeStyles, theme, stages
           type: d.phone ? 'phone' : 'meeting'
         };
       });
-  }, [deals, viewDate, stages]);
+  }, [deals, currentDate, stages]);
 
-  const events = connections.google ? [{ id: 'g1', title: 'Google: Планерка', time: '09:00', day: 15 }] : [];
-  const yandexEvents = connections.yandex ? [{ id: 'y1', title: 'Yandex: Обед', time: '13:00', day: 20 }] : [];
-
-  const gridCells = useMemo(() => {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const startOffset = firstDay === 0 ? 6 : firstDay - 1;
-    
+  const renderCalendarCells = () => {
     const cells = [];
-    for (let i = 0; i < startOffset; i++) cells.push({ day: null, current: false });
-    for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, current: true });
-    while (cells.length < 42) cells.push({ day: null, current: false });
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    for (let i = 0; i < startDay; i++) {
+      cells.push(<div key={`empty-${i}`} className={`min-h-[120px] p-2 border-b border-r ${themeStyles.panelBorder} opacity-20`} />);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isToday = dateStr === todayStr;
+      
+      const dayLeads = leads.filter(l => l.day === day);
+
+      cells.push(
+        <div key={day} className={`min-h-[140px] p-3 border-b border-r ${themeStyles.panelBorder} ${themeStyles.calendarCellHover} transition-colors flex flex-col gap-2 relative`}>
+          <div className="flex justify-between items-start mb-1">
+            <span className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-indigo-500 text-white shadow-md' : themeStyles.textMuted}`}>
+              {day}
+            </span>
+          </div>
+          <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-1">
+             {dayLeads.map(lead => (
+              <div 
+                key={lead.id} 
+                onClick={(e) => { e.stopPropagation(); onOpenDeal(lead.id); }}
+                className={`text-[10px] p-1.5 rounded-lg cursor-pointer transition-all border shadow-sm truncate flex items-center gap-1.5 ${theme === 'dark' ? 'bg-[#221f30] border-white/5 hover:border-indigo-500/50 text-slate-200' : 'bg-white border-slate-200 hover:border-indigo-500 text-slate-700'}`}
+                title={`Открыть сделку: ${lead.client}`}
+              >
+                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${lead.color === 'blue' ? 'bg-blue-500' : lead.color === 'emerald' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                <span className="font-bold truncate">{lead.client}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
+    const totalCells = cells.length;
+    const remaining = (7 - (totalCells % 7)) % 7;
+    for (let i = 0; i < remaining; i++) {
+      cells.push(<div key={`empty-end-${i}`} className={`min-h-[120px] p-2 border-b border-r ${themeStyles.panelBorder} opacity-20`} />);
+    }
+
     return cells;
-  }, [viewDate]);
+  };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-8 h-full overflow-y-auto custom-scrollbar">
+    <div className="flex flex-col h-full p-4 sm:p-8 overflow-hidden gap-6">
       
-      {/* ПАНЕЛЬ УПРАВЛЕНИЯ КАЛЕНДАРЕМ (HEADER TOOLBAR) */}
+      {/* ПАНЕЛЬ УПРАВЛЕНИЯ КАЛЕНДАРЕМ */}
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 sm:p-4 rounded-2xl sm:rounded-[24px] border ${themeStyles.panelBorder} ${themeStyles.panel} shadow-md relative z-40`}>
-        
-        {/* Левая часть: Навигация по времени */}
         <div className="flex items-center gap-3 sm:gap-5 px-1">
           <h2 className={`text-xl sm:text-2xl font-black min-w-[140px] sm:min-w-[180px] tracking-tight ${themeStyles.text}`}>
-            {MONTHS[viewDate.getMonth()]} <span className={`font-medium ${themeStyles.textMuted}`}>{viewDate.getFullYear()}</span>
+            {monthNames[month]} <span className={`font-medium ${themeStyles.textMuted}`}>{year}</span>
           </h2>
-          
           <div className={`flex items-center rounded-xl border ${themeStyles.panelBorder} ${theme === 'dark' ? 'bg-[#141120]' : 'bg-slate-50'}`}>
-            <button onClick={() => changeMonth(-1)} className={`p-2 sm:p-2.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-l-xl ${themeStyles.textMuted}`}><ChevronLeft size={18} /></button>
-            <button onClick={() => setViewDate(new Date())} className={`px-3 py-2 sm:px-4 sm:py-2.5 text-[11px] sm:text-xs font-bold border-l border-r ${themeStyles.panelBorder} ${themeStyles.textMuted} hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors`}>
-              Сегодня
-            </button>
-            <button onClick={() => changeMonth(1)} className={`p-2 sm:p-2.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-r-xl ${themeStyles.textMuted}`}><ChevronRight size={18} /></button>
+            <button onClick={handlePrevMonth} className={`p-2 sm:p-2.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-l-xl ${themeStyles.textMuted}`}><ChevronLeft size={18} /></button>
+            <button onClick={handleToday} className={`px-3 py-2 sm:px-4 sm:py-2.5 text-[11px] sm:text-xs font-bold border-l border-r ${themeStyles.panelBorder} ${themeStyles.textMuted} hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors`}>Сегодня</button>
+            <button onClick={handleNextMonth} className={`p-2 sm:p-2.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-r-xl ${themeStyles.textMuted}`}><ChevronRight size={18} /></button>
           </div>
         </div>
 
-        {/* Правая часть: Инструменты (Toolbar Action Bar) */}
         <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto relative">
-          
-          {/* Оверлей для закрытия меню по клику вне */}
-          {activeDropdown && (
-            <div className="fixed inset-0 z-40" onClick={() => setActiveDropdown(null)} />
-          )}
-
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setActiveDropdown(prev => prev === 'integrations' ? null : 'integrations')} 
-              className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all border ${activeDropdown === 'integrations' ? themeStyles.accentGradient + ' text-white border-transparent shadow-lg' : theme === 'dark' ? 'bg-white/5 text-white border-transparent hover:bg-white/10' : 'bg-white/50 text-slate-700 border-slate-200/50 hover:bg-white/80'}`}
-            >
-              <Cloud size={16} />
-              <span className="hidden sm:inline">Интеграции</span>
-              {isSyncing && <RefreshCw size={12} className="animate-spin hidden sm:block" />}
-            </button>
-
-            <button 
-              onClick={() => setActiveDropdown(prev => prev === 'agenda' ? null : 'agenda')} 
-              className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all border ${activeDropdown === 'agenda' ? themeStyles.accentGradient + ' text-white border-transparent shadow-lg' : theme === 'dark' ? 'bg-white/5 text-white border-transparent hover:bg-white/10' : 'bg-white/50 text-slate-700 border-slate-200/50 hover:bg-white/80'}`}
-            >
-              <Briefcase size={16} />
-              <span className="hidden sm:inline">Повестка</span>
-              {leads.length + yandexEvents.length > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-md text-[10px] ml-1 ${activeDropdown === 'agenda' ? 'bg-white/20' : theme === 'dark' ? 'bg-[#141120] text-slate-400' : 'bg-slate-200 text-slate-500'}`}>
-                  {leads.length + yandexEvents.length}
-                </span>
-              )}
-            </button>
-          </div>
-
-          <div className={`hidden sm:block w-px h-6 mx-1 ${themeStyles.panelBorder} border-r`} />
-          
-          <button 
-            onClick={onAddDeal}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold transition-all shadow-md active:scale-95`}
-          >
-            <Plus size={16} />
-            <span className="hidden sm:inline">Создать</span>
+          <button onClick={onAddDeal} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold transition-all shadow-md active:scale-95`}>
+            <Plus size={16} /><span className="hidden sm:inline">Создать событие</span>
           </button>
-
-          {/* ВЫПАДАЮЩИЕ КОНТЕЙНЕРЫ (DROPDOWNS) */}
-          {activeDropdown && (
-            <div className="absolute top-full left-0 sm:left-auto right-0 mt-3 w-[calc(100vw-2rem)] sm:w-[360px] z-50 animate-in fade-in slide-in-from-top-4 duration-200">
-              {activeDropdown === 'integrations' && (
-                <IntegrationSection isSyncing={isSyncing} connections={connections} onOpenSettings={(type) => { setSettingsModal(type); setActiveDropdown(null); }} themeStyles={themeStyles} theme={theme} />
-              )}
-              {activeDropdown === 'agenda' && (
-                <AgendaSection leads={leads} yandexEvents={yandexEvents} onOpenDeal={(id) => { if (onOpenDeal) onOpenDeal(id); setActiveDropdown(null); }} themeStyles={themeStyles} theme={theme} />
-              )}
-            </div>
-          )}
         </div>
       </div>
 
       {/* ОСНОВНАЯ СЕТКА КАЛЕНДАРЯ */}
-      <main className={`flex-1 flex flex-col rounded-2xl sm:rounded-[32px] border shadow-xl overflow-hidden ${themeStyles.panel} ${themeStyles.panelBorder}`}>
+      <div className={`flex-1 rounded-2xl sm:rounded-[32px] border ${themeStyles.panelBorder} ${themeStyles.panel} shadow-xl overflow-hidden flex flex-col`}>
         <div className={`grid grid-cols-7 border-b backdrop-blur-md ${theme === 'dark' ? 'border-[#2a253a] bg-[#141120]/50' : 'border-slate-200 bg-slate-50/50'}`}>
-          {DAYS_OF_WEEK.map(day => (
-            <div key={day} className={`py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] ${themeStyles.textMuted}`}>{day}</div>
+          {dayNames.map(day => (
+            <div key={day} className={`p-3 sm:p-4 text-center text-[10px] sm:text-xs font-black uppercase tracking-widest ${themeStyles.textMuted}`}>{day}</div>
           ))}
         </div>
-        
-        <div className="grid grid-cols-7 flex-1 overflow-y-auto custom-scrollbar">
-          {gridCells.map((cell, idx) => {
-            const isToday = cell.current && cell.day === new Date().getDate() && viewDate.getMonth() === new Date().getMonth() && viewDate.getFullYear() === new Date().getFullYear();
-            const dayLeads = leads.filter(l => l.day === cell.day);
-            const dayEvents = events.filter(e => e.day === cell.day);
-            const dayYandex = yandexEvents.filter(y => y.day === cell.day);
-
-            return (
-              <div key={idx} className={`min-h-[125px] border-r border-b p-2.5 flex flex-col gap-1.5 transition-all cursor-pointer ${theme === 'dark' ? 'border-[#2a253a] hover:bg-white/5' : 'border-slate-200 hover:bg-slate-50'} ${!cell.current ? 'opacity-20 pointer-events-none' : ''}`}>
-                <div className="flex justify-between items-start mb-1">
-                  <span className={`text-sm font-black w-8 h-8 flex items-center justify-center rounded-xl transition-all ${isToday ? `bg-indigo-500 text-white shadow-lg` : themeStyles.textMuted}`}>{cell.day}</span>
-                </div>
-                <div className="space-y-1 overflow-hidden">
-                  {dayLeads.map(lead => (
-                    <div key={lead.id} onClick={(e) => { e.stopPropagation(); if (onOpenDeal) onOpenDeal(lead.id); }} className={`p-1.5 rounded-xl shadow-sm truncate transition-colors border backdrop-blur-sm ${theme === 'dark' ? 'bg-[#141120]/80 border-[#2a253a] hover:border-indigo-500/50' : 'bg-white/80 border-slate-200 hover:border-indigo-400'}`} title="Открыть карточку сделки">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${lead.color === 'blue' ? 'bg-blue-500' : lead.color === 'emerald' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                        <span className={`text-[10px] font-bold truncate ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>{lead.client}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {dayEvents.map(event => (
-                    <div key={event.id} className={`p-1.5 rounded-lg text-[9px] font-bold flex items-center gap-1.5 shadow-md border ${theme === 'dark' ? 'bg-white/10 text-white border-transparent' : 'bg-slate-800 text-white border-transparent'}`}>
-                      <Bell size={10} className={theme === 'dark' ? 'text-slate-400' : 'text-slate-400'} /> <span className="truncate">{event.title}</span>
-                    </div>
-                  ))}
-                  {dayYandex.map(y => (
-                    <div key={y.id} className={`p-1.5 rounded-lg text-[9px] font-black flex items-center gap-1.5 shadow-sm border ${theme === 'dark' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
-                      <img src="https://yandex.ru/favicon.ico" alt="Y" className="w-3 h-3 shrink-0" /> <span className="truncate uppercase">{y.title}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-7 flex-1 overflow-y-auto custom-scrollbar auto-rows-[minmax(100px,auto)] sm:auto-rows-[minmax(140px,auto)]">
+          {renderCalendarCells()}
         </div>
-      </main>
-
-      {/* ОКНО НАСТРОЕК API ВНЕ КАРКАСА (чтобы не перекрывалось z-index'ами) */}
-      {settingsModal && <ApiSettingsModal type={settingsModal} isActive={connections[settingsModal]} onClose={() => setSettingsModal(null)} onSave={() => { connectSystem(settingsModal); setSettingsModal(null); sync(); }} onDisconnect={() => { disconnectSystem(settingsModal); setSettingsModal(null); sync(); }} themeStyles={themeStyles} theme={theme} />}
+      </div>
     </div>
   );
 };
@@ -464,7 +689,7 @@ const CalendarView = ({ deals, onOpenDeal, onAddDeal, themeStyles, theme, stages
 // 5. МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СДЕЛКИ
 // ==========================================
 
-const DealEditorModal = ({ deal, stages, themeStyles, onSave, onClose, onDelete, onCallAI, isSyncing, theme }) => {
+const DealEditorModal = ({ deal, stages, themeStyles, onSave, onClose, onDelete, isSyncing, theme }) => {
   const [draft, setDraft] = useState(deal);
 
   useEffect(() => {
@@ -472,11 +697,6 @@ const DealEditorModal = ({ deal, stages, themeStyles, onSave, onClose, onDelete,
     const timer = setTimeout(() => onSave(draft), 600);
     return () => clearTimeout(timer);
   }, [draft, deal, onSave]);
-
-  const togglePlugin = (pluginId) => {
-    const plugins = draft.plugins || [];
-    setDraft({ ...draft, plugins: plugins.includes(pluginId) ? plugins.filter(id => id !== pluginId) : [...plugins, pluginId] });
-  };
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-[#0f0c1b]/80 backdrop-blur-md animate-in fade-in duration-300">
@@ -511,21 +731,6 @@ const DealEditorModal = ({ deal, stages, themeStyles, onSave, onClose, onDelete,
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 sm:p-10 space-y-8 sm:space-y-10 custom-scrollbar">
-          
-          <div className="space-y-4 text-left">
-              <h3 className="text-xs font-black uppercase tracking-widest opacity-30 flex items-center gap-2"><Zap size={14} /> Инструменты обслуживания</h3>
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                {PLUGINS.map(p => {
-                  const isActive = draft.plugins?.includes(p.id);
-                  return (
-                    <button key={p.id} onClick={() => togglePlugin(p.id)}
-                      className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border text-xs font-bold transition-all duration-300 ${isActive ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-400 shadow-sm' : `${themeStyles.input} ${themeStyles.textMuted} opacity-60 hover:opacity-100`}`}>
-                      {p.icon}<span>{p.title}</span>{isActive && <CheckCircle2 size={12} className="ml-1" />}
-                    </button>
-                  );
-                })}
-              </div>
-          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
               <div className="space-y-2 text-left">
@@ -551,13 +756,19 @@ const DealEditorModal = ({ deal, stages, themeStyles, onSave, onClose, onDelete,
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-30 px-1">Телефон</label>
                   <div className={`flex items-center gap-3 p-4 rounded-xl border ${themeStyles.input}`}><Phone size={18} className="text-indigo-400 opacity-40" /><input value={draft.phone || ""} onChange={(e) => setDraft({...draft, phone: e.target.value})} placeholder="Телефон" className="bg-transparent text-sm w-full outline-none font-semibold" /></div>
                 </div>
+                <div className="space-y-2 text-left sm:col-span-2 mt-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-30 px-1 flex items-center gap-1.5"><Flag size={12}/> Источник маркетинга</label>
+                  <select value={draft.source || 'Неизвестно'} onChange={(e) => setDraft({...draft, source: e.target.value})} className={`w-full p-4 rounded-xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text} focus:ring-2 focus:ring-indigo-500/20`}>
+                    {MARKETING_SOURCES_LIST.map(s => <option key={s} value={s} className={themeStyles.panel}>{s}</option>)}
+                  </select>
+                  <p className="text-[10px] text-emerald-500 opacity-80 pl-2 mt-1">Определяет аналитику ROMI/CAC.</p>
+                </div>
               </div>
           </div>
 
           <div className="space-y-4 sm:space-y-6 text-left">
               <div className="flex justify-between items-center">
-              <h3 className="text-xs font-black uppercase tracking-widest opacity-30 flex items-center gap-2">Заметки и Аналитика</h3>
-              <button onClick={() => onCallAI(draft, setDraft)} className="text-[10px] font-black uppercase tracking-tighter bg-indigo-500/10 text-indigo-400 px-3 py-2 rounded-full border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-2"><Zap size={10} className="fill-current" /> AI Помощник</button>
+                <h3 className="text-xs font-black uppercase tracking-widest opacity-30 flex items-center gap-2">Заметки (Для команды)</h3>
               </div>
               <textarea 
               value={draft.fields.note || ""} onChange={(e) => setDraft({...draft, fields: {...draft.fields, note: e.target.value}})} 
@@ -568,7 +779,7 @@ const DealEditorModal = ({ deal, stages, themeStyles, onSave, onClose, onDelete,
         </div>
 
         <div className="p-4 sm:p-8 border-t border-white/5 flex gap-4 shrink-0 pb-6 sm:pb-8">
-          <button onClick={onClose} className={`w-full h-12 sm:h-14 rounded-xl sm:rounded-[24px] text-white font-bold text-sm transition-all active:scale-[0.98] ${theme === 'dark' ? 'bg-[#2a253a] hover:bg-[#352f44]' : 'bg-slate-800 hover:bg-slate-900'}`}>Готово</button>
+          <button onClick={onClose} className={`w-full h-12 sm:h-14 rounded-xl sm:rounded-[24px] text-white font-bold text-sm transition-all active:scale-[0.98] ${theme === 'dark' ? 'bg-[#2a253a] hover:bg-[#352f44]' : 'bg-slate-800 hover:bg-slate-900'}`}>Сохранить и закрыть</button>
         </div>
       </aside>
     </div>
@@ -591,7 +802,7 @@ export default function App() {
     localStorage.setItem('abqd_theme', theme);
   }, [theme]);
 
-  const [currentView, setCurrentView] = useState('kanban'); // 'kanban' | 'calendar'
+  const [currentView, setCurrentView] = useState('kanban'); 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   const [deals, setDeals] = useState(INITIAL_DEALS);
@@ -599,13 +810,10 @@ export default function App() {
   
   const [selectedId, setSelectedId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentRole, setCurrentRole] = useState("novice");
-  const [activePluginsFilter, setActivePluginsFilter] = useState([]);
   
   const [toasts, setToasts] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
   
-  // Drag and Drop State 
   const [dragType, setDragType] = useState(null); 
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
@@ -621,86 +829,6 @@ export default function App() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   }, []);
 
-  
-  // --- ABQD_CRM_API_SYNC_v1 ---
-  const API_BASE = "https://api.abqd.ru";
-  const syncHydratedRef = useRef(false);
-  const syncTimerRef = useRef(null);
-
-  const getToken = () => (typeof window !== "undefined" ? (localStorage.getItem("abqd_token") || "") : "");
-  const authHeaders = () => {
-    const token = getToken();
-    return token
-      ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-      : { "Content-Type": "application/json" };
-  };
-
-  const loadCrmState = useCallback(async () => {
-    try {
-      setIsSyncing(true);
-      const r = await fetch(`${API_BASE}/api/v1/crm/state`, { method: "GET", headers: authHeaders() });
-      if (!r.ok) throw new Error(`GET crm/state ${r.status}`);
-      const data = await r.json();
-      const state = data?.state ?? data;
-
-      if (state?.stages && Array.isArray(state.stages)) setStages(state.stages);
-      if (state?.deals && Array.isArray(state.deals)) setDeals(state.deals);
-    } catch (e) {
-      console.error(e);
-      addToast("error", "Синхронизация", "Не удалось загрузить CRM state");
-    } finally {
-      syncHydratedRef.current = true;
-      setIsSyncing(false);
-    }
-  }, [addToast]);
-
-  const pushCrmState = useCallback(async (payload) => {
-    try {
-      setIsSyncing(true);
-      const body = { state: payload, ...payload }; // совместимость: API может ожидать state или плоский объект
-      const r = await fetch(`${API_BASE}/api/v1/crm/state`, {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify(body),
-      });
-      if (!r.ok) throw new Error(`PUT crm/state ${r.status}`);
-    } catch (e) {
-      console.error(e);
-      addToast("error", "Синхронизация", "Не удалось сохранить CRM state");
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [addToast]);
-
-  useEffect(() => {
-    loadCrmState();
-  }, [loadCrmState]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const onFocus = () => loadCrmState();
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [loadCrmState]);
-
-  useEffect(() => {
-    if (!syncHydratedRef.current) return;
-    const payload = { version: 1, updatedAt: new Date().toISOString(), stages, deals };
-    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
-    syncTimerRef.current = setTimeout(() => pushCrmState(payload), 800);
-    return () => { if (syncTimerRef.current) clearTimeout(syncTimerRef.current); };
-  }, [stages, deals, pushCrmState]);
-  // --- end ABQD_CRM_API_SYNC_v1 ---
-const handleCallAI = async (currentDraft, setDraftFunction) => {
-    addToast("info", "AI думает", "Анализируем контекст сделки...");
-    setTimeout(() => {
-      setDraftFunction(prev => ({
-        ...prev,
-        fields: { ...prev.fields, note: (prev.fields.note || "") + "\n\n[AI]: Не забудьте обсудить архитектурный проект на следующей встрече." }
-      }));
-    }, 800);
-  };
-
   const handleSaveDeal = useCallback((updatedDeal) => {
     setIsSyncing(true);
     setDeals(prev => prev.map(d => d.id === updatedDeal.id ? updatedDeal : d));
@@ -711,8 +839,8 @@ const handleCallAI = async (currentDraft, setDraftFunction) => {
     const newId = `D-${Math.floor(Math.random() * 9000) + 1000}`;
     const newDeal = {
       id: newId, company: "Новая сделка", contact: "Контакт", stage: stageKey,
-      amount: 0, currency: "RUB", score: 50, phone: "", email: "", fields: { budget: "", deadline: "", note: "" },
-      tags: [], nextTaskAt: getTodayDateStr(), plugins: []
+      amount: 0, currency: "RUB", score: 50, phone: "", email: "", source: "Неизвестно", fields: { budget: "", deadline: "", note: "" },
+      tags: [], nextTaskAt: getTodayDateStr()
     };
     setDeals(prev => [newDeal, ...prev]);
     setSelectedId(newId);
@@ -768,12 +896,9 @@ const handleCallAI = async (currentDraft, setDraftFunction) => {
 
   const filteredDeals = useMemo(() => {
     return deals.filter(d => {
-      const matchesSearch = d.company.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesRole = currentRole === "novice" || d.stage !== "inbox";
-      const matchesPlugins = activePluginsFilter.length === 0 || d.plugins?.some(p => activePluginsFilter.includes(p));
-      return matchesSearch && matchesRole && matchesPlugins;
+      return d.company.toLowerCase().includes(searchQuery.toLowerCase());
     });
-  }, [deals, searchQuery, currentRole, activePluginsFilter]);
+  }, [deals, searchQuery]);
 
   const dealsByStage = useMemo(() => {
     const map = {};
@@ -793,36 +918,41 @@ const handleCallAI = async (currentDraft, setDraftFunction) => {
           {isSidebarCollapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
         </button>
 
-        <div className="space-y-2 mb-6">
+        <div className="space-y-2 mb-6 mt-4 flex-1">
           <button 
             onClick={() => setCurrentView('kanban')}
-            className={`w-full flex items-center rounded-xl transition-all duration-300 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} ${currentView === 'kanban' ? 'bg-indigo-500 text-white shadow-md' : `hover:bg-white/5 ${themeStyles.textMuted}`}`}
+            className={`w-full flex items-center rounded-xl transition-all duration-300 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} ${currentView === 'kanban' ? 'bg-indigo-500 text-white shadow-md' : `hover:bg-black/5 dark:hover:bg-white/5 ${themeStyles.textMuted}`}`}
             title={isSidebarCollapsed ? "Доска" : ''}
           >
             <LayoutDashboard size={18} />
             {!isSidebarCollapsed && <span className="text-sm font-bold">Доска</span>}
           </button>
+          
           <button 
             onClick={() => setCurrentView('calendar')}
-            className={`w-full flex items-center rounded-xl transition-all duration-300 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} ${currentView === 'calendar' ? 'bg-indigo-500 text-white shadow-md' : `hover:bg-white/5 ${themeStyles.textMuted}`}`}
+            className={`w-full flex items-center rounded-xl transition-all duration-300 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} ${currentView === 'calendar' ? 'bg-indigo-500 text-white shadow-md' : `hover:bg-black/5 dark:hover:bg-white/5 ${themeStyles.textMuted}`}`}
             title={isSidebarCollapsed ? "Календарь" : ''}
           >
             <CalendarDays size={18} />
             {!isSidebarCollapsed && <span className="text-sm font-bold">Календарь</span>}
           </button>
+
+          <button 
+            onClick={() => setCurrentView('analytics')}
+            className={`w-full flex items-center rounded-xl transition-all duration-300 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} ${currentView === 'analytics' ? 'bg-indigo-500 text-white shadow-md' : `hover:bg-black/5 dark:hover:bg-white/5 ${themeStyles.textMuted}`}`}
+            title={isSidebarCollapsed ? "Аналитика" : ''}
+          >
+            <BarChart3 size={18} />
+            {!isSidebarCollapsed && <span className="text-sm font-bold">Аналитика</span>}
+          </button>
         </div>
 
-        <div className={`w-full h-px ${themeStyles.panelBorder} border-t mb-6`} />
+        <div className={`w-full h-px ${themeStyles.panelBorder} border-t mb-4`} />
 
-        <div className="space-y-1 flex-1 overflow-y-auto no-scrollbar">
-          {!isSidebarCollapsed && <p className={`text-[10px] font-bold uppercase tracking-widest px-2 mb-4 ${themeStyles.textMuted} opacity-50 text-left`}>Фильтры плагинов</p>}
-          {PLUGINS.map(p => (
-            <button key={p.id} onClick={() => setActivePluginsFilter(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id])}
-              className={`w-full flex items-center rounded-xl transition-all duration-300 group mb-2 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-2.5'} ${activePluginsFilter.includes(p.id) ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : `hover:bg-white/5 ${themeStyles.textMuted} border border-transparent`}`}>
-              <div className={`${activePluginsFilter.includes(p.id) ? 'text-indigo-400' : 'group-hover:text-indigo-400 transition-colors'}`}>{p.icon}</div>
-              {!isSidebarCollapsed && <span className="text-sm font-semibold truncate text-left">{p.title}</span>}
-            </button>
-          ))}
+        <div className="mt-auto pb-4 flex justify-center pt-4">
+           <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-3 rounded-2xl hover:bg-black/5 dark:hover:bg-white/5 transition-all group flex items-center justify-center">
+              {theme === 'dark' ? <Sun size={20} className="text-amber-500/40 group-hover:text-amber-400 transition-colors duration-300" /> : <Moon size={20} className="text-indigo-500/50 group-hover:text-indigo-500 transition-colors duration-300" />}
+           </button>
         </div>
       </aside>
 
@@ -830,45 +960,27 @@ const handleCallAI = async (currentDraft, setDraftFunction) => {
       <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
         
         {/* HEADER */}
-        <header className={`h-16 border-b flex items-center justify-between px-4 sm:px-6 z-10 transition-colors ${themeStyles.panel} ${themeStyles.panelBorder} backdrop-blur-md bg-opacity-80`}>
-          <div className="flex items-center gap-4 flex-1 max-w-xl">
-            <div className="relative w-full">
-              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 ${themeStyles.textMuted}`} />
-              <input type="text" placeholder={currentView === 'kanban' ? "Поиск по доске..." : "Поиск по событиям..."} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full h-10 pl-10 sm:pl-12 pr-4 rounded-xl text-sm border outline-none transition-all ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500/30 focus:bg-[#1C1929]`} />
+        {currentView !== 'analytics' && (
+          <header className={`h-16 border-b flex items-center justify-between px-4 sm:px-6 z-10 transition-colors ${themeStyles.panel} ${themeStyles.panelBorder} backdrop-blur-md bg-opacity-80`}>
+            <div className="flex items-center gap-4 flex-1 max-w-xl">
+              <div className="relative w-full">
+                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 ${themeStyles.textMuted}`} />
+                <input type="text" placeholder={currentView === 'kanban' ? "Поиск по доске..." : "Поиск по событиям..."} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full h-10 pl-10 sm:pl-12 pr-4 rounded-xl text-sm border outline-none transition-all ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500/30 focus:bg-[#1C1929]`} />
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-             {isSyncing && (
-               <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-indigo-400 animate-pulse mr-4 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
-                 <Cloud size={14} /> <span>Синхронизация</span>
-               </div>
-             )}
-            <div className={`flex items-center gap-1 p-1.5 rounded-xl border ${themeStyles.panelBorder} ${theme === 'dark' ? 'bg-[#141120]' : 'bg-slate-100'}`}>
-              {Object.keys(ROLES).map(k => (
-                <button key={k} onClick={() => setCurrentRole(k)} className={`px-3 sm:px-5 py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 ${currentRole === k ? `bg-indigo-500 text-white shadow-sm` : `opacity-40 hover:opacity-100 ${themeStyles.text}`}`}>
-                  {ROLES[k].title}
-                </button>
-              ))}
+            <div className="flex items-center gap-3">
+               {isSyncing && (
+                 <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-indigo-400 animate-pulse mr-4 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                   <Cloud size={14} /> <span>Синхронизация</span>
+                 </div>
+               )}
             </div>
-            
-            <button 
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
-              className={`p-2.5 rounded-xl border ${themeStyles.panelBorder} transition-all group flex items-center justify-center ${theme === 'dark' ? 'bg-[#141120] hover:bg-white/5' : 'bg-slate-100 hover:bg-slate-200'}`}
-              title="Переключить тему"
-            >
-              {theme === 'dark' ? (
-                <Sun size={18} className="text-amber-500/60 group-hover:text-amber-400 transition-colors duration-300" />
-              ) : (
-                <Moon size={18} className="text-indigo-500/60 group-hover:text-indigo-500 transition-colors duration-300" />
-              )}
-            </button>
+          </header>
+        )}
 
-          </div>
-        </header>
-
-        {/* DYNAMIC VIEW: KANBAN OR CALENDAR */}
-        {currentView === 'kanban' ? (
+        {/* DYNAMIC VIEW SWITCHER */}
+        {currentView === 'kanban' && (
           <div id="board-container" className="flex-1 overflow-x-auto overflow-y-hidden flex p-4 sm:p-8 gap-4 sm:gap-8 custom-scrollbar">
             {stages.map(stage => {
               const stageDeals = dealsByStage[stage.key] || [];
@@ -888,7 +1000,7 @@ const handleCallAI = async (currentDraft, setDraftFunction) => {
                     e.dataTransfer.setData('text/plain', stage.key); 
                     e.dataTransfer.setData('stageId', stage.key);
                   }}
-                  onDragEnd={(e) => { 
+                  onDragEnd={() => { 
                     setDragType(null); 
                     setDraggedId(null); 
                     setDragOverId(null); 
@@ -963,13 +1075,7 @@ const handleCallAI = async (currentDraft, setDraftFunction) => {
                             <span className={`font-bold tracking-tight ${themeStyles.accentText}`}>{formatMoney(deal.amount)}</span>
                           </div>
                           
-                          <div className="flex items-center gap-2 pt-3 border-t border-white/5">
-                            <div className="flex -space-x-1.5 overflow-hidden">
-                              {deal.plugins?.length > 0 ? deal.plugins.map(pid => {
-                                  const p = PLUGINS.find(item => item.id === pid);
-                                  return p ? <div key={pid} className={`w-6 h-6 rounded-full ${themeStyles.bg} border ${themeStyles.panelBorder} flex items-center justify-center text-indigo-400 shadow-sm z-10 hover:z-20`} title={p.title}>{p.icon}</div> : null;
-                                }) : <span className="text-[10px] opacity-40 font-medium mt-1">Нет плагинов</span>}
-                            </div>
+                          <div className="flex items-center gap-2 pt-3 border-t border-black/5 dark:border-white/5">
                             <div className="flex-1" />
                             {deal.nextTaskAt && (
                                <div className={`flex items-center gap-1 text-[10px] font-bold ${getDueStatus(deal.nextTaskAt) === "expired" ? "text-rose-500" : getDueStatus(deal.nextTaskAt) === "today" ? "text-amber-500" : "text-emerald-500"}`}>
@@ -993,11 +1099,22 @@ const handleCallAI = async (currentDraft, setDraftFunction) => {
               </button>
             </div>
           </div>
-        ) : (
+        )}
+
+        {currentView === 'calendar' && (
           <CalendarView 
             deals={filteredDeals} 
             onOpenDeal={(id) => setSelectedId(id)} 
             onAddDeal={() => handleAddDeal('inbox')}
+            themeStyles={themeStyles} 
+            theme={theme} 
+            stages={stages}
+          />
+        )}
+
+        {currentView === 'analytics' && (
+          <AnalyticsView 
+            deals={deals} 
             themeStyles={themeStyles} 
             theme={theme} 
             stages={stages}
@@ -1009,7 +1126,7 @@ const handleCallAI = async (currentDraft, setDraftFunction) => {
       {selectedDeal && (
         <DealEditorModal 
           deal={selectedDeal} stages={stages} themeStyles={themeStyles} theme={theme} isSyncing={isSyncing}
-          onSave={handleSaveDeal} onClose={() => setSelectedId(null)} onDelete={handleDeleteDeal} onCallAI={handleCallAI}
+          onSave={handleSaveDeal} onClose={() => setSelectedId(null)} onDelete={handleDeleteDeal}
         />
       )}
 
