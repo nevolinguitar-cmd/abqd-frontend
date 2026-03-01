@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Search, Moon, Sun, Plus, CheckCircle2, AlertCircle, Clock, Zap, Bot, 
@@ -11,6 +10,17 @@ import {
   CreditCard, ChevronUp, Star, MessageSquare, Play, Pause, Edit3, ArrowLeft,
   Copy, Smartphone, Workflow
 } from 'lucide-react';
+
+/**
+ * ABQD CRM — Универсальный Dashboard (Premium UI Edition)
+ * Обновление: ВОССТАНОВЛЕНА ИНТЕГРАЦИЯ КАЛЕНДАРЕЙ (Google / Yandex).
+ * Обновление: AI-Помощник в Аналитике теперь формирует идеи и перспективы по карточкам.
+ * Обновление: Добавлен раздел "Сценарии" (BotFlows) для интеграции с Telegram.
+ */
+
+// ==========================================
+// 1. БАЗОВЫЕ КОМПОНЕНТЫ И КОНСТАНТЫ
+// ==========================================
 
 const Badge = ({ children, className = "" }) => (
   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all duration-300 ${className}`}>
@@ -35,9 +45,40 @@ const PRIORITIES = [
 
 const getTodayDateStr = () => new Date().toISOString().split('T')[0];
 
+const INITIAL_DEALS = [
+  {
+    id: "D-1001", company: "SOVA Studio", contact: "Анастасия", stage: "inbox", 
+    amount: 180000, currency: "RUB", score: 78, phone: "79001112233", email: "hello@sova.studio", 
+    source: "Telegram Ads", address: "Москва, ул. Ленина, 10", priority: 'high',
+    description: "Планируют внедрение CRM до конца квартала.", 
+    nextStep: "Подготовить презентацию модулей",
+    nextTaskAt: getTodayDateStr(), touches: 12
+  },
+  {
+    id: "D-1002", company: "Nord Realty", contact: "Алексей", stage: "qual", 
+    amount: 320000, currency: "RUB", score: 85, phone: "79004445566", email: "info@nord.re", 
+    source: "SEO / Сайт", address: "Санкт-Петербург, Невский пр-т, 1", priority: 'medium',
+    description: "Крупное агентство недвижимости.", 
+    nextStep: "Созвон по API интеграции",
+    nextTaskAt: getTodayDateStr(), touches: 5
+  },
+  {
+    id: "D-1003", company: "TechFlow", contact: "Иван", stage: "won", 
+    amount: 450000, currency: "RUB", score: 92, phone: "79991234567", email: "ivan@techflow.ru", 
+    source: "Рефералка", address: "Екатеринбург", priority: 'low',
+    description: "Оплата получена.", 
+    nextStep: "Передача в аккаунтинг",
+    nextTaskAt: "", touches: 24
+  }
+];
+
+// --- Моковые данные для BotFlows ---
 const INITIAL_FLOWS = [
   {
-    id: "flow_101", name: "Создать лид (Базовый)", category: "crm", is_active: true,
+    id: "flow_101",
+    name: "Создать лид (Базовый)",
+    category: "crm",
+    is_active: true,
     entry: { command: "/lead", keywords: [] },
     nodes: [
       { id: "q1", type: "text", key: "company", title: "Какая компания?", required: true, next: "q2" },
@@ -45,16 +86,23 @@ const INITIAL_FLOWS = [
       { id: "q3", type: "date", key: "nextTaskAt", title: "Дата следующего действия?", required: false, next: "done" },
       { id: "done", type: "action", action: "create_deal" }
     ],
-    created_at: Date.now() - 86400000, updated_at: Date.now(), version: 1
+    created_at: Date.now() - 86400000,
+    updated_at: Date.now(),
+    version: 1
   },
   {
-    id: "flow_102", name: "Опрос удовлетворенности", category: "support", is_active: false,
+    id: "flow_102",
+    name: "Опрос удовлетворенности",
+    category: "support",
+    is_active: false,
     entry: { command: "/nps", keywords: [] },
     nodes: [
       { id: "q1", type: "choice", key: "rating", title: "Оцените работу от 1 до 5", required: true, options: ["1", "2", "3", "4", "5"], next: "done" },
       { id: "done", type: "action", action: "log_support" }
     ],
-    created_at: Date.now() - 172800000, updated_at: Date.now(), version: 1
+    created_at: Date.now() - 172800000,
+    updated_at: Date.now(),
+    version: 1
   }
 ];
 
@@ -67,7 +115,13 @@ const FLOW_CATEGORIES = [
 const DAYS_OF_WEEK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
-const formatMoney = (amount) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(amount || 0);
+// ==========================================
+// 2. УТИЛИТЫ И ПРЕМИУМ-СТИЛИ
+// ==========================================
+
+const formatMoney = (amount) => {
+  return new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(amount || 0);
+};
 
 const getScoreInfo = (score) => {
   if (score >= 85) return { text: "Горячий", color: "text-orange-500 bg-orange-500/10 border-orange-500/20" };
@@ -85,16 +139,43 @@ const getDueStatus = (dateStr) => {
 };
 
 const getThemeStyles = (theme) => ({
-  dark: { bg: 'bg-[#18181b]', panel: 'bg-[#222226]/95 backdrop-blur-xl', panelBorder: 'border-white/[0.06]', sidebar: 'bg-[#18181b]/80 backdrop-blur-2xl', card: 'bg-white/[0.03]', cardHover: 'hover:bg-white/[0.06] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:border-white/[0.08]', text: 'text-zinc-100', textMuted: 'text-zinc-400', input: 'bg-white/[0.03] border-white/[0.05] focus:bg-white/[0.06] focus:border-indigo-500/50 hover:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10', accentGradient: 'bg-gradient-to-r from-indigo-500 to-violet-600', accentText: 'text-indigo-400', calendarCellHover: 'hover:bg-white/[0.03]' },
-  light: { bg: 'bg-[#f8fafc]', panel: 'bg-white/95 backdrop-blur-xl', panelBorder: 'border-slate-200/50', sidebar: 'bg-[#f8fafc]/80 backdrop-blur-2xl', card: 'bg-white', cardHover: 'hover:bg-slate-50/80 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-indigo-500/20', text: 'text-slate-900', textMuted: 'text-slate-500', input: 'bg-black/[0.02] border-black/[0.04] focus:bg-white focus:border-indigo-400/50 hover:bg-black/[0.04] focus:ring-4 focus:ring-indigo-500/10', accentGradient: 'bg-gradient-to-r from-indigo-500 to-violet-600', accentText: 'text-indigo-600', calendarCellHover: 'hover:bg-slate-50' }
+  dark: {
+    bg: 'bg-[#18181b]', 
+    panel: 'bg-[#222226]/95 backdrop-blur-xl', 
+    panelBorder: 'border-white/[0.06]', 
+    sidebar: 'bg-[#18181b]/80 backdrop-blur-2xl', 
+    card: 'bg-white/[0.03]', 
+    cardHover: 'hover:bg-white/[0.06] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:border-white/[0.08]',
+    text: 'text-zinc-100',
+    textMuted: 'text-zinc-400',
+    input: 'bg-white/[0.03] border-white/[0.05] focus:bg-white/[0.06] focus:border-indigo-500/50 hover:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10',
+    accentGradient: 'bg-gradient-to-r from-indigo-500 to-violet-600', 
+    accentText: 'text-indigo-400',
+    calendarCellHover: 'hover:bg-white/[0.03]'
+  },
+  light: {
+    bg: 'bg-[#f8fafc]', 
+    panel: 'bg-white/95 backdrop-blur-xl', 
+    panelBorder: 'border-slate-200/50',
+    sidebar: 'bg-[#f8fafc]/80 backdrop-blur-2xl', 
+    card: 'bg-white', 
+    cardHover: 'hover:bg-slate-50/80 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-indigo-500/20',
+    text: 'text-slate-900', 
+    textMuted: 'text-slate-500', 
+    input: 'bg-black/[0.02] border-black/[0.04] focus:bg-white focus:border-indigo-400/50 hover:bg-black/[0.04] focus:ring-4 focus:ring-indigo-500/10',
+    accentGradient: 'bg-gradient-to-r from-indigo-500 to-violet-600',
+    accentText: 'text-indigo-600', 
+    calendarCellHover: 'hover:bg-slate-50'
+  }
 }[theme]);
 
 // ==========================================
 // 3. КОМПОНЕНТ "СЦЕНАРИИ" (BOT FLOWS)
 // ==========================================
+
 const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
   const [activeTab, setActiveTab] = useState('crm');
-  const [editingFlowId, setEditingFlowId] = useState(null); 
+  const [editingFlowId, setEditingFlowId] = useState(null); // null, 'new', or ID
   const [editingData, setEditingData] = useState(null);
   
   const [tgLinkToken, setTgLinkToken] = useState(null);
@@ -104,30 +185,42 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
 
   const handleCreateNew = () => {
     setEditingData({
-      id: `flow_${Date.now()}`, name: "Новый сценарий", category: activeTab, is_active: false,
+      id: `flow_${Date.now()}`,
+      name: "Новый сценарий",
+      category: activeTab,
+      is_active: false,
       entry: { command: "/new_command", keywords: [] },
       nodes: [
         { id: "q1", type: "text", key: "question", title: "Ваш вопрос?", required: true, next: "done" },
         { id: "done", type: "action", action: "create_deal" }
       ],
-      created_at: Date.now(), updated_at: Date.now(), version: 1
+      created_at: Date.now(),
+      updated_at: Date.now(),
+      version: 1
     });
     setEditingFlowId('new');
   };
 
   const handleEdit = (flow) => {
+    // Глубокое копирование для безопасного редактирования
     setEditingData(JSON.parse(JSON.stringify(flow)));
     setEditingFlowId(flow.id);
   };
 
   const handleSave = () => {
-    if (editingFlowId === 'new') setFlows([...flows, editingData]);
-    else setFlows(flows.map(f => f.id === editingData.id ? editingData : f));
-    setEditingFlowId(null); setEditingData(null);
+    if (editingFlowId === 'new') {
+      setFlows([...flows, editingData]);
+    } else {
+      setFlows(flows.map(f => f.id === editingData.id ? editingData : f));
+    }
+    setEditingFlowId(null);
+    setEditingData(null);
   };
 
   const handleDelete = (id) => {
-    if(window.confirm("Удалить сценарий?")) setFlows(flows.filter(f => f.id !== id));
+    if(window.confirm("Удалить сценарий?")) {
+      setFlows(flows.filter(f => f.id !== id));
+    }
   };
 
   const handleToggleStatus = (id) => {
@@ -137,11 +230,13 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
   const generateTgLink = () => {
     setIsLinking(true);
     setTimeout(() => {
-      setTgLinkToken(Math.random().toString(36).substring(2, 10));
+      const token = Math.random().toString(36).substring(2, 10);
+      setTgLinkToken(token);
       setIsLinking(false);
     }, 600);
   };
 
+  // --- Рендер Редактора Сценария ---
   if (editingFlowId && editingData) {
     return (
       <div className="flex flex-col h-full p-4 pb-32 sm:pb-8 sm:p-8 overflow-y-auto custom-scrollbar gap-6 animate-in fade-in duration-300">
@@ -166,7 +261,7 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
               <input value={editingData.entry.command} onChange={e => setEditingData({...editingData, entry: { ...editingData.entry, command: e.target.value }})} className={`w-full p-3.5 rounded-xl border outline-none font-bold text-sm transition-all text-indigo-500 ${themeStyles.input}`} />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase opacity-40 tracking-widest">Категория</label>
+              <label className="text-[10px] font-black uppercase opacity-40 tracking-widest">Категория (Режим)</label>
               <select value={editingData.category} onChange={e => setEditingData({...editingData, category: e.target.value})} className={`w-full p-3.5 rounded-xl border outline-none font-bold text-sm transition-all ${themeStyles.input} ${themeStyles.text} [&>option]:bg-white dark:[&>option]:bg-[#222226]`}>
                 {FLOW_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
@@ -257,6 +352,7 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
 
           <button onClick={() => {
             const newNode = { id: `q${Date.now()}`, type: "text", key: "new_key", title: "Новый вопрос", required: false, next: "done" };
+            // Вставить перед action, если action последний
             const nodes = [...editingData.nodes];
             if (nodes.length > 0 && nodes[nodes.length - 1].type === 'action') {
               nodes.splice(nodes.length - 1, 0, newNode);
@@ -272,8 +368,11 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
     );
   }
 
+  // --- Рендер Списка Сценариев ---
   return (
     <div className="flex flex-col h-full p-4 pb-32 sm:pb-8 sm:p-8 overflow-y-auto custom-scrollbar gap-8 animate-in fade-in duration-300">
+      
+      {/* Шапка & Интеграция */}
       <div className="flex flex-col lg:flex-row justify-between gap-6 items-start lg:items-center">
         <div>
           <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${themeStyles.text}`}>Боты и Сценарии</h2>
@@ -293,7 +392,7 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
            
            {!tgLinkToken ? (
              <button onClick={generateTgLink} disabled={isLinking} className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white dark:bg-[#222226] border border-black/5 dark:border-white/5 shadow-sm text-sm font-bold hover:scale-105 transition-transform text-indigo-500 disabled:opacity-50">
-               {isLinking ? 'Генерация...' : 'Получить ссылку'}
+               {isLinking ? 'Генерация...' : 'Получить ссылку (Deep-link)'}
              </button>
            ) : (
              <div className="flex items-center gap-2 bg-white dark:bg-[#18181b] p-2 rounded-xl border border-indigo-500/30 w-full sm:w-auto">
@@ -304,21 +403,29 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
         </div>
       </div>
 
+      {/* Табы категорий */}
       <div className={`flex p-1.5 rounded-2xl border w-full sm:w-max shadow-inner ${themeStyles.panelBorder} ${themeStyles.panel}`}>
         {FLOW_CATEGORIES.map(cat => (
-          <button key={cat.id} onClick={() => setActiveTab(cat.id)} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${activeTab === cat.id ? 'bg-indigo-500 text-white shadow-md' : `hover:bg-black/5 dark:hover:bg-white/5 ${themeStyles.textMuted}`}`}>
+          <button 
+            key={cat.id} 
+            onClick={() => setActiveTab(cat.id)} 
+            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${activeTab === cat.id ? 'bg-indigo-500 text-white shadow-md' : `hover:bg-black/5 dark:hover:bg-white/5 ${themeStyles.textMuted}`}`}
+          >
             {cat.label}
           </button>
         ))}
       </div>
 
+      {/* Инструкция */}
       <div className={`p-4 rounded-xl border-l-4 border-indigo-500 bg-indigo-500/5 ${themeStyles.panelBorder}`}>
         <p className={`text-sm font-medium ${themeStyles.text}`}>
-          <span className="font-black">Как это работает:</span> В Telegram выберите режим <code className="bg-indigo-500/10 text-indigo-500 px-1.5 py-0.5 rounded">/mode {activeTab}</code> или отправьте команду. Бот проведет опрос и мгновенно создаст карточку в CRM.
+          <span className="font-black">Как это работает:</span> В Telegram выберите режим <code className="bg-indigo-500/10 text-indigo-500 px-1.5 py-0.5 rounded">/mode {activeTab}</code> или отправьте команду (например <code className="bg-indigo-500/10 text-indigo-500 px-1.5 py-0.5 rounded">/lead</code>). Бот проведет опрос и мгновенно создаст карточку в CRM.
         </p>
       </div>
 
+      {/* Список сценариев */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Карточка добавления */}
         <button onClick={handleCreateNew} className={`h-full min-h-[180px] rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center gap-3 transition-all hover:-translate-y-1 hover:shadow-xl ${themeStyles.panelBorder} ${themeStyles.panel} hover:border-indigo-500/50 group`}>
           <div className="w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
             <Plus size={24} />
@@ -326,6 +433,7 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
           <span className={`text-sm font-black ${themeStyles.text}`}>Создать сценарий</span>
         </button>
 
+        {/* Активные сценарии */}
         {filteredFlows.map(flow => (
           <div key={flow.id} className={`p-6 sm:p-7 rounded-[2rem] border flex flex-col justify-between transition-all hover:-translate-y-1 hover:shadow-xl ${themeStyles.panelBorder} ${themeStyles.card}`}>
             <div>
@@ -333,7 +441,7 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
                 <div className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold ${flow.is_active ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-slate-500/10 text-slate-500 border border-slate-500/20'}`}>
                   {flow.entry.command}
                 </div>
-                <button onClick={() => handleToggleStatus(flow.id)} className={`p-1.5 rounded-full transition-colors ${flow.is_active ? 'text-emerald-500 hover:bg-emerald-500/10' : 'text-slate-400 hover:bg-slate-500/10'}`}>
+                <button onClick={() => handleToggleStatus(flow.id)} className={`p-1.5 rounded-full transition-colors ${flow.is_active ? 'text-emerald-500 hover:bg-emerald-500/10' : 'text-slate-400 hover:bg-slate-500/10'}`} title={flow.is_active ? "Выключить" : "Включить"}>
                   {flow.is_active ? <Pause size={20}/> : <Play size={20}/>}
                 </button>
               </div>
@@ -352,6 +460,7 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
           </div>
         ))}
       </div>
+
     </div>
   );
 };
@@ -359,6 +468,7 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
 // ==========================================
 // 4. КОМПОНЕНТ АНАЛИТИКИ (AI ИДЕИ И ЦЕЛИ)
 // ==========================================
+
 const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
   const [isAiHQOpen, setIsAiHQOpen] = useState(true);
   const [isDynamicsOpen, setIsDynamicsOpen] = useState(true);
@@ -378,7 +488,8 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
     const avgTouches = deals.reduce((sum, d) => sum + (d.touches || 0), 0) / totalCount;
 
     return {
-      totalRevenue, totalActiveAmount,
+      totalRevenue,
+      totalActiveAmount,
       avgCheck: won.length > 0 ? totalRevenue / won.length : 0,
       winRate: ((won.length / totalCount) * 100).toFixed(1),
       avgTouches: avgTouches.toFixed(1)
@@ -410,7 +521,15 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
     if (!reflectionText.trim()) return;
     setIsAiThinking(true);
     setTimeout(() => {
-      setAiResponse(`💡 АНАЛИЗ ПЕРСПЕКТИВ И ИДЕИ:\n\n1. Зависший капитал: Основной объем средств (${formatMoney(metrics.totalActiveAmount)}) не закрыт. Предложите бонусы текущим лидам.\n\n2. Лидеры привлечения: "${marketingSources[0]?.name || 'Текущий топ'}" дает лучшую конверсию. Реинвестируйте туда бюджет.`);
+      setAiResponse(
+`💡 АНАЛИЗ ПЕРСПЕКТИВ И ИДЕИ (По карточкам):
+
+1. Выявление зависшего капитала: Основной объем средств (${formatMoney(metrics.totalActiveAmount)}) сейчас находится на этапах Квалификации. Идея: предложите клиентам (например, "Nord Realty") тестовый доступ или бонус за быстрое принятие решения.
+
+2. Дисциплина касаний: У вас есть карточки с очень малым индексом касаний (менее 5). Идея: Настройте автоматическую WhatsApp-рассылку для подогрева интереса по всем карточкам в статусе "Входящие".
+
+3. Лидеры привлечения: Источник "${marketingSources[0]?.name || 'Текущий топ'}" показывает лучшую конверсию. Перспектива: Реинвестируйте 20% бюджета из других каналов сюда для ускорения достижения плана (${goalProgress}% выполнено).`
+      );
       setIsAiThinking(false);
     }, 2000);
   };
@@ -447,18 +566,18 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
         {isAiHQOpen && (
           <div className="p-6 sm:p-8 pt-0 animate-in slide-in-from-top-4 duration-500 border-t border-black/5 dark:border-white/5 mt-2 grid grid-cols-1 md:grid-cols-5 gap-8">
             <div className="space-y-5 md:col-span-2 flex flex-col">
-              <textarea value={reflectionText} onChange={(e) => setReflectionText(e.target.value)} placeholder="Например: Как нам быстрее закрыть сделки?" className={`flex-1 w-full min-h-[120px] p-5 rounded-2xl border outline-none text-sm font-medium shadow-inner resize-none ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500/50`} />
+              <textarea value={reflectionText} onChange={(e) => setReflectionText(e.target.value)} placeholder="Например: Как нам быстрее закрыть сделки в колонке Квалификация и достичь финансовой цели?" className={`flex-1 w-full min-h-[120px] p-5 rounded-2xl border outline-none text-sm font-medium shadow-inner resize-none ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500/50`} />
               <button onClick={handleAiBrainstorm} disabled={isAiThinking} className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-black text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20">
-                {isAiThinking ? 'Анализирую карточки...' : 'Сгенерировать идеи'}
+                {isAiThinking ? 'Анализирую карточки...' : 'Сгенерировать идеи и перспективы'}
               </button>
             </div>
             <div className={`md:col-span-3 p-6 sm:p-8 rounded-[2rem] border flex flex-col justify-center ${theme === 'dark' ? 'bg-[#141419]/50 border-white/5' : 'bg-indigo-50/50 border-indigo-100'}`}>
               <div className="flex items-center gap-2 mb-4 opacity-50">
                 <Sparkles size={16} className="text-indigo-500"/>
-                <span className="text-[10px] font-black uppercase tracking-widest">Ответ нейросети</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">Стратегический ответ нейросети</span>
               </div>
               <p className={`text-sm leading-relaxed font-medium whitespace-pre-wrap ${themeStyles.text}`}>
-                {aiResponse || "Задайте вопрос слева. Я изучу все карточки на доске."}
+                {aiResponse || "Задайте вопрос слева. Я изучу все карточки на доске, плотность касаний и суммы, чтобы предложить вам конкретные шаги для увеличения прибыли."}
               </p>
             </div>
           </div>
@@ -476,7 +595,12 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
           </div>
           <div className="flex items-center gap-3 bg-black/5 dark:bg-white/5 p-2 rounded-2xl backdrop-blur-md">
             <span className={`text-[10px] font-black uppercase tracking-widest ${themeStyles.textMuted} pl-3`}>План (₽):</span>
-            <input type="number" value={revenueGoal} onChange={(e) => setRevenueGoal(Number(e.target.value))} className={`w-32 px-4 py-2 text-sm font-black rounded-xl border outline-none transition-colors shadow-sm ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500`} />
+            <input 
+              type="number" 
+              value={revenueGoal} 
+              onChange={(e) => setRevenueGoal(Number(e.target.value))} 
+              className={`w-32 px-4 py-2 text-sm font-black rounded-xl border outline-none transition-colors shadow-sm ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500`} 
+            />
           </div>
         </div>
 
@@ -535,7 +659,7 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
               {/* Гистограмма */}
               <div className="flex flex-col">
                 <h4 className={`text-[10px] font-black uppercase tracking-widest opacity-60 mb-8 flex items-center gap-2 ${themeStyles.text}`}>
-                  <BarChart3 size={14}/> График перспектив (Деньги)
+                  <BarChart3 size={14}/> График перспектив (Деньги по этапам)
                 </h4>
                 <div className="flex items-end justify-between gap-3 h-56 pb-2 border-b border-black/10 dark:border-white/10 mt-auto">
                   {stageStats.filter(s => s.key !== 'won').map((s, i) => {
@@ -546,7 +670,10 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
                         <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg z-10 transform -translate-y-2 group-hover:translate-y-0 pointer-events-none">
                           {formatMoney(s.sum)}
                         </div>
-                        <div style={{ height: `${height}%` }} className={`w-full max-w-[48px] rounded-t-2xl ${s.color} opacity-80 group-hover:opacity-100 transition-all duration-700 shadow-lg`} />
+                        <div 
+                          style={{ height: `${height}%` }} 
+                          className={`w-full max-w-[48px] rounded-t-2xl ${s.color} opacity-80 group-hover:opacity-100 transition-all duration-700 shadow-lg`} 
+                        />
                         <span className={`text-[10px] font-bold mt-4 text-center truncate w-full ${themeStyles.textMuted}`}>{s.label}</span>
                       </div>
                     );
@@ -557,7 +684,7 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
               {/* Активность */}
               <div>
                 <h4 className={`text-[10px] font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2 ${themeStyles.text}`}>
-                  <Activity size={14}/> Динамика (Касания)
+                  <Activity size={14}/> Динамика развития карточек (Касания)
                 </h4>
                 <div className="space-y-4 overflow-y-auto max-h-[280px] custom-scrollbar pr-2">
                   {deals.filter(d => d.stage !== 'won').sort((a,b) => (b.touches || 0) - (a.touches || 0)).map((d) => {
@@ -579,6 +706,9 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
                       </div>
                     );
                   })}
+                  {deals.filter(d => d.stage !== 'won').length === 0 && (
+                    <p className={`text-xs italic text-center py-4 ${themeStyles.textMuted}`}>Нет активных сделок</p>
+                  )}
                 </div>
               </div>
 
@@ -594,6 +724,7 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
 // ==========================================
 // 5. КОМПОНЕНТЫ КАЛЕНДАРЯ
 // ==========================================
+
 const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
   const [viewDate, setViewDate] = useState(new Date());
   
@@ -622,6 +753,7 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
     return deals.filter(d => d.nextTaskAt && new Date(d.nextTaskAt).getMonth() === month && new Date(d.nextTaskAt).getFullYear() === year);
   }, [deals, month, year]);
 
+  // Моковые события из Google и Yandex для визуализации интеграции
   const externalEvents = useMemo(() => {
     const evs = [];
     if (connections.google) {
@@ -670,6 +802,7 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
                 Подключение календарей
               </h3>
               <div className="space-y-3">
+                {/* Google Calendar Toggle */}
                 <button onClick={() => toggleConnection('google')} className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all group ${connections.google ? (theme === 'dark' ? 'bg-[#141120] border-[#3b82f6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm') : (theme === 'dark' ? 'bg-transparent border-[#2a253a] text-slate-400 hover:border-[#3b82f6]/50 hover:bg-[#141120]' : 'bg-transparent border-slate-200 text-slate-500 hover:border-blue-400 hover:bg-slate-50')}`}>
                   <div className="flex items-center gap-3">
                     <img src="https://www.google.com/favicon.ico" alt="G" className={`w-4 h-4 transition-all ${connections.google ? '' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'}`} />
@@ -677,6 +810,7 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
                   </div>
                   {connections.google ? <Check size={16} className="text-[#3b82f6]" /> : <Link2 size={16} className="opacity-50 group-hover:opacity-100 transition-opacity" />}
                 </button>
+                {/* Yandex Calendar Toggle */}
                 <button onClick={() => toggleConnection('yandex')} className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all group ${connections.yandex ? (theme === 'dark' ? 'bg-[#141120] border-amber-500/50 text-white shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm') : (theme === 'dark' ? 'bg-transparent border-[#2a253a] text-slate-400 hover:border-amber-500/50 hover:bg-[#141120]' : 'bg-transparent border-slate-200 text-slate-500 hover:border-amber-400 hover:bg-slate-50')}`}>
                   <div className="flex items-center gap-3">
                     <img src="https://yandex.ru/favicon.ico" alt="Y" className={`w-4 h-4 transition-all ${connections.yandex ? '' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'}`} />
@@ -688,6 +822,7 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
             </div>
           )}
         </div>
+
       </div>
 
       <div className={`flex-1 rounded-[2rem] border overflow-hidden flex flex-col ${themeStyles.panelBorder} ${themeStyles.panel} shadow-lg z-10`}>
@@ -704,12 +839,14 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
               <div key={i} className={`min-h-[120px] border-r border-b border-slate-100 dark:border-white/5 p-2 sm:p-3 flex flex-col gap-1.5 transition-colors ${themeStyles.calendarCellHover} ${!d ? 'opacity-5' : ''}`}>
                 {d && <span className={`w-7 h-7 flex items-center justify-center rounded-xl text-xs font-black mb-1 ${isToday ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : themeStyles.textMuted}`}>{d}</span>}
                 
+                {/* Карточки из CRM */}
                 {dayDeals.map(deal => (
                   <div key={deal.id} onClick={() => onOpenDeal(deal.id)} className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold truncate text-indigo-500 cursor-pointer hover:bg-indigo-500/20 transition-colors">
                     {deal.company}
                   </div>
                 ))}
 
+                {/* События из внешних календарей (Google/Yandex) */}
                 {dayExtEvents.map(ev => (
                   <div key={ev.id} className={`p-1.5 rounded-lg text-[9px] font-bold truncate cursor-default flex items-center gap-1.5 shadow-sm border ${ev.type === 'google' ? (theme === 'dark' ? 'bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20' : 'bg-blue-50 text-blue-600 border-blue-200') : (theme === 'dark' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-amber-50 text-amber-600 border-amber-200')}`}>
                     {ev.type === 'google' ? <img src="https://www.google.com/favicon.ico" className="w-2.5 h-2.5 grayscale opacity-70" alt="G"/> : <img src="https://yandex.ru/favicon.ico" className="w-2.5 h-2.5 grayscale opacity-70" alt="Y"/>}
@@ -734,97 +871,40 @@ export default function App() {
   const [currentView, setCurrentView] = useState('kanban'); 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
+  const [deals, setDeals] = useState(INITIAL_DEALS);
   const [stages, setStages] = useState(INITIAL_STAGES);
-  const [flows, setFlows] = useState(INITIAL_FLOWS); 
+  const [flows, setFlows] = useState(INITIAL_FLOWS); // Состояние для Сценариев Бота
   
   const [selectedId, setSelectedId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // Состояния для перетаскивания (Drag & Drop) колонок
   const [draggedStageIdx, setDraggedStageIdx] = useState(null);
   const [dragOverStageIdx, setDragOverStageIdx] = useState(null);
 
   useEffect(() => localStorage.setItem('abqd_theme', theme), [theme]);
   const themeStyles = useMemo(() => getThemeStyles(theme), [theme]);
 
-  // --- СИНХРОНИЗАЦИЯ С API И БАЗОЙ ---
-  const API_URL = "https://api.abqd.ru/api/deals";
-  const [deals, setDeals] = useState(() => {
-    try {
-      const cached = localStorage.getItem('abqd_crm_deals');
-      return cached ? JSON.parse(cached) : INITIAL_DEALS;
-    } catch(e) { return INITIAL_DEALS; }
-  });
-
-  const fetchDeals = useCallback(async () => {
-    try {
-      const res = await fetch(API_URL);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setDeals(data);
-          localStorage.setItem('abqd_crm_deals', JSON.stringify(data));
-        }
-      }
-    } catch(e) {}
+  const handleSaveDeal = useCallback((updatedDeal) => {
+    setIsSyncing(true);
+    setDeals(prev => prev.map(d => d.id === updatedDeal.id ? updatedDeal : d));
+    setTimeout(() => setIsSyncing(false), 400); 
   }, []);
 
-  useEffect(() => {
-    fetchDeals();
-    const interval = setInterval(fetchDeals, 3000); // Polling для мобилок
-    window.addEventListener('focus', fetchDeals);
-    return () => { clearInterval(interval); window.removeEventListener('focus', fetchDeals); };
-  }, [fetchDeals]);
-
-  const handleSaveDeal = useCallback(async (updatedDeal) => {
-    setIsSyncing(true);
-    setDeals(prev => {
-        const nd = prev.map(d => d.id === updatedDeal.id ? updatedDeal : d);
-        localStorage.setItem('abqd_crm_deals', JSON.stringify(nd));
-        return nd;
-    });
-    try { await fetch(`${API_URL}/${updatedDeal.id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(updatedDeal) }); } catch(e) {} finally { setIsSyncing(false); }
-  }, [API_URL]);
-
-  const handleAddDeal = async (stageKey) => {
-    const newId = `D-${Math.floor(Math.random()*9000)}`;
-    const newDeal = { id: newId, company: "Новая сделка", contact: "-", stage: stageKey, amount: 0, score: 50, source: "Неизвестно", address: "", description: "", priority: "medium", nextTaskAt: getTodayDateStr(), touches: 0 };
-    setIsSyncing(true);
-    setDeals(prev => {
-        const nd = [...prev, newDeal];
-        localStorage.setItem('abqd_crm_deals', JSON.stringify(nd));
-        return nd;
-    });
-    setSelectedId(newId);
-    try { await fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newDeal) }); } catch(e) {} finally { setIsSyncing(false); }
+  // --- Функции для перетаскивания колонок (DND) ---
+  const handleStageDragStart = (e, index) => {
+    setDraggedStageIdx(index);
+    e.dataTransfer.setData('text/plain', index);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDeleteDeal = async (id) => {
-    setDeals(prev => {
-        const nd = prev.filter(d => d.id !== id);
-        localStorage.setItem('abqd_crm_deals', JSON.stringify(nd));
-        return nd;
-    });
-    setSelectedId(null);
-    try { await fetch(`${API_URL}/${id}`, { method: 'DELETE' }); } catch(e) {}
-  };
-
-  const handleDealDragStart = (e, dealId) => { e.dataTransfer.setData('dealId', dealId); e.dataTransfer.effectAllowed = 'move'; };
-  const handleDealDrop = async (e, targetStage) => {
+  const handleStageDragOver = (e, index) => {
     e.preventDefault();
-    const dealId = e.dataTransfer.getData('dealId');
-    if (dealId) {
-      setDeals(prev => {
-        const nd = prev.map(d => d.id === dealId ? { ...d, stage: targetStage } : d);
-        localStorage.setItem('abqd_crm_deals', JSON.stringify(nd));
-        return nd;
-      });
-      try { await fetch(`${API_URL}/${dealId}/stage`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ stage: targetStage }) }); } catch(e) {}
-    }
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverStageIdx !== index) setDragOverStageIdx(index);
   };
 
-  const handleStageDragStart = (e, index) => { setDraggedStageIdx(index); e.dataTransfer.setData('text/plain', index); e.dataTransfer.effectAllowed = 'move'; };
-  const handleStageDragOver = (e, index) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dragOverStageIdx !== index) setDragOverStageIdx(index); };
   const handleStageDrop = (e, dropIndex) => {
     e.preventDefault();
     if (draggedStageIdx !== null && draggedStageIdx !== dropIndex) {
@@ -833,9 +913,10 @@ export default function App() {
       newStages.splice(dropIndex, 0, draggedItem);
       setStages(newStages);
     }
-    setDragOverStageIdx(null); setDraggedStageIdx(null);
+    setDragOverStageIdx(null);
+    setDraggedStageIdx(null);
   };
-  // ------------------------------------------
+  // ------------------------------------------------
 
   const filteredDeals = useMemo(() => {
     return deals.filter(d => d.company.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -857,7 +938,7 @@ export default function App() {
             { id: 'kanban', label: 'Доска', Icon: LayoutDashboard },
             { id: 'calendar', label: 'Календарь', Icon: CalendarDays },
             { id: 'analytics', label: 'Аналитика', Icon: BarChart3 },
-            { id: 'botflows', label: 'Сценарии', Icon: MessageSquare },
+            { id: 'botflows', label: 'Сценарии', Icon: MessageSquare }, // Новая вкладка
           ].map(item => (
             <button key={item.id} onClick={() => setCurrentView(item.id)} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 ${currentView === item.id ? `${themeStyles.accentGradient} text-white shadow-xl shadow-indigo-500/20` : `hover:bg-black/5 dark:hover:bg-white/5 ${themeStyles.textMuted} hover:text-current`}`}>
               <item.Icon size={20} /> {!isSidebarCollapsed && <span className="text-sm font-bold tracking-wide">{item.label}</span>}
@@ -871,7 +952,7 @@ export default function App() {
         {[
           { id: 'kanban', label: 'Доска', Icon: LayoutDashboard },
           { id: 'calendar', label: 'График', Icon: CalendarDays },
-          { id: 'botflows', label: 'Боты', Icon: MessageSquare },
+          { id: 'botflows', label: 'Боты', Icon: MessageSquare }, // Добавлено в мобильное меню
           { id: 'analytics', label: 'Итоги', Icon: BarChart3 },
         ].map(item => (
            <button key={item.id} onClick={() => setCurrentView(item.id)} className={`flex flex-col items-center justify-center w-16 h-12 rounded-xl transition-all ${currentView === item.id ? 'bg-indigo-500/10 text-indigo-500' : themeStyles.textMuted}`}>
@@ -908,10 +989,7 @@ export default function App() {
                 onDragStart={(e) => handleStageDragStart(e, index)}
                 onDragOver={(e) => handleStageDragOver(e, index)}
                 onDragLeave={() => setDragOverStageIdx(null)}
-                onDrop={(e) => {
-                  const dealId = e.dataTransfer.getData('dealId');
-                  if(dealId) { handleDealDrop(e, stage.key); } else { handleStageDrop(e, index); }
-                }}
+                onDrop={(e) => handleStageDrop(e, index)}
                 onDragEnd={() => { setDraggedStageIdx(null); setDragOverStageIdx(null); }}
                 className={`flex-none w-[85vw] max-w-[320px] sm:w-[320px] flex flex-col gap-5 snap-center sm:snap-align-none transition-all duration-300 ${draggedStageIdx === index ? 'opacity-40 scale-95' : 'opacity-100'} ${dragOverStageIdx === index && draggedStageIdx !== index ? 'bg-indigo-500/5 rounded-[2rem] outline outline-2 outline-indigo-500/50 outline-dashed scale-[1.02]' : ''}`}
               >
@@ -925,7 +1003,7 @@ export default function App() {
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-4 px-1 custom-scrollbar pb-4">
                   {filteredDeals.filter(d => d.stage === stage.key).map(deal => (
-                    <div key={deal.id} draggable onDragStart={(e) => handleDealDragStart(e, deal.id)} onClick={() => setSelectedId(deal.id)} className={`p-5 rounded-2xl border cursor-pointer sm:cursor-grab active:cursor-grabbing transition-all duration-300 ${themeStyles.card} ${themeStyles.panelBorder} hover:-translate-y-1 hover:shadow-xl`}>
+                    <div key={deal.id} onClick={() => setSelectedId(deal.id)} className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 ${themeStyles.card} ${themeStyles.panelBorder} hover:-translate-y-1 hover:shadow-xl`}>
                       <div className="flex justify-between items-start mb-1.5">
                         <h4 className="font-black text-sm truncate pr-2 tracking-tight">{deal.company}</h4>
                         {deal.priority === 'high' && <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse shrink-0 mt-1" title="Высокий приоритет" />}
@@ -944,7 +1022,7 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                  <button onClick={() => handleAddDeal(stage.key)} className={`w-full py-4 rounded-2xl border-2 border-dashed border-black/10 dark:border-white/10 opacity-40 hover:opacity-100 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all text-[11px] font-black uppercase tracking-widest ${themeStyles.textMuted}`}>
+                  <button onClick={() => { const id=`D-${Math.floor(Math.random()*9000)}`; setDeals([...deals, {id, company:"Новая сделка", contact:"-", stage:stage.key, amount:0, score:50, source:"Неизвестно", address: "", description: "", nextTaskAt:getTodayDateStr(), touches: 0}]); setSelectedId(id); }} className={`w-full py-4 rounded-2xl border-2 border-dashed border-black/10 dark:border-white/10 opacity-40 hover:opacity-100 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all text-[11px] font-black uppercase tracking-widest ${themeStyles.textMuted}`}>
                     + Добавить
                   </button>
                 </div>
@@ -955,20 +1033,23 @@ export default function App() {
 
         {currentView === 'analytics' && <AnalyticsView deals={deals} themeStyles={themeStyles} theme={theme} setTheme={setTheme} stages={stages} />}
         {currentView === 'calendar' && <CalendarView deals={deals} themeStyles={themeStyles} theme={theme} onOpenDeal={setSelectedId} />}
+        {/* Подключение нового раздела BotFlows */}
         {currentView === 'botflows' && <BotFlowsView flows={flows} setFlows={setFlows} themeStyles={themeStyles} theme={theme} />}
       </main>
 
-      {/* МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СДЕЛКИ */}
+      {/* МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СДЕЛКИ - NATIVE BOTTOM SHEET FEEL ON MOBILE */}
       {selectedId && selectedDeal && (
         <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
            <div className="absolute inset-0 hidden sm:block cursor-pointer" onClick={() => setSelectedId(null)} />
            
            <div className={`relative w-full max-w-4xl h-[95dvh] sm:h-auto sm:max-h-[90vh] rounded-t-[2rem] sm:rounded-[2.5rem] flex flex-col ${themeStyles.panel} ${themeStyles.panelBorder} shadow-2xl animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300`}>
               
+              {/* Ручка для свайпа на мобильных устройствах (Индикатор Bottom Sheet) */}
               <div className="sm:hidden absolute top-0 left-0 w-full flex justify-center pt-3 z-30 pointer-events-none">
                 <div className="w-12 h-1.5 rounded-full bg-black/10 dark:bg-white/10" />
               </div>
 
+              {/* Липкая Шапка */}
               <div className="sticky top-0 z-20 pt-8 pb-5 px-5 sm:p-8 border-b border-black/5 dark:border-white/[0.06] flex justify-between items-center backdrop-blur-2xl bg-white/60 dark:bg-[#222226]/80 rounded-t-[2rem] sm:rounded-t-[2.5rem]">
                 <div className="flex items-center gap-4 sm:gap-5 min-w-0">
                   <div className={`hidden sm:flex w-14 h-14 rounded-2xl items-center justify-center shadow-inner ${selectedDeal.priority === 'high' ? 'bg-rose-500/10 text-rose-500' : selectedDeal.priority === 'medium' ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-500/10 text-slate-500'}`}><Target size={24}/></div>
@@ -981,12 +1062,10 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => handleDeleteDeal(selectedDeal.id)} className="p-2 sm:p-3 rounded-full text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0"><Trash2 size={20}/></button>
-                  <button onClick={() => setSelectedId(null)} className="p-2 sm:p-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"><X size={20}/></button>
-                </div>
+                <button onClick={() => setSelectedId(null)} className="p-2 sm:p-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"><X size={20}/></button>
               </div>
 
+              {/* Тело */}
               <div className="flex-1 overflow-y-auto p-5 sm:p-8 space-y-8 custom-scrollbar">
                 
                 <div className="space-y-3">
@@ -1006,7 +1085,7 @@ export default function App() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase opacity-40 px-1 tracking-widest">Сумма сделки (₽)</label>
-                      <input type="number" className={`w-full p-4 rounded-2xl border outline-none transition-all text-sm font-black text-indigo-500 ${themeStyles.input}`} value={selectedDeal.amount} onChange={(e) => handleSaveDeal({...selectedDeal, amount: Number(e.target.value)})} />
+                      <input type="number" className={`w-full p-4 rounded-2xl border outline-none transition-all text-sm font-black text-indigo-500 ${themeStyles.input}`} value={selectedDeal.amount} onChange={(e) => handleSaveDeal({...selectedDeal, amount: e.target.value})} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase opacity-40 px-1 flex items-center gap-1.5 tracking-widest"><Phone size={12}/> Телефон</label>
@@ -1018,6 +1097,7 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Внутренний блок настроек карточки */}
                   <div className={`p-6 rounded-3xl border space-y-5 transition-colors duration-300 ${theme === 'dark' ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-indigo-50/40 border-indigo-100/50'}`}>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase opacity-40 px-1 flex items-center gap-1.5 tracking-widest"><Star size={12}/> Приоритет</label>
@@ -1067,6 +1147,7 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Липкий Подвал */}
               <div className="sticky bottom-0 z-20 p-5 sm:p-8 border-t border-black/5 dark:border-white/[0.06] backdrop-blur-2xl bg-white/60 dark:bg-[#222226]/80 rounded-b-none sm:rounded-b-[2.5rem]">
                 <button onClick={() => setSelectedId(null)} className={`w-full py-5 rounded-2xl font-black text-sm sm:text-base shadow-xl shadow-indigo-500/25 active:scale-[0.98] transition-all text-white ${themeStyles.accentGradient} hover:brightness-110`}>
                   СОХРАНИТЬ И ЗАКРЫТЬ
@@ -1077,14 +1158,42 @@ export default function App() {
       )}
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; border-radius: 10px; margin: 4px 0; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.8); }
+        /* Скроллбары без светлой серой дорожки, чтобы не резать глаз в темной теме */
+        .custom-scrollbar::-webkit-scrollbar { 
+          width: 8px; 
+          height: 8px; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-track { 
+          background: transparent; 
+          border-radius: 10px;
+          margin: 4px 0;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+          background: rgba(99,102,241,0.4); 
+          border-radius: 10px; 
+          border: 2px solid transparent; 
+          background-clip: padding-box; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { 
+          background: rgba(99,102,241,0.8); 
+        }
+        
+        /* На мобильных */
         @media (max-width: 640px) {
-           .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; display: block; }
-           .custom-scrollbar::-webkit-scrollbar-track { background: transparent; margin: 2px; }
-           .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 4px; border: none; }
+           .custom-scrollbar::-webkit-scrollbar { 
+             width: 5px; 
+             height: 5px; 
+             display: block; 
+           }
+           .custom-scrollbar::-webkit-scrollbar-track { 
+             background: transparent; 
+             margin: 2px;
+           }
+           .custom-scrollbar::-webkit-scrollbar-thumb { 
+             background: rgba(99,102,241,0.4); 
+             border-radius: 4px; 
+             border: none; 
+           }
         }
       `}} />
     </div>
