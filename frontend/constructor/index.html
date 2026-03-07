@@ -14,6 +14,7 @@
   body:not(.u-page) .abqdRoot { padding-top: 90px !important; }
   /* Скрываем хедер на странице u */
   .u-page #header-root, .u-page #header { display: none !important; }
+  @media (max-width: 768px) { .mobile-footer { display: none !important; } }
 </style>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -374,6 +375,7 @@
 
   .toastWrap { position: fixed; bottom: 20px; right: 20px; z-index: 100000; }
   .toast { background: var(--bg-app); border: 1px solid var(--border-panel); color: var(--text-main); padding: 12px 20px; border-radius: 12px; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-size: 13px; font-weight: 700; }
+  @media (max-width: 768px) { .mobile-footer { display: none !important; } }
 </style>
 
 <div class="abqdRoot" data-abqd-constructor>
