@@ -6,6 +6,24 @@
   <title>Конструктор профиля ABQD</title>
 </head>
 <body>
+
+<link rel="stylesheet" href="/assets/header.css">
+<script src="/assets/header.js" defer></script>
+<style>
+  /* Отступ только для конструктора */
+  body:not(.u-page) .abqdRoot { padding-top: 90px !important; }
+  /* Скрываем хедер на странице u */
+  .u-page #header-root, .u-page #header { display: none !important; }
+</style>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.location.pathname.includes("/u/")) {
+      document.body.classList.add("u-page");
+    }
+  });
+</script>
+<div id="header-root"></div><div id="header"></div>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -192,7 +210,7 @@
   .tab.active { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(109, 92, 255, 0.3); border: none; }
 
   /* Scrollable Editor Area */
-  .editorInner { padding: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-panel) transparent; }
+  .editorInner { flex: 1; overflow-y: auto !important; -webkit-overflow-scrolling: touch; padding-bottom: 250px !important; }
   .pad { padding: 24px 20px; }
 
   /* --- FORMS & INPUTS --- */
@@ -329,7 +347,7 @@
     .editorCard {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      height: 70vh !important;
+      height: 85vh !important;
       margin: 0;
       border-radius: 32px 32px 0 0;
       z-index: 10000;
@@ -351,7 +369,7 @@
     .sheet-handle { display: block; width: 40px; height: 5px; background: var(--text-muted); border-radius: 99px; opacity: 0.4; margin-bottom: 4px; }
     .close-sheet-btn { display: block; margin-left: 12px; }
     
-    .editorSticky { position: static; height: calc(100% - 70px); }
+    .editorSticky { position: relative; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   }
 
   .toastWrap { position: fixed; bottom: 20px; right: 20px; z-index: 100000; }
@@ -549,7 +567,7 @@
     // ==========================================
     // Так как теперь мы будем хостить HTML на нашем же Node.js сервере,
     // мы можем использовать относительный путь к API:
-    const API_ENDPOINT = "/api/profile"; 
+    const API_ENDPOINT = "/api/v1/profile"; 
     
     // Как мы идентифицируем пользователя? Если это встроено в ЛК, 
     // сюда можно передавать ID пользователя (например, из переменной сессии)
@@ -697,34 +715,101 @@
       return response;
     }
 
+    
+    // --- ABQD MEDIA & API PIPELINE ---
+    
+    // --- ABQD MEDIA PIPELINE (FIXED) ---
+    async function uploadMediaViaAPI(file) {
+        if (!file) return "";
+        const statusEl = document.getElementById("saveStatusText");
+        if(statusEl) statusEl.innerHTML = "<span style='color:#2979ff'>Загрузка фото в Yandex Cloud...</span>";
+        
+        const fd = new FormData();
+        fd.append("file", file);
+        
+        // Передаем slug, если бэкенд использует его для создания папки
+        const currentSlug = document.getElementById("slug") ? document.getElementById("slug").value : localStorage.getItem("abqd_active_slug");
+        if (currentSlug) fd.append("slug", currentSlug);
+        
+        const headers = {};
+        // Берем токен авторизации
+        const token = localStorage.getItem("token") || localStorage.getItem("auth_token") || localStorage.getItem("access_token");
+        if (token) headers["Authorization"] = "Bearer " + token;
+
+        try {
+            const res = await fetch("/api/v1/media/upload", { 
+                method: "POST", 
+                headers: headers,
+                credentials: "include",
+                body: fd 
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if(statusEl) statusEl.innerHTML = "<span style='color:#00c853'>✅ Фото загружено! Теперь нажмите 'Сохранить'.</span>";
+                return data.public_url || data.url || "";
+            } else {
+                const errText = await res.text();
+                console.error("Upload error:", errText);
+                if(statusEl) statusEl.innerHTML = "<span style='color:#ff4d4d'>❌ Ошибка API при загрузке фото</span>";
+                alert("Сервер отклонил фото: " + errText);
+            }
+        } catch(e) { 
+            console.error("Network error:", e); 
+            if(statusEl) statusEl.innerHTML = "<span style='color:#ff4d4d'>❌ Ошибка сети при загрузке</span>";
+        }
+        return "";
+    }
+
     async function loadDataFromCloud() {
       try {
-        const url = `${API_ENDPOINT}?userId=${USER_PROFILE_ID}`;
-        const res = await fetchWithTimeout(url, { method: "GET" }, 5000);
+        let currentSlug = document.getElementById("slug") ? document.getElementById("slug").value : "ivan-ivanov";
+        if (!currentSlug || currentSlug === "ivan-ivanov") currentSlug = localStorage.getItem("abqd_active_slug") || "ivan-ivanov";
+        
+        const res = await fetch(`/api/v1/profile/${currentSlug}?t=${Date.now()}`);
         if (res.ok) {
-          return await res.json();
+           const raw = await res.json();
+           const bs = raw.state || {};
+           const bp = bs.profile || {};
+           
+           if (raw.slug) localStorage.setItem("abqd_active_slug", raw.slug);
+           
+           return {
+             slug: raw.slug || currentSlug,
+             fullName: bp.name || "", role: bp.role || "", about: bp.about || "", callPhone: bp.phone || "",
+             avatarDataUrl: bp.avatar || "", bannerDataUrl: bp.banner || "",
+             buttons: bs.buttons || [], chips: bs.chips || [], points: bs.points || [], gallery: bs.gallery || [],
+             theme: bs.theme || "dark", ctaTheme: bs.ctaTheme || "auto", pointsTitle: bs.pointsTitle || "Ссылки", galleryTitle: bs.galleryTitle || "Работы"
+           };
         }
-      } catch (e) {
-        console.warn("API Sync Load failed, falling back to local:", e);
-      }
+      } catch(e) {}
       return null;
     }
 
     async function saveDataToCloud(dataObj) {
       try {
-        const url = `${API_ENDPOINT}?userId=${USER_PROFILE_ID}`;
-        const res = await fetchWithTimeout(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dataObj)
-        }, 5000);
+        const slug = dataObj.slug || "new-profile";
+        localStorage.setItem("abqd_active_slug", slug);
+        
+        // Оборачиваем данные строго в "state", как требует FastAPI
+        const payload = {
+          state: {
+            theme: dataObj.theme || "dark", ctaTheme: dataObj.ctaTheme || "auto",
+            profile: {
+              name: dataObj.fullName || "", role: dataObj.role || "", about: dataObj.about || "", phone: dataObj.callPhone || "",
+              avatar: dataObj.avatarDataUrl || "", banner: dataObj.bannerDataUrl || ""
+            },
+            buttons: dataObj.buttons || [], chips: dataObj.chips || [],
+            points: dataObj.points || [], pointsTitle: dataObj.pointsTitle || "Ссылки",
+            gallery: dataObj.gallery || [], galleryTitle: dataObj.galleryTitle || "Работы"
+          }
+        };
+        
+        const res = await fetch(`/api/v1/profile/${slug}`, {
+          method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+        });
         return res.ok;
-      } catch (e) {
-        console.warn("API Sync Save failed:", e);
-        return false;
-      }
+      } catch(e) { return false; }
     }
-
     let state = clone(defaultState); // Изначально дефолтный, обновится в init()
     let dirty = false;
     let saveTimer = null;
@@ -1095,10 +1180,10 @@
     // File Inputs
     root.addEventListener("change", async (e)=>{
        const el = e.target;
-       if(el.id==="avatarFile") { state.avatarDataUrl = await readFileAsDataURL(el.files[0]); }
-       if(el.id==="bannerFile") { state.bannerDataUrl = await readFileAsDataURL(el.files[0]); }
-       if(el.id==="logoFile") { state.logoDataUrl = await readFileAsDataURL(el.files[0]); }
-       if(el.dataset.gfile) { state.gallery[el.dataset.i].img = await readFileAsDataURL(el.files[0]); }
+       if(el.id==="avatarFile") { state.avatarDataUrl = await uploadMediaViaAPI(el.files[0]); }
+       if(el.id==="bannerFile") { state.bannerDataUrl = await uploadMediaViaAPI(el.files[0]); }
+       if(el.id==="logoFile") { state.logoDataUrl = await uploadMediaViaAPI(el.files[0]); }
+       if(el.dataset.gfile) { state.gallery[el.dataset.i].img = await uploadMediaViaAPI(el.files[0]); }
        
        if(el.dataset.b==="style") { state.buttons[el.dataset.i].style = el.value; }
        if(el.dataset.c==="style") { state.chips[el.dataset.i].style = el.value; }

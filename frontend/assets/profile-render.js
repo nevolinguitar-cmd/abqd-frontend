@@ -106,7 +106,7 @@
     out.callStyle = normalizeBtnStyle(p.callStyle || st.callStyle || 'ghost');
 
     out.avatarDataUrl = pick(p.avatarUrl, p.avatar, p.avatarDataUrl, '');
-    out.bannerDataUrl = pick(p.bannerUrl, p.bannerDataUrl, '');
+    out.bannerDataUrl = pick(p.bannerUrl, p.bannerDataUrl, p.banner, '');
     out.logoDataUrl   = pick(p.logoUrl, p.logoDataUrl, '');
     out.logoLink      = pick(p.logoLink, '');
 
