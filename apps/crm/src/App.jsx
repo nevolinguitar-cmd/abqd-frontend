@@ -13,6 +13,7 @@ import {
 
 /**
  * ABQD CRM — Универсальный Dashboard (Premium UI Edition)
+ * Обновление: Исправлена ошибка компиляции (разделены CalendarView и App).
  * Обновление: ВОССТАНОВЛЕНА ИНТЕГРАЦИЯ КАЛЕНДАРЕЙ (Google / Yandex).
  * Обновление: AI-Помощник в Аналитике теперь формирует идеи и перспективы по карточкам.
  * Обновление: Добавлен раздел "Сценарии" (BotFlows) для интеграции с Telegram.
@@ -522,201 +523,262 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
     setIsAiThinking(true);
     setTimeout(() => {
       setAiResponse(
-`💡 АНАЛИЗ ПЕРСПЕКТИВ И ИДЕИ (По карточкам):
+`💡 АНАЛИЗ ПЕРСПЕКТИВ И ИДЕИ:
 
-1. Выявление зависшего капитала: Основной объем средств (${formatMoney(metrics.totalActiveAmount)}) сейчас находится на этапах Квалификации. Идея: предложите клиентам (например, "Nord Realty") тестовый доступ или бонус за быстрое принятие решения.
+1. Выявление зависшего капитала: Основной объем средств (${formatMoney(metrics.totalActiveAmount)}) сейчас находится на этапах Квалификации. Идея: предложите клиентам тестовый доступ или бонус за быстрое принятие решения.
 
-2. Дисциплина касаний: У вас есть карточки с очень малым индексом касаний (менее 5). Идея: Настройте автоматическую WhatsApp-рассылку для подогрева интереса по всем карточкам в статусе "Входящие".
+2. Дисциплина касаний: У вас есть карточки с очень малым индексом касаний (менее 5). Идея: Настройте автоматическую WhatsApp-рассылку для подогрева интереса.
 
 3. Лидеры привлечения: Источник "${marketingSources[0]?.name || 'Текущий топ'}" показывает лучшую конверсию. Перспектива: Реинвестируйте 20% бюджета из других каналов сюда для ускорения достижения плана (${goalProgress}% выполнено).`
       );
       setIsAiThinking(false);
-    }, 2000);
+    }, 1500);
   };
 
   return (
-    <div className="flex flex-col h-full p-4 pb-32 sm:pb-8 sm:p-8 overflow-y-auto custom-scrollbar gap-8">
-      
-      {/* Шапка */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${themeStyles.text}`}>Аналитика и Цели</h2>
-          <p className={`text-sm mt-1 ${themeStyles.textMuted}`}>Управление финансовыми показателями и поиск перспектив.</p>
-        </div>
-        <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className={`p-3 rounded-2xl border ${themeStyles.panelBorder} ${themeStyles.panel} shadow-sm hover:scale-105 transition-transform`}>
-          {theme === 'dark' ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-indigo-500" />}
-        </button>
-      </div>
-
-      {/* AI HQ */}
-      <div className={`rounded-[2rem] border shadow-xl overflow-hidden ${themeStyles.panelBorder} ${themeStyles.panel} relative`}>
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-500 opacity-90" />
-        <button onClick={() => setIsAiHQOpen(!isAiHQOpen)} className="w-full p-6 sm:p-8 flex items-center justify-between group">
-          <div className="flex items-center gap-5 text-left">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${theme === 'dark' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'} group-hover:scale-105 transition-transform`}>
-              <Bot size={28} />
-            </div>
-            <div>
-              <h3 className={`text-xl font-black ${themeStyles.text}`}>AI-Помощник (Идеи и Перспективы)</h3>
-              <p className={`text-sm mt-1 ${themeStyles.textMuted}`}>Искусственный интеллект анализирует карточки и формирует стратегию роста.</p>
-            </div>
-          </div>
-          <ChevronDown size={20} className={`transition-transform duration-500 ${isAiHQOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {isAiHQOpen && (
-          <div className="p-6 sm:p-8 pt-0 animate-in slide-in-from-top-4 duration-500 border-t border-black/5 dark:border-white/5 mt-2 grid grid-cols-1 md:grid-cols-5 gap-8">
-            <div className="space-y-5 md:col-span-2 flex flex-col">
-              <textarea value={reflectionText} onChange={(e) => setReflectionText(e.target.value)} placeholder="Например: Как нам быстрее закрыть сделки в колонке Квалификация и достичь финансовой цели?" className={`flex-1 w-full min-h-[120px] p-5 rounded-2xl border outline-none text-sm font-medium shadow-inner resize-none ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500/50`} />
-              <button onClick={handleAiBrainstorm} disabled={isAiThinking} className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-black text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20">
-                {isAiThinking ? 'Анализирую карточки...' : 'Сгенерировать идеи и перспективы'}
-              </button>
-            </div>
-            <div className={`md:col-span-3 p-6 sm:p-8 rounded-[2rem] border flex flex-col justify-center ${theme === 'dark' ? 'bg-[#141419]/50 border-white/5' : 'bg-indigo-50/50 border-indigo-100'}`}>
-              <div className="flex items-center gap-2 mb-4 opacity-50">
-                <Sparkles size={16} className="text-indigo-500"/>
-                <span className="text-[10px] font-black uppercase tracking-widest">Стратегический ответ нейросети</span>
-              </div>
-              <p className={`text-sm leading-relaxed font-medium whitespace-pre-wrap ${themeStyles.text}`}>
-                {aiResponse || "Задайте вопрос слева. Я изучу все карточки на доске, плотность касаний и суммы, чтобы предложить вам конкретные шаги для увеличения прибыли."}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Выставление Целей */}
-      <div className={`p-6 sm:p-8 rounded-[2rem] border shadow-lg relative overflow-hidden ${themeStyles.panelBorder} ${themeStyles.panel}`}>
-        <div className={`absolute -top-10 -right-10 p-6 opacity-[0.03] ${themeStyles.accentText}`}><Target size={200} /></div>
+    <div className="w-full h-full overflow-y-auto custom-scrollbar">
+      <div className="max-w-[1600px] mx-auto flex flex-col gap-8 sm:gap-12 p-4 sm:p-8 pb-32 sm:pb-12 min-h-max">
         
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 relative z-10">
+        {/* Шапка Аналитики */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
           <div>
-            <h3 className={`text-xl font-black flex items-center gap-2 ${themeStyles.text}`}>Прогресс выполнения плана</h3>
-            <p className={`text-xs mt-1 ${themeStyles.textMuted}`}>Выручка по всем успешно закрытым сделкам</p>
+            <h2 className={`text-3xl sm:text-4xl font-black tracking-tight ${themeStyles.text}`}>Аналитика и Цели</h2>
+            <p className={`text-sm mt-1.5 font-medium ${themeStyles.textMuted}`}>Управление показателями и поиск точек роста.</p>
           </div>
-          <div className="flex items-center gap-3 bg-black/5 dark:bg-white/5 p-2 rounded-2xl backdrop-blur-md">
-            <span className={`text-[10px] font-black uppercase tracking-widest ${themeStyles.textMuted} pl-3`}>План (₽):</span>
-            <input 
-              type="number" 
-              value={revenueGoal} 
-              onChange={(e) => setRevenueGoal(Number(e.target.value))} 
-              className={`w-32 px-4 py-2 text-sm font-black rounded-xl border outline-none transition-colors shadow-sm ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500`} 
-            />
-          </div>
+          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className={`p-3.5 rounded-2xl border ${themeStyles.panelBorder} ${themeStyles.panel} shadow-sm hover:scale-105 transition-all duration-300 group shrink-0`}>
+            {theme === 'dark' ? <Sun size={20} className="text-amber-400 group-hover:rotate-45 transition-transform duration-500" /> : <Moon size={20} className="text-indigo-500 group-hover:-rotate-12 transition-transform duration-500" />}
+          </button>
         </div>
 
-        <div className="relative z-10">
-          <div className="flex items-end justify-between mb-4">
-            <span className="text-4xl sm:text-5xl font-black text-emerald-500 tracking-tighter">{formatMoney(metrics.totalRevenue)}</span>
-            <div className="text-right">
-              <span className={`text-2xl font-black ${themeStyles.text}`}>{goalProgress}%</span>
-            </div>
-          </div>
-          <div className="w-full h-4 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden shadow-inner p-0.5">
-            <div style={{ width: `${goalProgress}%` }} className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000 shadow-md" />
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Сетка */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-        {[
-          { label: 'Потенциал в работе', val: formatMoney(metrics.totalActiveAmount), color: 'text-indigo-500', Icon: Zap },
-          { label: 'Средний чек', val: formatMoney(metrics.avgCheck), color: themeStyles.text, Icon: CreditCard },
-          { label: 'Успешность (Win Rate)', val: metrics.winRate + '%', color: 'text-amber-500', Icon: Activity },
-        ].map((m, i) => (
-          <div key={i} className={`p-6 rounded-[2rem] border ${themeStyles.panelBorder} ${themeStyles.panel} shadow-sm group transition-transform hover:-translate-y-1 hover:shadow-xl`}>
-            <div className="flex justify-between items-start mb-4">
-              <p className={`text-[10px] font-black uppercase tracking-widest ${themeStyles.textMuted}`}>{m.label}</p>
-              <div className={`p-2 rounded-xl bg-black/5 dark:bg-white/5 ${m.color}`}><m.Icon size={16} /></div>
-            </div>
-            <h3 className={`text-2xl sm:text-3xl font-black tracking-tighter ${m.color}`}>{m.val}</h3>
-          </div>
-        ))}
-      </div>
-
-      {/* График перспектив и Динамика */}
-      <div className={`rounded-[2rem] border shadow-xl overflow-hidden ${themeStyles.panelBorder} ${themeStyles.panel}`}>
-        <div className={`w-full h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-90`} />
-        <button onClick={() => setIsDynamicsOpen(!isDynamicsOpen)} className="w-full p-6 sm:p-8 flex items-center justify-between group">
-          <div className="flex items-center gap-5 text-left">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${theme === 'dark' ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'} group-hover:scale-105 transition-transform`}>
-              <BarChart2 size={28} />
-            </div>
-            <div>
-              <h3 className={`text-xl font-black ${themeStyles.text}`}>Матрица потенциала</h3>
-              <p className={`text-sm mt-1 ${themeStyles.textMuted}`}>График воронки и плотность касаний по карточкам.</p>
-            </div>
-          </div>
-          <div className={`p-3 rounded-full border transition-all duration-500 ${isDynamicsOpen ? 'bg-blue-500/10 border-blue-500/30 text-blue-500 rotate-180' : `${themeStyles.panelBorder} ${themeStyles.textMuted}`}`}>
-            <ChevronDown size={20} />
-          </div>
-        </button>
-
-        {isDynamicsOpen && (
-          <div className="p-6 sm:p-8 pt-0 animate-in slide-in-from-top-4 duration-500 border-t border-black/5 dark:border-white/5 mt-2">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mt-6">
-              
-              {/* Гистограмма */}
-              <div className="flex flex-col">
-                <h4 className={`text-[10px] font-black uppercase tracking-widest opacity-60 mb-8 flex items-center gap-2 ${themeStyles.text}`}>
-                  <BarChart3 size={14}/> График перспектив (Деньги по этапам)
-                </h4>
-                <div className="flex items-end justify-between gap-3 h-56 pb-2 border-b border-black/10 dark:border-white/10 mt-auto">
-                  {stageStats.filter(s => s.key !== 'won').map((s, i) => {
-                    const maxVal = Math.max(...stageStats.filter(x => x.key !== 'won').map(x => x.sum)) || 1;
-                    const height = Math.max((s.sum / maxVal) * 100, 5); 
-                    return (
-                      <div key={i} className="flex-1 flex flex-col items-center justify-end group relative h-full">
-                        <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg z-10 transform -translate-y-2 group-hover:translate-y-0 pointer-events-none">
-                          {formatMoney(s.sum)}
-                        </div>
-                        <div 
-                          style={{ height: `${height}%` }} 
-                          className={`w-full max-w-[48px] rounded-t-2xl ${s.color} opacity-80 group-hover:opacity-100 transition-all duration-700 shadow-lg`} 
-                        />
-                        <span className={`text-[10px] font-bold mt-4 text-center truncate w-full ${themeStyles.textMuted}`}>{s.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+        {/* AI HQ - Премиальный блок */}
+        <div className={`rounded-[2.5rem] border shadow-sm overflow-hidden transition-all duration-500 ${themeStyles.panelBorder} ${themeStyles.panel} relative shrink-0`}>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 via-purple-500 to-indigo-400 opacity-80" />
+          
+          <button onClick={() => setIsAiHQOpen(!isAiHQOpen)} className="w-full p-6 sm:p-10 flex items-center justify-between group outline-none">
+            <div className="flex items-center gap-5 text-left">
+              <div className={`w-16 h-16 rounded-[1.25rem] flex items-center justify-center shadow-inner ${theme === 'dark' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'} group-hover:scale-105 transition-transform duration-500`}>
+                <Bot size={32} strokeWidth={1.5} />
               </div>
-
-              {/* Активность */}
               <div>
-                <h4 className={`text-[10px] font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2 ${themeStyles.text}`}>
-                  <Activity size={14}/> Динамика развития карточек (Касания)
-                </h4>
-                <div className="space-y-4 overflow-y-auto max-h-[280px] custom-scrollbar pr-2">
-                  {deals.filter(d => d.stage !== 'won').sort((a,b) => (b.touches || 0) - (a.touches || 0)).map((d) => {
-                    const touchColor = d.touches > 15 ? 'text-emerald-500' : d.touches > 5 ? 'text-amber-500' : 'text-slate-400';
-                    const stg = stages.find(s => s.key === d.stage);
-                    return (
-                      <div key={d.id} className={`p-4 sm:p-5 rounded-2xl border ${themeStyles.panelBorder} ${themeStyles.card} flex items-center justify-between group hover:border-indigo-500/30 transition-colors shadow-sm`}>
-                        <div className="flex flex-col min-w-0 pr-4">
-                          <p className={`text-sm font-black truncate ${themeStyles.text}`}>{d.company}</p>
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${stg?.color}`} />
-                            <span className="text-[10px] font-bold opacity-50 truncate">{stg?.title}</span>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className={`text-sm font-black ${touchColor}`}>{d.touches || 0} <span className="text-[9px] uppercase tracking-widest opacity-50 ml-0.5">касаний</span></p>
-                          <p className={`text-xs font-bold mt-1.5 ${themeStyles.text}`}>{formatMoney(d.amount)}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {deals.filter(d => d.stage !== 'won').length === 0 && (
-                    <p className={`text-xs italic text-center py-4 ${themeStyles.textMuted}`}>Нет активных сделок</p>
+                <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${themeStyles.text}`}>AI-Стратег</h3>
+                <p className={`text-sm mt-1 font-medium ${themeStyles.textMuted}`}>Искусственный интеллект анализирует вашу воронку.</p>
+              </div>
+            </div>
+            <div className={`p-3 rounded-full border transition-all duration-500 ${isAiHQOpen ? 'bg-blue-500/10 border-blue-500/30 text-blue-500 rotate-180' : `${themeStyles.panelBorder} opacity-50 group-hover:opacity-100`}`}>
+              <ChevronDown size={20} />
+            </div>
+          </button>
+
+          {isAiHQOpen && (
+            <div className="p-6 sm:p-10 pt-0 animate-in slide-in-from-top-4 fade-in duration-500 grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-10 border-t border-black/5 dark:border-white/5 mt-2">
+              <div className="space-y-5 lg:col-span-2 flex flex-col">
+                <div className="relative flex-1 flex flex-col">
+                  <textarea 
+                    value={reflectionText} 
+                    onChange={(e) => setReflectionText(e.target.value)} 
+                    placeholder="Опишите ситуацию. Например: 'Как мне ускорить сделки на этапе квалификации?'" 
+                    className={`flex-1 w-full min-h-[160px] p-6 rounded-3xl border outline-none text-sm font-medium shadow-inner resize-none transition-all duration-300 ${themeStyles.input} ${themeStyles.text} focus:border-indigo-500/50 focus:shadow-[0_0_20px_rgba(99,102,241,0.1)]`} 
+                  />
+                  <div className="absolute top-5 right-5 opacity-20 pointer-events-none">
+                    <BrainCircuit size={28} />
+                  </div>
+                </div>
+                <button 
+                  onClick={handleAiBrainstorm} 
+                  disabled={isAiThinking} 
+                  className={`w-full py-4 sm:py-5 rounded-2xl font-black text-sm tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-3 ${isAiThinking ? 'bg-indigo-400 text-white/80 cursor-wait' : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-indigo-500/25'}`}
+                >
+                  {isAiThinking ? (
+                    <><RefreshCw size={18} className="animate-spin" /> Анализирую данные...</>
+                  ) : (
+                    <><Sparkles size={18} /> Сгенерировать план действий</>
+                  )}
+                </button>
+              </div>
+              
+              <div className={`lg:col-span-3 p-6 sm:p-10 rounded-[2rem] border relative overflow-hidden flex flex-col ${theme === 'dark' ? 'bg-[#18181b]/80 border-white/[0.04]' : 'bg-white border-slate-200 shadow-sm'}`}>
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="flex items-center gap-2.5 mb-6 opacity-60 relative z-10">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                  <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${themeStyles.text}`}>Отчет нейросети</span>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10">
+                  {aiResponse ? (
+                    <p className={`text-sm sm:text-base leading-relaxed font-medium whitespace-pre-wrap ${themeStyles.text} animate-in fade-in duration-700`}>
+                      {aiResponse}
+                    </p>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center opacity-40 py-10">
+                      <Bot size={56} strokeWidth={1} className="mb-5 text-indigo-500" />
+                      <p className={`text-sm font-medium max-w-md ${themeStyles.text}`}>Задайте вопрос слева, и я проанализирую все ваши карточки, воронку и касания, чтобы найти скрытую прибыль.</p>
+                    </div>
                   )}
                 </div>
               </div>
+            </div>
+          )}
+        </div>
 
+        {/* Выставление Целей */}
+        <div className={`p-8 sm:p-12 rounded-[2.5rem] border shadow-sm relative overflow-hidden flex flex-col justify-center min-h-[280px] shrink-0 ${themeStyles.panelBorder} ${themeStyles.panel}`}>
+          <div className={`absolute top-1/2 -translate-y-1/2 -right-12 sm:right-0 p-6 opacity-[0.02] ${themeStyles.accentText} pointer-events-none`}>
+            <Target size={280} strokeWidth={1} />
+          </div>
+          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 relative z-10 w-full mb-10">
+            <div>
+              <h3 className={`text-2xl sm:text-3xl font-black flex items-center gap-3 tracking-tight ${themeStyles.text}`}>
+                <Flag size={28} className="text-emerald-500" /> Прогресс выручки
+              </h3>
+              <p className={`text-sm sm:text-base mt-2 font-medium opacity-60 ${themeStyles.text}`}>Сумма по всем успешно закрытым сделкам</p>
+            </div>
+            
+            <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
+              <span className={`text-[10px] font-black uppercase tracking-widest opacity-40 ${themeStyles.text}`}>Установленная цель (₽)</span>
+              <input 
+                type="number" 
+                value={revenueGoal} 
+                onChange={(e) => setRevenueGoal(Number(e.target.value))} 
+                className={`w-full sm:w-56 px-6 py-4 text-xl font-black rounded-2xl border outline-none transition-all shadow-inner text-right ${themeStyles.input} ${themeStyles.text} focus:border-emerald-500/50`} 
+              />
             </div>
           </div>
-        )}
-      </div>
 
+          <div className="relative z-10 w-full mt-auto">
+            <div className="flex items-end justify-between mb-5 px-2">
+              <span className="text-5xl sm:text-7xl font-black text-emerald-500 tracking-tighter drop-shadow-sm">{formatMoney(metrics.totalRevenue)}</span>
+              <div className="text-right">
+                <span className={`text-3xl sm:text-5xl font-black tracking-tight ${themeStyles.text}`}>{goalProgress}%</span>
+              </div>
+            </div>
+            {/* Премиальный прогресс-бар */}
+            <div className="w-full h-6 sm:h-8 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden p-1.5 shadow-inner backdrop-blur-sm border border-black/5 dark:border-white/5">
+              <div 
+                style={{ width: `${goalProgress}%` }} 
+                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000 ease-out shadow-sm relative overflow-hidden" 
+              >
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/30 to-transparent" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI Сетка */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 shrink-0">
+          {[
+            { label: 'Потенциал в работе', val: formatMoney(metrics.totalActiveAmount), color: 'text-indigo-500', bgGlow: 'bg-indigo-500', Icon: Zap },
+            { label: 'Средний чек', val: formatMoney(metrics.avgCheck), color: themeStyles.text, bgGlow: 'bg-slate-500', Icon: CreditCard },
+            { label: 'Успешность (Win Rate)', val: metrics.winRate + '%', color: 'text-emerald-500', bgGlow: 'bg-emerald-500', Icon: Activity },
+          ].map((m, i) => (
+            <div key={i} className={`p-8 sm:p-10 rounded-[2.5rem] border ${themeStyles.panelBorder} ${themeStyles.panel} shadow-sm group transition-all duration-500 hover:-translate-y-2 hover:shadow-xl relative overflow-hidden cursor-default`}>
+              <div className={`absolute -right-8 -top-8 w-40 h-40 rounded-full ${m.bgGlow} opacity-[0.03] group-hover:opacity-10 blur-3xl group-hover:scale-150 transition-all duration-700 pointer-events-none`} />
+              
+              <div className="flex justify-between items-start mb-8 relative z-10">
+                <p className={`text-[11px] sm:text-xs font-black uppercase tracking-widest opacity-50 ${themeStyles.text}`}>{m.label}</p>
+                <div className={`p-3 rounded-2xl bg-black/5 dark:bg-white/5 ${m.color} group-hover:scale-110 transition-transform duration-300`}>
+                  <m.Icon size={22} strokeWidth={2} />
+                </div>
+              </div>
+              <h3 className={`text-4xl sm:text-5xl font-black tracking-tighter relative z-10 ${m.color}`}>{m.val}</h3>
+            </div>
+          ))}
+        </div>
+
+        {/* График перспектив и Динамика */}
+        <div className={`rounded-[2.5rem] border shadow-sm overflow-hidden transition-all duration-500 shrink-0 ${themeStyles.panelBorder} ${themeStyles.panel}`}>
+          <button onClick={() => setIsDynamicsOpen(!isDynamicsOpen)} className="w-full p-6 sm:p-10 flex items-center justify-between group outline-none">
+            <div className="flex items-center gap-5 text-left">
+              <div className={`w-16 h-16 rounded-[1.25rem] flex items-center justify-center shadow-inner ${theme === 'dark' ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'} group-hover:scale-105 transition-transform duration-500`}>
+                <BarChart2 size={32} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${themeStyles.text}`}>Матрица потенциала</h3>
+                <p className={`text-sm mt-1 font-medium ${themeStyles.textMuted}`}>Визуализация воронки и плотность работы с клиентами.</p>
+              </div>
+            </div>
+            <div className={`p-3 rounded-full border transition-all duration-500 ${isDynamicsOpen ? 'bg-blue-500/10 border-blue-500/30 text-blue-500 rotate-180' : `${themeStyles.panelBorder} opacity-50 group-hover:opacity-100`}`}>
+              <ChevronDown size={20} />
+            </div>
+          </button>
+
+          {isDynamicsOpen && (
+            <div className="p-6 sm:p-10 pt-0 animate-in slide-in-from-top-4 fade-in duration-500 border-t border-black/5 dark:border-white/5 mt-2">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 sm:gap-12 mt-8">
+                
+                {/* Гистограмма */}
+                <div className="flex flex-col bg-black/[0.01] dark:bg-white/[0.01] p-6 sm:p-8 rounded-[2rem] border border-black/5 dark:border-white/5">
+                  <h4 className={`text-[10px] font-black uppercase tracking-widest opacity-50 mb-10 flex items-center gap-2 ${themeStyles.text}`}>
+                    <PieChart size={14}/> Объем средств по этапам
+                  </h4>
+                  <div className="flex items-end justify-between gap-2 sm:gap-4 h-72 sm:h-80 pb-2 border-b-2 border-black/5 dark:border-white/5 mt-auto relative">
+                    {stageStats.filter(s => s.key !== 'won').map((s, i) => {
+                      const maxVal = Math.max(...stageStats.filter(x => x.key !== 'won').map(x => x.sum)) || 1;
+                      const height = Math.max((s.sum / maxVal) * 100, 8); 
+                      return (
+                        <div key={i} className="flex-1 flex flex-col items-center justify-end group relative h-full">
+                          <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-black px-4 py-2 rounded-xl shadow-xl z-20 transform translate-y-2 group-hover:translate-y-0 pointer-events-none whitespace-nowrap">
+                            {formatMoney(s.sum)}
+                          </div>
+                          <div 
+                            style={{ height: `${height}%` }} 
+                            className={`w-full max-w-[64px] rounded-t-2xl ${s.color} opacity-90 group-hover:opacity-100 group-hover:shadow-[0_0_20px_rgba(0,0,0,0.1)] transition-all duration-500 relative overflow-hidden`} 
+                          >
+                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/20 to-transparent" />
+                          </div>
+                          <span className={`text-[10px] font-bold mt-5 text-center truncate w-full opacity-60 group-hover:opacity-100 transition-opacity ${themeStyles.text}`}>{s.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Активность / Касания */}
+                <div className="flex flex-col bg-black/[0.01] dark:bg-white/[0.01] p-6 sm:p-8 rounded-[2rem] border border-black/5 dark:border-white/5">
+                  <h4 className={`text-[10px] font-black uppercase tracking-widest opacity-50 mb-6 flex items-center gap-2 ${themeStyles.text}`}>
+                    <Flame size={14}/> Интенсивность касаний (Топ карточек)
+                  </h4>
+                  <div className="space-y-4 overflow-y-auto h-72 sm:h-80 custom-scrollbar pr-3">
+                    {deals.filter(d => d.stage !== 'won').sort((a,b) => (b.touches || 0) - (a.touches || 0)).map((d) => {
+                      const isHot = d.touches > 15;
+                      const touchColor = isHot ? 'text-orange-500' : d.touches > 5 ? 'text-amber-500' : 'text-slate-400';
+                      const bgHover = isHot ? 'hover:border-orange-500/30' : 'hover:border-indigo-500/30';
+                      const stg = stages.find(s => s.key === d.stage);
+                      
+                      return (
+                        <div key={d.id} className={`p-5 rounded-2xl border ${themeStyles.panelBorder} ${themeStyles.card} flex items-center justify-between group ${bgHover} transition-all duration-300 shadow-sm hover:shadow-md cursor-default`}>
+                          <div className="flex flex-col min-w-0 pr-4">
+                            <p className={`text-base font-black truncate tracking-tight ${themeStyles.text}`}>{d.company}</p>
+                            <div className="flex items-center gap-2 mt-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                              <span className={`w-2.5 h-2.5 rounded-full shrink-0 shadow-sm ${stg?.color}`} />
+                              <span className={`text-xs font-bold truncate ${themeStyles.text}`}>{stg?.title}</span>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0 flex flex-col items-end">
+                            <div className={`flex items-center gap-1.5 text-base font-black ${touchColor}`}>
+                              {isHot && <Flame size={16} className="animate-pulse" />}
+                              {d.touches || 0} <span className="text-[10px] uppercase tracking-widest opacity-50 font-bold">касаний</span>
+                            </div>
+                            <p className={`text-sm font-bold mt-1.5 opacity-80 ${themeStyles.text}`}>{formatMoney(d.amount)}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {deals.filter(d => d.stage !== 'won').length === 0 && (
+                      <div className="h-full flex items-center justify-center">
+                        <p className={`text-sm font-bold opacity-40 ${themeStyles.text}`}>Нет активных сделок для анализа</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 };
@@ -753,7 +815,6 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
     return deals.filter(d => d.nextTaskAt && new Date(d.nextTaskAt).getMonth() === month && new Date(d.nextTaskAt).getFullYear() === year);
   }, [deals, month, year]);
 
-  // Моковые события из Google и Yandex для визуализации интеграции
   const externalEvents = useMemo(() => {
     const evs = [];
     if (connections.google) {
@@ -802,7 +863,6 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
                 Подключение календарей
               </h3>
               <div className="space-y-3">
-                {/* Google Calendar Toggle */}
                 <button onClick={() => toggleConnection('google')} className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all group ${connections.google ? (theme === 'dark' ? 'bg-[#141120] border-[#3b82f6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm') : (theme === 'dark' ? 'bg-transparent border-[#2a253a] text-slate-400 hover:border-[#3b82f6]/50 hover:bg-[#141120]' : 'bg-transparent border-slate-200 text-slate-500 hover:border-blue-400 hover:bg-slate-50')}`}>
                   <div className="flex items-center gap-3">
                     <img src="https://www.google.com/favicon.ico" alt="G" className={`w-4 h-4 transition-all ${connections.google ? '' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'}`} />
@@ -810,7 +870,6 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
                   </div>
                   {connections.google ? <Check size={16} className="text-[#3b82f6]" /> : <Link2 size={16} className="opacity-50 group-hover:opacity-100 transition-opacity" />}
                 </button>
-                {/* Yandex Calendar Toggle */}
                 <button onClick={() => toggleConnection('yandex')} className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all group ${connections.yandex ? (theme === 'dark' ? 'bg-[#141120] border-amber-500/50 text-white shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm') : (theme === 'dark' ? 'bg-transparent border-[#2a253a] text-slate-400 hover:border-amber-500/50 hover:bg-[#141120]' : 'bg-transparent border-slate-200 text-slate-500 hover:border-amber-400 hover:bg-slate-50')}`}>
                   <div className="flex items-center gap-3">
                     <img src="https://yandex.ru/favicon.ico" alt="Y" className={`w-4 h-4 transition-all ${connections.yandex ? '' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'}`} />
@@ -873,15 +932,16 @@ export default function App() {
   
   const [deals, setDeals] = useState(INITIAL_DEALS);
   const [stages, setStages] = useState(INITIAL_STAGES);
-  const [flows, setFlows] = useState(INITIAL_FLOWS); // Состояние для Сценариев Бота
+  const [flows, setFlows] = useState(INITIAL_FLOWS); 
   
   const [selectedId, setSelectedId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Состояния для перетаскивания (Drag & Drop) колонок
+  // Состояния для перетаскивания (Drag & Drop)
   const [draggedStageIdx, setDraggedStageIdx] = useState(null);
   const [dragOverStageIdx, setDragOverStageIdx] = useState(null);
+  const [draggedDealId, setDraggedDealId] = useState(null);
 
   useEffect(() => localStorage.setItem('abqd_theme', theme), [theme]);
   const themeStyles = useMemo(() => getThemeStyles(theme), [theme]);
@@ -892,31 +952,44 @@ export default function App() {
     setTimeout(() => setIsSyncing(false), 400); 
   }, []);
 
-  // --- Функции для перетаскивания колонок (DND) ---
-  const handleStageDragStart = (e, index) => {
-    setDraggedStageIdx(index);
-    e.dataTransfer.setData('text/plain', index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleStageDragOver = (e, index) => {
+  // --- Функции для перетаскивания (DND) ---
+  const handleDragOver = (e, index) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     if (dragOverStageIdx !== index) setDragOverStageIdx(index);
   };
 
-  const handleStageDrop = (e, dropIndex) => {
+  const handleDrop = (e, dropIndex, stageKey) => {
     e.preventDefault();
-    if (draggedStageIdx !== null && draggedStageIdx !== dropIndex) {
-      const newStages = [...stages];
-      const [draggedItem] = newStages.splice(draggedStageIdx, 1);
-      newStages.splice(dropIndex, 0, draggedItem);
-      setStages(newStages);
+    const dealId = e.dataTransfer.getData('dealId');
+    const stageIndexText = e.dataTransfer.getData('stageIndex');
+
+    if (dealId) {
+      // Обновление стадии при переносе карточки
+      setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: stageKey } : d));
+      setIsSyncing(true);
+      setTimeout(() => setIsSyncing(false), 400);
+    } else if (stageIndexText) {
+      // Обновление порядка колонок
+      const dragIndex = parseInt(stageIndexText, 10);
+      if (dragIndex !== dropIndex) {
+        const newStages = [...stages];
+        const [draggedItem] = newStages.splice(dragIndex, 1);
+        newStages.splice(dropIndex, 0, draggedItem);
+        setStages(newStages);
+      }
     }
+    
     setDragOverStageIdx(null);
     setDraggedStageIdx(null);
+    setDraggedDealId(null);
   };
-  // ------------------------------------------------
+
+  const handleStageDragStart = (e, index) => {
+    setDraggedStageIdx(index);
+    e.dataTransfer.setData('stageIndex', index.toString());
+    e.dataTransfer.effectAllowed = 'move';
+  };
 
   const filteredDeals = useMemo(() => {
     return deals.filter(d => d.company.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -927,7 +1000,7 @@ export default function App() {
   return (
     <div className={`flex h-screen w-full font-sans transition-colors duration-500 relative overflow-hidden ${themeStyles.bg} ${themeStyles.text}`}>
       
-      {/* Боковая панель (Десктоп) */}
+      {/* Боковая панель */}
       <aside className={`hidden sm:flex relative border-r p-5 transition-all duration-300 z-40 ${isSidebarCollapsed ? 'w-24' : 'w-72'} ${themeStyles.sidebar} ${themeStyles.panelBorder}`}>
         <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className={`absolute -right-3.5 top-12 w-7 h-7 rounded-full border flex items-center justify-center shadow-sm transition-all hover:scale-110 z-50 ${themeStyles.panel} ${themeStyles.panelBorder} ${themeStyles.textMuted} hover:text-indigo-500 dark:hover:text-indigo-400`}>
           {isSidebarCollapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
@@ -938,7 +1011,7 @@ export default function App() {
             { id: 'kanban', label: 'Доска', Icon: LayoutDashboard },
             { id: 'calendar', label: 'Календарь', Icon: CalendarDays },
             { id: 'analytics', label: 'Аналитика', Icon: BarChart3 },
-            { id: 'botflows', label: 'Сценарии', Icon: MessageSquare }, // Новая вкладка
+            { id: 'botflows', label: 'Сценарии', Icon: MessageSquare },
           ].map(item => (
             <button key={item.id} onClick={() => setCurrentView(item.id)} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 ${currentView === item.id ? `${themeStyles.accentGradient} text-white shadow-xl shadow-indigo-500/20` : `hover:bg-black/5 dark:hover:bg-white/5 ${themeStyles.textMuted} hover:text-current`}`}>
               <item.Icon size={20} /> {!isSidebarCollapsed && <span className="text-sm font-bold tracking-wide">{item.label}</span>}
@@ -947,12 +1020,12 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Парящая Мобильная навигация (Premium) */}
+      {/* Мобильная навигация */}
       <nav className="sm:hidden fixed bottom-6 left-4 right-4 h-16 rounded-[2rem] z-50 flex items-center justify-around px-2 shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-white/10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl transition-all">
         {[
           { id: 'kanban', label: 'Доска', Icon: LayoutDashboard },
           { id: 'calendar', label: 'График', Icon: CalendarDays },
-          { id: 'botflows', label: 'Боты', Icon: MessageSquare }, // Добавлено в мобильное меню
+          { id: 'botflows', label: 'Боты', Icon: MessageSquare },
           { id: 'analytics', label: 'Итоги', Icon: BarChart3 },
         ].map(item => (
            <button key={item.id} onClick={() => setCurrentView(item.id)} className={`flex flex-col items-center justify-center w-16 h-12 rounded-xl transition-all ${currentView === item.id ? 'bg-indigo-500/10 text-indigo-500' : themeStyles.textMuted}`}>
@@ -987,10 +1060,10 @@ export default function App() {
                 key={stage.key} 
                 draggable
                 onDragStart={(e) => handleStageDragStart(e, index)}
-                onDragOver={(e) => handleStageDragOver(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
                 onDragLeave={() => setDragOverStageIdx(null)}
-                onDrop={(e) => handleStageDrop(e, index)}
-                onDragEnd={() => { setDraggedStageIdx(null); setDragOverStageIdx(null); }}
+                onDrop={(e) => handleDrop(e, index, stage.key)}
+                onDragEnd={() => { setDraggedStageIdx(null); setDragOverStageIdx(null); setDraggedDealId(null); }}
                 className={`flex-none w-[85vw] max-w-[320px] sm:w-[320px] flex flex-col gap-5 snap-center sm:snap-align-none transition-all duration-300 ${draggedStageIdx === index ? 'opacity-40 scale-95' : 'opacity-100'} ${dragOverStageIdx === index && draggedStageIdx !== index ? 'bg-indigo-500/5 rounded-[2rem] outline outline-2 outline-indigo-500/50 outline-dashed scale-[1.02]' : ''}`}
               >
                 <div className="flex items-center justify-between px-2 cursor-grab active:cursor-grabbing group">
@@ -1003,16 +1076,32 @@ export default function App() {
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-4 px-1 custom-scrollbar pb-4">
                   {filteredDeals.filter(d => d.stage === stage.key).map(deal => (
-                    <div key={deal.id} onClick={() => setSelectedId(deal.id)} className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 ${themeStyles.card} ${themeStyles.panelBorder} hover:-translate-y-1 hover:shadow-xl`}>
-                      <div className="flex justify-between items-start mb-1.5">
+                    <div 
+                      key={deal.id} 
+                      draggable
+                      onDragStart={(e) => {
+                        e.stopPropagation(); 
+                        setDraggedDealId(deal.id);
+                        e.dataTransfer.setData('dealId', deal.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragEnd={(e) => {
+                        e.stopPropagation();
+                        setDraggedDealId(null);
+                        setDragOverStageIdx(null);
+                      }}
+                      onClick={() => setSelectedId(deal.id)} 
+                      className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 ${themeStyles.card} ${themeStyles.panelBorder} hover:-translate-y-1 hover:shadow-xl ${draggedDealId === deal.id ? 'opacity-40 scale-95' : 'opacity-100'}`}
+                    >
+                      <div className="flex justify-between items-start mb-1.5 pointer-events-none">
                         <h4 className="font-black text-sm truncate pr-2 tracking-tight">{deal.company}</h4>
                         {deal.priority === 'high' && <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse shrink-0 mt-1" title="Высокий приоритет" />}
                       </div>
-                      <div className="flex justify-between items-center mb-4">
+                      <div className="flex justify-between items-center mb-4 pointer-events-none">
                         <span className="text-[10px] font-medium opacity-50 truncate w-32">{deal.nextStep || deal.contact}</span>
                         <span className={`text-sm font-black tracking-tighter ${themeStyles.accentText}`}>{formatMoney(deal.amount)}</span>
                       </div>
-                      <div className="flex items-center justify-between border-t border-black/5 dark:border-white/5 pt-3">
+                      <div className="flex items-center justify-between border-t border-black/5 dark:border-white/5 pt-3 pointer-events-none">
                         <Badge className={getScoreInfo(deal.score).color}>{deal.score}</Badge>
                         {deal.nextTaskAt && (
                           <div className={`text-[9px] font-bold flex items-center gap-1 ${getDueStatus(deal.nextTaskAt) === 'expired' ? 'text-rose-500' : 'text-emerald-500'}`}>
@@ -1033,23 +1122,20 @@ export default function App() {
 
         {currentView === 'analytics' && <AnalyticsView deals={deals} themeStyles={themeStyles} theme={theme} setTheme={setTheme} stages={stages} />}
         {currentView === 'calendar' && <CalendarView deals={deals} themeStyles={themeStyles} theme={theme} onOpenDeal={setSelectedId} />}
-        {/* Подключение нового раздела BotFlows */}
         {currentView === 'botflows' && <BotFlowsView flows={flows} setFlows={setFlows} themeStyles={themeStyles} theme={theme} />}
       </main>
 
-      {/* МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СДЕЛКИ - NATIVE BOTTOM SHEET FEEL ON MOBILE */}
+      {/* МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СДЕЛКИ */}
       {selectedId && selectedDeal && (
         <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
            <div className="absolute inset-0 hidden sm:block cursor-pointer" onClick={() => setSelectedId(null)} />
            
            <div className={`relative w-full max-w-4xl h-[95dvh] sm:h-auto sm:max-h-[90vh] rounded-t-[2rem] sm:rounded-[2.5rem] flex flex-col ${themeStyles.panel} ${themeStyles.panelBorder} shadow-2xl animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300`}>
               
-              {/* Ручка для свайпа на мобильных устройствах (Индикатор Bottom Sheet) */}
               <div className="sm:hidden absolute top-0 left-0 w-full flex justify-center pt-3 z-30 pointer-events-none">
                 <div className="w-12 h-1.5 rounded-full bg-black/10 dark:bg-white/10" />
               </div>
 
-              {/* Липкая Шапка */}
               <div className="sticky top-0 z-20 pt-8 pb-5 px-5 sm:p-8 border-b border-black/5 dark:border-white/[0.06] flex justify-between items-center backdrop-blur-2xl bg-white/60 dark:bg-[#222226]/80 rounded-t-[2rem] sm:rounded-t-[2.5rem]">
                 <div className="flex items-center gap-4 sm:gap-5 min-w-0">
                   <div className={`hidden sm:flex w-14 h-14 rounded-2xl items-center justify-center shadow-inner ${selectedDeal.priority === 'high' ? 'bg-rose-500/10 text-rose-500' : selectedDeal.priority === 'medium' ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-500/10 text-slate-500'}`}><Target size={24}/></div>
@@ -1065,7 +1151,6 @@ export default function App() {
                 <button onClick={() => setSelectedId(null)} className="p-2 sm:p-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"><X size={20}/></button>
               </div>
 
-              {/* Тело */}
               <div className="flex-1 overflow-y-auto p-5 sm:p-8 space-y-8 custom-scrollbar">
                 
                 <div className="space-y-3">
@@ -1097,7 +1182,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Внутренний блок настроек карточки */}
                   <div className={`p-6 rounded-3xl border space-y-5 transition-colors duration-300 ${theme === 'dark' ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-indigo-50/40 border-indigo-100/50'}`}>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase opacity-40 px-1 flex items-center gap-1.5 tracking-widest"><Star size={12}/> Приоритет</label>
@@ -1147,7 +1231,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Липкий Подвал */}
               <div className="sticky bottom-0 z-20 p-5 sm:p-8 border-t border-black/5 dark:border-white/[0.06] backdrop-blur-2xl bg-white/60 dark:bg-[#222226]/80 rounded-b-none sm:rounded-b-[2.5rem]">
                 <button onClick={() => setSelectedId(null)} className={`w-full py-5 rounded-2xl font-black text-sm sm:text-base shadow-xl shadow-indigo-500/25 active:scale-[0.98] transition-all text-white ${themeStyles.accentGradient} hover:brightness-110`}>
                   СОХРАНИТЬ И ЗАКРЫТЬ
@@ -1158,7 +1241,6 @@ export default function App() {
       )}
 
       <style dangerouslySetInnerHTML={{ __html: `
-        /* Скроллбары без светлой серой дорожки, чтобы не резать глаз в темной теме */
         .custom-scrollbar::-webkit-scrollbar { 
           width: 8px; 
           height: 8px; 
@@ -1178,7 +1260,6 @@ export default function App() {
           background: rgba(99,102,241,0.8); 
         }
         
-        /* На мобильных */
         @media (max-width: 640px) {
            .custom-scrollbar::-webkit-scrollbar { 
              width: 5px; 
