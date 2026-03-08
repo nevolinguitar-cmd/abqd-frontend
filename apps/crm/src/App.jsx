@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
   Search, Moon, Sun, Plus, CheckCircle2, AlertCircle, Clock, Zap, Bot, 
   BarChart3, X, User, Target, Phone, Trash2, PanelLeftClose, PanelLeftOpen, Cloud, 
@@ -45,6 +45,88 @@ const PRIORITIES = [
 ];
 
 const getTodayDateStr = () => new Date().toISOString().split('T')[0];
+
+// --- ABQD_CRM_SYNC_v1 ---
+const CRM_API = 'https://api.abqd.ru';
+const CRM_LS_KEY = 'abqd_crm_state_v1';
+
+const normalizeStage = (stage, idx = 0) => ({
+  ...(stage && typeof stage === 'object' ? stage : {}),
+  key: stage?.key || `stage_${idx + 1}`,
+  title: stage?.title || `Этап ${idx + 1}`,
+  color: stage?.color || 'bg-slate-400',
+});
+
+const normalizeDeal = (deal, idx = 0) => ({
+  ...(deal && typeof deal === 'object' ? deal : {}),
+  id: deal?.id || `D-${Date.now()}-${idx + 1}`,
+  company: deal?.company || 'Новая сделка',
+  contact: deal?.contact || '-',
+  stage: deal?.stage || 'inbox',
+  amount: Number(deal?.amount || 0),
+  currency: deal?.currency || 'RUB',
+  score: Number(deal?.score || 50),
+  phone: deal?.phone || '',
+  email: deal?.email || '',
+  source: deal?.source || 'Неизвестно',
+  address: deal?.address || '',
+  priority: deal?.priority || 'medium',
+  description: deal?.description || deal?.fields?.note || '',
+  nextStep: deal?.nextStep || '',
+  nextTaskAt: deal?.nextTaskAt || '',
+  touches: Number(deal?.touches || 0),
+  tags: Array.isArray(deal?.tags) ? deal.tags : [],
+  fields: deal && typeof deal.fields === 'object' && deal.fields ? deal.fields : {},
+  plugins: Array.isArray(deal?.plugins) ? deal.plugins : [],
+});
+
+const normalizeFlow = (flow, idx = 0) => ({
+  ...(flow && typeof flow === 'object' ? flow : {}),
+  id: flow?.id || `flow_${Date.now()}_${idx + 1}`,
+  name: flow?.name || 'Новый сценарий',
+  category: flow?.category || 'crm',
+  is_active: Boolean(flow?.is_active),
+  entry: flow && typeof flow.entry === 'object' && flow.entry ? flow.entry : { command: '/new_command', keywords: [] },
+  nodes: Array.isArray(flow?.nodes) ? flow.nodes : [],
+  created_at: Number(flow?.created_at || Date.now()),
+  updated_at: Number(flow?.updated_at || Date.now()),
+  version: Number(flow?.version || 1),
+});
+
+const normalizeCrmSnapshot = (raw) => {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  return {
+    stages: Array.isArray(src.stages) && src.stages.length ? src.stages.map(normalizeStage) : INITIAL_STAGES.map(normalizeStage),
+    deals: Array.isArray(src.deals) && src.deals.length ? src.deals.map(normalizeDeal) : INITIAL_DEALS.map(normalizeDeal),
+    flows: Array.isArray(src.flows) && src.flows.length ? src.flows.map(normalizeFlow) : INITIAL_FLOWS.map(normalizeFlow),
+    theme: src?.theme === 'light' ? 'light' : 'dark',
+  };
+};
+
+const readLocalCrmSnapshot = () => {
+  try {
+    const raw = localStorage.getItem(CRM_LS_KEY);
+    if (!raw) return null;
+    return normalizeCrmSnapshot(JSON.parse(raw));
+  } catch (e) {
+    console.error('ABQD CRM local read failed', e);
+    return null;
+  }
+};
+
+const writeLocalCrmSnapshot = (snapshot) => {
+  try {
+    localStorage.setItem(CRM_LS_KEY, JSON.stringify(normalizeCrmSnapshot(snapshot)));
+  } catch (e) {
+    console.error('ABQD CRM local write failed', e);
+  }
+};
+
+const getAuthHeader = () => {
+  const token = (localStorage.getItem('abqd_token') || '').trim();
+  if (!token) return '';
+  return token.toLowerCase().startsWith('bearer ') ? token : `Bearer ${token}`;
+};
 
 const INITIAL_DEALS = [
   {
@@ -930,9 +1012,15 @@ export default function App() {
   const [currentView, setCurrentView] = useState('kanban'); 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
-  const [deals, setDeals] = useState(INITIAL_DEALS);
-  const [stages, setStages] = useState(INITIAL_STAGES);
-  const [flows, setFlows] = useState(INITIAL_FLOWS); 
+  const bootSnapshot = useMemo(() => readLocalCrmSnapshot(), []);
+  const [deals, setDeals] = useState(() => (bootSnapshot?.deals?.length ? bootSnapshot.deals : INITIAL_DEALS.map(normalizeDeal)));
+  const [stages, setStages] = useState(() => (bootSnapshot?.stages?.length ? bootSnapshot.stages : INITIAL_STAGES.map(normalizeStage)));
+  const [flows, setFlows] = useState(() => (bootSnapshot?.flows?.length ? bootSnapshot.flows : INITIAL_FLOWS.map(normalizeFlow))); 
+
+  const hydrateDoneRef = useRef(false);
+  const saveTimerRef = useRef(null);
+  const lastRemoteUpdatedAtRef = useRef(0);
+  const dirtyRef = useRef(false);
   
   const [selectedId, setSelectedId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -946,10 +1034,161 @@ export default function App() {
   useEffect(() => localStorage.setItem('abqd_theme', theme), [theme]);
   const themeStyles = useMemo(() => getThemeStyles(theme), [theme]);
 
+  // --- ABQD_CRM_SYNC_EFFECTS_v1 ---
+  const flushCrmState = useCallback(async (reason = 'autosave') => {
+    const snapshot = normalizeCrmSnapshot({ stages, deals, flows, theme });
+    writeLocalCrmSnapshot(snapshot);
+
+    const authorization = getAuthHeader();
+    if (!authorization) return;
+
+    try {
+      setIsSyncing(true);
+      const res = await fetch(`${CRM_API}/api/v1/crm/state`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          authorization,
+        },
+        body: JSON.stringify({
+          stages: snapshot.stages,
+          deals: snapshot.deals,
+          theme: snapshot.theme,
+        }),
+        keepalive: reason !== 'autosave',
+      });
+
+      if (!res.ok) throw new Error(`crm_state_put_${res.status}`);
+
+      const data = await res.json().catch(() => null);
+      if (data?.updated_at) {
+        lastRemoteUpdatedAtRef.current = Number(data.updated_at);
+      }
+      dirtyRef.current = false;
+    } catch (e) {
+      console.error('ABQD CRM PUT sync failed', e);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [stages, deals, flows, theme]);
+
+  const pullCrmState = useCallback(async (reason = 'manual') => {
+    const authorization = getAuthHeader();
+    if (!authorization) {
+      hydrateDoneRef.current = true;
+      return;
+    }
+
+    try {
+      const res = await fetch(`${CRM_API}/api/v1/crm/state`, {
+        method: 'GET',
+        headers: { authorization },
+        cache: 'no-store',
+      });
+
+      if (!res.ok) throw new Error(`crm_state_get_${res.status}`);
+
+      const data = await res.json().catch(() => null);
+      const updatedAt = Number(data?.updated_at || 0);
+
+      if (dirtyRef.current) {
+        return;
+      }
+
+      if (updatedAt > lastRemoteUpdatedAtRef.current) {
+        const remote = normalizeCrmSnapshot({
+          stages: data?.state?.stages || [],
+          deals: data?.state?.deals || [],
+          flows,
+          theme: data?.state?.theme || theme,
+        });
+
+        lastRemoteUpdatedAtRef.current = updatedAt;
+        setStages(remote.stages);
+        setDeals(remote.deals);
+        if (data?.state?.theme === 'dark' || data?.state?.theme === 'light') {
+          setTheme(data.state.theme);
+        }
+        writeLocalCrmSnapshot({
+          stages: remote.stages,
+          deals: remote.deals,
+          flows,
+          theme: remote.theme,
+        });
+      }
+    } catch (e) {
+      console.error(`ABQD CRM GET sync failed (${reason})`, e);
+    } finally {
+      hydrateDoneRef.current = true;
+    }
+  }, [flows]);
+
+  useEffect(() => {
+    if (hydrateDoneRef.current) return;
+    pullCrmState('boot');
+  }, [pullCrmState]);
+
+  useEffect(() => {
+    if (!hydrateDoneRef.current) return;
+
+    dirtyRef.current = true;
+
+    writeLocalCrmSnapshot({ stages, deals, flows });
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => {
+      flushCrmState('autosave');
+    }, 700);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [stages, deals, flows, flushCrmState]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        pullCrmState('visibilitychange');
+      } else {
+        flushCrmState('visibilitychange');
+      }
+    };
+
+    const onFocus = () => pullCrmState('focus');
+    const onPageHide = () => { flushCrmState('pagehide'); };
+    const onBeforeUnload = () => { flushCrmState('beforeunload'); };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('pagehide', onPageHide);
+    window.addEventListener('beforeunload', onBeforeUnload);
+
+    const pollId = window.setInterval(() => {
+      pullCrmState('poll');
+    }, 10000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('pagehide', onPageHide);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      window.clearInterval(pollId);
+    };
+  }, [pullCrmState, flushCrmState]);
+
   const handleSaveDeal = useCallback((updatedDeal) => {
     setIsSyncing(true);
     setDeals(prev => prev.map(d => d.id === updatedDeal.id ? updatedDeal : d));
     setTimeout(() => setIsSyncing(false), 400); 
+  }, []);
+
+  const handleDeleteDeal = useCallback((dealId) => {
+    if (!dealId) return;
+    if (!window.confirm('Удалить карточку безвозвратно?')) return;
+    setIsSyncing(true);
+    setDeals(prev => prev.filter(d => d.id !== dealId));
+    setSelectedId(prev => (prev === dealId ? null : prev));
+    setTimeout(() => setIsSyncing(false), 400);
   }, []);
 
   // --- Функции для перетаскивания (DND) ---
@@ -1145,6 +1384,7 @@ export default function App() {
                       <span className="text-[10px] font-black uppercase opacity-40 tracking-widest">ID: {selectedDeal.id}</span>
                       <span className="opacity-20 text-[10px]">•</span>
                       <span className="text-[10px] font-black uppercase text-orange-500 flex items-center gap-1"><Flame size={12} className="mb-0.5"/> {selectedDeal.touches || 0} касаний</span>
+                      <button type="button" onClick={() => handleDeleteDeal(selectedDeal.id)} className="text-[10px] font-black uppercase text-rose-500 flex items-center gap-1 hover:opacity-80 transition-opacity"><Trash2 size={12} className="mb-0.5"/> удалить</button>
                     </div>
                   </div>
                 </div>
