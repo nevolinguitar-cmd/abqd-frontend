@@ -609,7 +609,43 @@
     });
 
     // --- CORE LOGIC & SYNC ---
-    const KEY = "abqd_constructor_data_" + USER_PROFILE_ID;
+    function getAuthTokenRaw() {
+      return localStorage.getItem("abqd_token")
+        || localStorage.getItem("token")
+        || localStorage.getItem("auth_token")
+        || localStorage.getItem("access_token")
+        || "";
+    }
+
+    function hashUserScope(str) {
+      str = String(str || "anon");
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0).toString(36);
+    }
+
+    function getUserScope() {
+      const tok = getAuthTokenRaw();
+      if (!tok) return "";
+      return hashUserScope(tok);
+    }
+
+    function getConstructorStorageKey() {
+      const scope = getUserScope();
+      return scope ? ("abqd_constructor_" + scope) : "";
+    }
+
+    function getActiveSlugStorageKey() {
+      const scope = getUserScope();
+      return scope ? ("abqd_active_slug_" + scope) : "";
+    }
+
+    const KEY = getConstructorStorageKey();
+    const ACTIVE_SLUG_KEY = getActiveSlugStorageKey();
+
     const STYLE_LABELS = { glass: "Стекло", accent: "Акцент", metal: "Металл", outline: "Обводка" };
     const STYLE_SETS_CTA = { dark: ["glass", "accent", "metal"], soft: ["glass", "accent", "metal"] };
     const STYLE_SETS_CHIPS = { dark: ["outline", "accent"], soft: ["outline", "accent"] };
@@ -680,8 +716,18 @@
       chips: [ { label: "TG", url: "https://t.me/", style: "outline" }, { label: "Mail", url: "mailto:", style: "outline" } ]
     };
 
-    const storageGet = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
-    const storageSet = (v) => { try { localStorage.setItem(KEY, v); return true; } catch (e) { return false; } };
+
+    try {
+      localStorage.removeItem("abqd_constructor_demo_v2");
+      localStorage.removeItem("abqd_constructor_data_user_12345");
+      localStorage.removeItem("abqd_active_slug");
+    } catch (e) {}
+
+    const storageGet = () => { try { return KEY ? localStorage.getItem(KEY) : null; } catch (e) { return null; } };
+
+    const storageSet = (v) => { try { if (!KEY) return false; localStorage.setItem(KEY, v); return true; } catch (e) { return false; } };
+    const activeSlugGet = () => { try { return ACTIVE_SLUG_KEY ? localStorage.getItem(ACTIVE_SLUG_KEY) : null; } catch (e) { return null; } };
+    const activeSlugSet = (v) => { try { if (!ACTIVE_SLUG_KEY) return false; localStorage.setItem(ACTIVE_SLUG_KEY, v); return true; } catch (e) { return false; } };
 
     const normUrl = (u) => {
       u = clean(u); if (!u) return "";
@@ -732,12 +778,12 @@
         
         fd.append("kind", kind);
 // Передаем slug, если бэкенд использует его для создания папки
-        const currentSlug = document.getElementById("slug") ? document.getElementById("slug").value : localStorage.getItem("abqd_active_slug");
+        const currentSlug = document.getElementById("slug") ? document.getElementById("slug").value : activeSlugGet();
         if (currentSlug) fd.append("slug", currentSlug);
         
         const headers = {};
         // Берем токен авторизации
-        const token = localStorage.getItem("token") || localStorage.getItem("auth_token") || localStorage.getItem("access_token");
+        const token = getAuthTokenRaw();
         if (token) headers["Authorization"] = "Bearer " + token;
 
         try {
@@ -766,17 +812,21 @@
 
     async function loadDataFromCloud() {
       try {
-        let currentSlug = document.getElementById("slug") ? document.getElementById("slug").value : "ivan-ivanov";
-        if (!currentSlug || currentSlug === "ivan-ivanov") currentSlug = localStorage.getItem("abqd_active_slug") || "ivan-ivanov";
-        
+        const typedSlug = document.getElementById("slug") ? String(document.getElementById("slug").value || "").trim() : "";
+        const rememberedSlug = activeSlugGet() || "";
+        const currentSlug = (typedSlug && typedSlug !== "ivan-ivanov") ? typedSlug : rememberedSlug;
+
+        // Для нового пользователя без своего slug ничего из публичного profile API не подгружаем.
+        if (!currentSlug) return null;
+
         const res = await fetch(`/api/v1/profile/${currentSlug}?t=${Date.now()}`);
         if (res.ok) {
            const raw = await res.json();
            const bs = raw.state || {};
            const bp = bs.profile || {};
-           
-           if (raw.slug) localStorage.setItem("abqd_active_slug", raw.slug);
-           
+
+           if (raw.slug) activeSlugSet(raw.slug);
+
            return {
              slug: raw.slug || currentSlug,
              fullName: bp.name || "", role: bp.role || "", about: bp.about || "", callPhone: bp.phone || "",
@@ -792,7 +842,7 @@
     async function saveDataToCloud(dataObj) {
       try {
         const slug = dataObj.slug || "new-profile";
-        localStorage.setItem("abqd_active_slug", slug);
+        activeSlugSet(slug);
         
         // Оборачиваем данные строго в "state", как требует FastAPI
         const payload = {
@@ -808,8 +858,11 @@
           }
         };
         
+        const headers = { "Content-Type": "application/json" };
+        const token = getAuthTokenRaw();
+        if (token) headers["Authorization"] = "Bearer " + token;
         const res = await fetch(`/api/v1/profile/${slug}`, {
-          method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+          method: "PUT", headers, credentials: "include", body: JSON.stringify(payload)
         });
         return res.ok;
       } catch(e) { return false; }
