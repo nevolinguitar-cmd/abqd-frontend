@@ -8,15 +8,13 @@ import {
   ShieldAlert, Download, Filter, Sparkles, Send, BrainCircuit, ChevronDown, Flag, 
   Video, Mail, MapPin, ExternalLink, MessageCircle, Share2, BarChart2, Flame,
   CreditCard, ChevronUp, Star, MessageSquare, Play, Pause, Edit3, ArrowLeft,
-  Copy, Smartphone, Workflow
+  Copy, Smartphone, Workflow, KeyRound, Info
 } from 'lucide-react';
 
 /**
  * ABQD CRM — Универсальный Dashboard (Premium UI Edition)
- * Обновление: ВОССТАНОВЛЕНА ИНТЕГРАЦИЯ КАЛЕНДАРЕЙ (Google / Yandex). Готовность к API OAuth.
- * Обновление: Добавлена возможность создавать и удалять колонки (stages) на Канбан-доске.
- * Обновление: AI-Помощник в Аналитике теперь формирует идеи и перспективы по карточкам.
- * Обновление: Добавлен раздел "Сценарии" (BotFlows) для интеграции с Telegram.
+ * Обновление: Добавлено сохранение состояния (deals, stages, flows) в localStorage (данные не пропадают при F5).
+ * Обновление: Раздел "Календарь" переработан под новую архитектуру синхронизации (ICS MVP + OAuth + CalDAV).
  */
 
 // ==========================================
@@ -73,7 +71,6 @@ const INITIAL_DEALS = [
   }
 ];
 
-// --- Моковые данные для BotFlows ---
 const INITIAL_FLOWS = [
   {
     id: "flow_101",
@@ -176,9 +173,8 @@ const getThemeStyles = (theme) => ({
 
 const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
   const [activeTab, setActiveTab] = useState('crm');
-  const [editingFlowId, setEditingFlowId] = useState(null); // null, 'new', or ID
+  const [editingFlowId, setEditingFlowId] = useState(null); 
   const [editingData, setEditingData] = useState(null);
-  
   const [tgLinkToken, setTgLinkToken] = useState(null);
   const [isLinking, setIsLinking] = useState(false);
 
@@ -186,42 +182,31 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
 
   const handleCreateNew = () => {
     setEditingData({
-      id: `flow_${Date.now()}`,
-      name: "Новый сценарий",
-      category: activeTab,
-      is_active: false,
+      id: `flow_${Date.now()}`, name: "Новый сценарий", category: activeTab, is_active: false,
       entry: { command: "/new_command", keywords: [] },
       nodes: [
         { id: "q1", type: "text", key: "question", title: "Ваш вопрос?", required: true, next: "done" },
         { id: "done", type: "action", action: "create_deal" }
       ],
-      created_at: Date.now(),
-      updated_at: Date.now(),
-      version: 1
+      created_at: Date.now(), updated_at: Date.now(), version: 1
     });
     setEditingFlowId('new');
   };
 
   const handleEdit = (flow) => {
-    // Глубокое копирование для безопасного редактирования
     setEditingData(JSON.parse(JSON.stringify(flow)));
     setEditingFlowId(flow.id);
   };
 
   const handleSave = () => {
-    if (editingFlowId === 'new') {
-      setFlows([...flows, editingData]);
-    } else {
-      setFlows(flows.map(f => f.id === editingData.id ? editingData : f));
-    }
+    if (editingFlowId === 'new') setFlows([...flows, editingData]);
+    else setFlows(flows.map(f => f.id === editingData.id ? editingData : f));
     setEditingFlowId(null);
     setEditingData(null);
   };
 
   const handleDelete = (id) => {
-    if(window.confirm("Удалить сценарий?")) {
-      setFlows(flows.filter(f => f.id !== id));
-    }
+    if(window.confirm("Удалить сценарий?")) setFlows(flows.filter(f => f.id !== id));
   };
 
   const handleToggleStatus = (id) => {
@@ -231,13 +216,11 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
   const generateTgLink = () => {
     setIsLinking(true);
     setTimeout(() => {
-      const token = Math.random().toString(36).substring(2, 10);
-      setTgLinkToken(token);
+      setTgLinkToken(Math.random().toString(36).substring(2, 10));
       setIsLinking(false);
     }, 600);
   };
 
-  // --- Рендер Редактора Сценария ---
   if (editingFlowId && editingData) {
     return (
       <div className="flex flex-col h-full p-4 pb-32 sm:pb-8 sm:p-8 overflow-y-auto custom-scrollbar gap-6 animate-in fade-in duration-300">
@@ -353,13 +336,9 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
 
           <button onClick={() => {
             const newNode = { id: `q${Date.now()}`, type: "text", key: "new_key", title: "Новый вопрос", required: false, next: "done" };
-            // Вставить перед action, если action последний
             const nodes = [...editingData.nodes];
-            if (nodes.length > 0 && nodes[nodes.length - 1].type === 'action') {
-              nodes.splice(nodes.length - 1, 0, newNode);
-            } else {
-              nodes.push(newNode);
-            }
+            if (nodes.length > 0 && nodes[nodes.length - 1].type === 'action') nodes.splice(nodes.length - 1, 0, newNode);
+            else nodes.push(newNode);
             setEditingData({...editingData, nodes});
           }} className={`mt-6 w-full py-4 rounded-xl border-2 border-dashed border-indigo-500/20 text-indigo-500 font-bold text-sm hover:bg-indigo-500/5 hover:border-indigo-500/50 transition-all flex items-center justify-center gap-2`}>
             <Plus size={18} /> Добавить шаг
@@ -369,11 +348,8 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
     );
   }
 
-  // --- Рендер Списка Сценариев ---
   return (
     <div className="flex flex-col h-full p-4 pb-32 sm:pb-8 sm:p-8 overflow-y-auto custom-scrollbar gap-8 animate-in fade-in duration-300">
-      
-      {/* Шапка & Интеграция */}
       <div className="flex flex-col lg:flex-row justify-between gap-6 items-start lg:items-center">
         <div>
           <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${themeStyles.text}`}>Боты и Сценарии</h2>
@@ -390,7 +366,6 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">@abqd_robot</p>
              </div>
            </div>
-           
            {!tgLinkToken ? (
              <button onClick={generateTgLink} disabled={isLinking} className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white dark:bg-[#222226] border border-black/5 dark:border-white/5 shadow-sm text-sm font-bold hover:scale-105 transition-transform text-indigo-500 disabled:opacity-50">
                {isLinking ? 'Генерация...' : 'Получить ссылку (Deep-link)'}
@@ -404,7 +379,6 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
         </div>
       </div>
 
-      {/* Табы категорий */}
       <div className={`flex p-1.5 rounded-2xl border w-full sm:w-max shadow-inner ${themeStyles.panelBorder} ${themeStyles.panel}`}>
         {FLOW_CATEGORIES.map(cat => (
           <button 
@@ -417,16 +391,13 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
         ))}
       </div>
 
-      {/* Инструкция */}
       <div className={`p-4 rounded-xl border-l-4 border-indigo-500 bg-indigo-500/5 ${themeStyles.panelBorder}`}>
         <p className={`text-sm font-medium ${themeStyles.text}`}>
           <span className="font-black">Как это работает:</span> В Telegram выберите режим <code className="bg-indigo-500/10 text-indigo-500 px-1.5 py-0.5 rounded">/mode {activeTab}</code> или отправьте команду (например <code className="bg-indigo-500/10 text-indigo-500 px-1.5 py-0.5 rounded">/lead</code>). Бот проведет опрос и мгновенно создаст карточку в CRM.
         </p>
       </div>
 
-      {/* Список сценариев */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Карточка добавления */}
         <button onClick={handleCreateNew} className={`h-full min-h-[180px] rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center gap-3 transition-all hover:-translate-y-1 hover:shadow-xl ${themeStyles.panelBorder} ${themeStyles.panel} hover:border-indigo-500/50 group`}>
           <div className="w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
             <Plus size={24} />
@@ -434,7 +405,6 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
           <span className={`text-sm font-black ${themeStyles.text}`}>Создать сценарий</span>
         </button>
 
-        {/* Активные сценарии */}
         {filteredFlows.map(flow => (
           <div key={flow.id} className={`p-6 sm:p-7 rounded-[2rem] border flex flex-col justify-between transition-all hover:-translate-y-1 hover:shadow-xl ${themeStyles.panelBorder} ${themeStyles.card}`}>
             <div>
@@ -461,7 +431,6 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
           </div>
         ))}
       </div>
-
     </div>
   );
 };
@@ -473,24 +442,19 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
 const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
   const [isAiHQOpen, setIsAiHQOpen] = useState(true);
   const [isDynamicsOpen, setIsDynamicsOpen] = useState(true);
-  
   const [reflectionText, setReflectionText] = useState('');
   const [aiResponse, setAiResponse] = useState(null);
   const [isAiThinking, setIsAiThinking] = useState(false);
-
   const [revenueGoal, setRevenueGoal] = useState(1000000);
 
   const metrics = useMemo(() => {
     const totalCount = deals.length || 1;
     const won = deals.filter(d => d.stage === 'won');
-    
     const totalRevenue = won.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
     const totalActiveAmount = deals.filter(d => d.stage !== 'won').reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
     const avgTouches = deals.reduce((sum, d) => sum + (d.touches || 0), 0) / totalCount;
-
     return {
-      totalRevenue,
-      totalActiveAmount,
+      totalRevenue, totalActiveAmount,
       avgCheck: won.length > 0 ? totalRevenue / won.length : 0,
       winRate: ((won.length / totalCount) * 100).toFixed(1),
       avgTouches: avgTouches.toFixed(1)
@@ -538,8 +502,6 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
   return (
     <div className="w-full h-full overflow-y-auto custom-scrollbar">
       <div className="max-w-[1600px] mx-auto flex flex-col gap-8 sm:gap-12 p-4 sm:p-8 pb-32 sm:pb-12 min-h-max">
-        
-        {/* Шапка Аналитики */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
           <div>
             <h2 className={`text-3xl sm:text-4xl font-black tracking-tight ${themeStyles.text}`}>Аналитика и Цели</h2>
@@ -550,7 +512,6 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
           </button>
         </div>
 
-        {/* AI HQ - Премиальный блок */}
         <div className={`rounded-[2.5rem] border shadow-sm overflow-hidden transition-all duration-500 ${themeStyles.panelBorder} ${themeStyles.panel} relative shrink-0`}>
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 via-purple-500 to-indigo-400 opacity-80" />
           
@@ -598,12 +559,10 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
               
               <div className={`lg:col-span-3 p-6 sm:p-10 rounded-[2rem] border relative overflow-hidden flex flex-col ${theme === 'dark' ? 'bg-[#18181b]/80 border-white/[0.04]' : 'bg-white border-slate-200 shadow-sm'}`}>
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-                
                 <div className="flex items-center gap-2.5 mb-6 opacity-60 relative z-10">
                   <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                   <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${themeStyles.text}`}>Отчет нейросети</span>
                 </div>
-                
                 <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10">
                   {aiResponse ? (
                     <p className={`text-sm sm:text-base leading-relaxed font-medium whitespace-pre-wrap ${themeStyles.text} animate-in fade-in duration-700`}>
@@ -621,7 +580,6 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
           )}
         </div>
 
-        {/* Выставление Целей */}
         <div className={`p-8 sm:p-12 rounded-[2.5rem] border shadow-sm relative overflow-hidden flex flex-col justify-center min-h-[280px] shrink-0 ${themeStyles.panelBorder} ${themeStyles.panel}`}>
           <div className={`absolute top-1/2 -translate-y-1/2 -right-12 sm:right-0 p-6 opacity-[0.02] ${themeStyles.accentText} pointer-events-none`}>
             <Target size={280} strokeWidth={1} />
@@ -653,7 +611,6 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
                 <span className={`text-3xl sm:text-5xl font-black tracking-tight ${themeStyles.text}`}>{goalProgress}%</span>
               </div>
             </div>
-            {/* Премиальный прогресс-бар */}
             <div className="w-full h-6 sm:h-8 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden p-1.5 shadow-inner backdrop-blur-sm border border-black/5 dark:border-white/5">
               <div 
                 style={{ width: `${goalProgress}%` }} 
@@ -665,7 +622,6 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
           </div>
         </div>
 
-        {/* KPI Сетка */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 shrink-0">
           {[
             { label: 'Потенциал в работе', val: formatMoney(metrics.totalActiveAmount), color: 'text-indigo-500', bgGlow: 'bg-indigo-500', Icon: Zap },
@@ -686,7 +642,6 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
           ))}
         </div>
 
-        {/* График перспектив и Динамика */}
         <div className={`rounded-[2.5rem] border shadow-sm overflow-hidden transition-all duration-500 shrink-0 ${themeStyles.panelBorder} ${themeStyles.panel}`}>
           <button onClick={() => setIsDynamicsOpen(!isDynamicsOpen)} className="w-full p-6 sm:p-10 flex items-center justify-between group outline-none">
             <div className="flex items-center gap-5 text-left">
@@ -707,7 +662,6 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
             <div className="p-6 sm:p-10 pt-0 animate-in slide-in-from-top-4 fade-in duration-500 border-t border-black/5 dark:border-white/5 mt-2">
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 sm:gap-12 mt-8">
                 
-                {/* Гистограмма */}
                 <div className="flex flex-col bg-black/[0.01] dark:bg-white/[0.01] p-6 sm:p-8 rounded-[2rem] border border-black/5 dark:border-white/5">
                   <h4 className={`text-[10px] font-black uppercase tracking-widest opacity-50 mb-10 flex items-center gap-2 ${themeStyles.text}`}>
                     <PieChart size={14}/> Объем средств по этапам
@@ -734,7 +688,6 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
                   </div>
                 </div>
 
-                {/* Активность / Касания */}
                 <div className="flex flex-col bg-black/[0.01] dark:bg-white/[0.01] p-6 sm:p-8 rounded-[2rem] border border-black/5 dark:border-white/5">
                   <h4 className={`text-[10px] font-black uppercase tracking-widest opacity-50 mb-6 flex items-center gap-2 ${themeStyles.text}`}>
                     <Flame size={14}/> Интенсивность касаний (Топ карточек)
@@ -790,10 +743,16 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
 const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
   const [viewDate, setViewDate] = useState(new Date());
   
-  // Состояния для интеграций календарей
-  const [activeDropdown, setActiveDropdown] = useState(null);
+  // Состояния для окна настроек синхронизации
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [syncSettings, setSyncSettings] = useState({ googleTwoWay: false, yandexTwoWay: false });
   const [connections, setConnections] = useState({ google: false, yandex: false });
+  
+  const [showYandexModal, setShowYandexModal] = useState(false);
+  const [yandexCreds, setYandexCreds] = useState({ email: '', appPassword: '' });
+  
   const [isSyncing, setIsSyncing] = useState(false);
+  const [icsToken] = useState('abqd_cal_8f9x2k1l'); // Эмуляция токена пользователя
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -801,21 +760,41 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
   const startDay = new Date(year, month, 1).getDay();
   const startOffset = startDay === 0 ? 6 : startDay - 1;
 
-  // Логика интеграции через API OAuth (Симуляция)
-  const handleOAuthConnect = (provider) => {
-    // В реальном приложении здесь должен быть редирект на эндпоинт авторизации, например:
-    // window.location.href = `/api/v1/oauth/${provider}/connect`;
-    
+  // Логика подключения Google (OAuth MVP)
+  const handleGoogleConnect = () => {
     setIsSyncing(true);
-    // Симуляция успешного ответа от API и синхронизации
     setTimeout(() => {
-      setConnections(prev => ({...prev, [provider]: !prev[provider]}));
+      setConnections(prev => ({...prev, google: !prev.google}));
       setIsSyncing(false);
-      
-      if (!connections[provider]) {
-        alert(`✅ Успешная авторизация по API!\nВаш реальный ${provider === 'google' ? 'Google' : 'Yandex'} Календарь теперь синхронизирован.`);
+      if (!connections.google) {
+        alert("✅ Google Calendar успешно подключен через OAuth.");
       }
     }, 1500);
+  };
+
+  // Логика подключения Yandex (CalDAV MVP)
+  const handleYandexConnectSubmit = () => {
+    if (!yandexCreds.email || !yandexCreds.appPassword) {
+      alert("Пожалуйста, введите Email и Пароль приложения.");
+      return;
+    }
+    setIsSyncing(true);
+    setTimeout(() => {
+      setConnections(prev => ({...prev, yandex: true}));
+      setShowYandexModal(false);
+      setIsSyncing(false);
+      alert("✅ Yandex Calendar успешно подключен по протоколу CalDAV.");
+    }, 1500);
+  };
+
+  const handleYandexDisconnect = () => {
+    setConnections(prev => ({...prev, yandex: false}));
+    setYandexCreds({ email: '', appPassword: '' });
+  };
+
+  const copyIcsLink = () => {
+    navigator.clipboard.writeText(`https://api.abqd.ru/api/v1/calendar/${icsToken}.ics`);
+    alert("Ссылка на ICS-календарь скопирована!\n\nВы можете добавить её в Google Calendar ('Добавить по URL') или Яндекс.Календарь для просмотра событий ABQD в режиме 'Только чтение'.");
   };
 
   const monthLeads = useMemo(() => {
@@ -841,7 +820,7 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
 
   return (
     <div className="flex flex-col h-full p-4 pb-32 sm:p-8 overflow-hidden gap-6 relative">
-      <div className={`p-4 sm:p-6 rounded-[2rem] border ${themeStyles.panelBorder} ${themeStyles.panel} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-md relative z-40`}>
+      <div className={`p-4 sm:p-6 rounded-[2rem] border ${themeStyles.panelBorder} ${themeStyles.panel} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-md relative z-10`}>
         <div className="flex items-center gap-4">
           <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${themeStyles.text}`}>{MONTHS[month]} <span className="opacity-40">{year}</span></h2>
           <div className="flex border rounded-xl border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
@@ -851,49 +830,17 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
           </div>
         </div>
         
-        {/* КНОПКА ИНТЕГРАЦИИ КАЛЕНДАРЕЙ */}
-        <div className="relative w-full sm:w-auto">
-          {activeDropdown && <div className="fixed inset-0 z-30" onClick={() => setActiveDropdown(null)}/>}
-          
-          <button 
-            onClick={() => setActiveDropdown(activeDropdown === 'int' ? null : 'int')} 
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm border z-40 relative ${activeDropdown === 'int' ? themeStyles.accentGradient + ' text-white border-transparent' : themeStyles.panelBorder + ' ' + themeStyles.text + ' hover:scale-[1.02]'}`}
-          >
-            <Cloud size={16} /> <span>Синхронизация</span>
-            {isSyncing && <RefreshCw size={12} className="animate-spin ml-1" />}
-          </button>
-
-          {/* ВЫПАДАЮЩАЯ ПАНЕЛЬ ИНТЕГРАЦИЙ */}
-          {activeDropdown === 'int' && (
-            <div className={`absolute top-full right-0 mt-3 w-full sm:w-80 p-6 rounded-[2rem] border shadow-2xl z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-4 duration-200 ${themeStyles.panel} ${themeStyles.panelBorder}`}>
-              <h3 className={`text-[10px] font-black uppercase tracking-widest mb-2 flex items-center justify-between ${themeStyles.textMuted}`}>
-                API Интеграции
-              </h3>
-              <p className={`text-[11px] font-medium mb-5 opacity-70 ${themeStyles.text}`}>Синхронизируйте реальные события из календаря на вашем телефоне напрямую в CRM.</p>
-              
-              <div className="space-y-3">
-                <button onClick={() => handleOAuthConnect('google')} disabled={isSyncing} className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all group ${connections.google ? (theme === 'dark' ? 'bg-[#141120] border-[#3b82f6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm') : (theme === 'dark' ? 'bg-transparent border-[#2a253a] text-slate-400 hover:border-[#3b82f6]/50 hover:bg-[#141120]' : 'bg-transparent border-slate-200 text-slate-500 hover:border-blue-400 hover:bg-slate-50')}`}>
-                  <div className="flex items-center gap-3">
-                    <img src="https://www.google.com/favicon.ico" alt="G" className={`w-4 h-4 transition-all ${connections.google ? '' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'}`} />
-                    <span className="text-xs font-bold">Google Calendar</span>
-                  </div>
-                  {connections.google ? <Check size={16} className="text-[#3b82f6]" /> : <Link2 size={16} className="opacity-50 group-hover:opacity-100 transition-opacity" />}
-                </button>
-                <button onClick={() => handleOAuthConnect('yandex')} disabled={isSyncing} className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all group ${connections.yandex ? (theme === 'dark' ? 'bg-[#141120] border-amber-500/50 text-white shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm') : (theme === 'dark' ? 'bg-transparent border-[#2a253a] text-slate-400 hover:border-amber-500/50 hover:bg-[#141120]' : 'bg-transparent border-slate-200 text-slate-500 hover:border-amber-400 hover:bg-slate-50')}`}>
-                  <div className="flex items-center gap-3">
-                    <img src="https://yandex.ru/favicon.ico" alt="Y" className={`w-4 h-4 transition-all ${connections.yandex ? '' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'}`} />
-                    <span className="text-xs font-bold">Yandex Calendar</span>
-                  </div>
-                  {connections.yandex ? <Check size={16} className="text-amber-500" /> : <Link2 size={16} className="opacity-50 group-hover:opacity-100 transition-opacity" />}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
+        {/* КНОПКА ОТКРЫТИЯ НАСТРОЕК ИНТЕГРАЦИИ */}
+        <button 
+          onClick={() => setIsSyncModalOpen(true)} 
+          className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm border ${themeStyles.panelBorder} ${themeStyles.text} hover:scale-[1.02] bg-white dark:bg-[#222226]`}
+        >
+          <Cloud size={16} className="text-indigo-500" /> <span>Настройки синхронизации</span>
+          {(connections.google || connections.yandex) && <div className="w-2 h-2 rounded-full bg-emerald-500 ml-1 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>}
+        </button>
       </div>
 
-      <div className={`flex-1 rounded-[2rem] border overflow-hidden flex flex-col ${themeStyles.panelBorder} ${themeStyles.panel} shadow-lg z-10`}>
+      <div className={`flex-1 rounded-[2rem] border overflow-hidden flex flex-col ${themeStyles.panelBorder} ${themeStyles.panel} shadow-lg z-0`}>
         <div className="grid grid-cols-7 border-b border-slate-100 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
           {DAYS_OF_WEEK.map(d => <div key={d} className="py-4 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">{d}</div>)}
         </div>
@@ -926,6 +873,163 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
           })}
         </div>
       </div>
+
+      {/* --- МОДАЛЬНОЕ ОКНО НАСТРОЕК ИНТЕГРАЦИИ (ЗЕРКАЛИРОВАНИЯ) --- */}
+      {isSyncModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="absolute inset-0 cursor-pointer" onClick={() => !showYandexModal && setIsSyncModalOpen(false)} />
+          
+          <div className={`relative w-full max-w-2xl rounded-[2.5rem] flex flex-col ${themeStyles.panel} ${themeStyles.panelBorder} shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-hidden`}>
+            
+            <div className="p-6 sm:p-8 border-b border-black/5 dark:border-white/[0.06] flex justify-between items-center bg-white/60 dark:bg-[#222226]/80">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight">Интеграция с календарями</h2>
+                <p className={`text-sm mt-1 font-medium ${themeStyles.textMuted}`}>ABQD является основным источником данных (Source of Truth).</p>
+              </div>
+              <button onClick={() => setIsSyncModalOpen(false)} className="p-2 sm:p-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"><X size={20}/></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
+              
+              {/* Способ 1: Базовая подписка ICS */}
+              <div className={`p-6 rounded-[2rem] border ${themeStyles.panelBorder} ${theme === 'dark' ? 'bg-white/[0.02]' : 'bg-slate-50'}`}>
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
+                    <Globe size={24} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-black flex items-center gap-2">Подписка по ссылке (ICS) <Badge className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20">Самый надежный</Badge></h3>
+                    <p className={`text-sm mt-1.5 font-medium ${themeStyles.textMuted}`}>Добавьте эту ссылку в любой календарь на телефоне или ПК. События будут зеркалироваться в режиме "Только чтение".</p>
+                    
+                    <div className="mt-4 flex flex-col sm:flex-row items-center gap-2 bg-white dark:bg-[#18181b] p-2 rounded-xl border border-indigo-500/30">
+                      <input readOnly value={`https://api.abqd.ru/api/v1/calendar/${icsToken}.ics`} className="bg-transparent outline-none text-xs font-mono text-indigo-500 w-full px-3 py-2" />
+                      <button onClick={copyIcsLink} className="w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-500 text-white font-bold text-xs hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 shrink-0">
+                        <Copy size={14}/> Скопировать
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Способ 2: Прямые интеграции (Двусторонние) */}
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-widest opacity-40 mb-4 px-2">Прямое подключение (Опционально)</h3>
+                
+                <div className="space-y-4">
+                  {/* Google Calendar */}
+                  <div className={`p-5 rounded-2xl border ${themeStyles.panelBorder} ${theme === 'dark' ? 'bg-[#18181b]' : 'bg-white'} flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors ${connections.google && 'border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.1)]'}`}>
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <img src="https://www.google.com/favicon.ico" alt="G" className="w-8 h-8" />
+                      <div>
+                        <h4 className="font-bold text-sm">Google Calendar</h4>
+                        <p className={`text-xs mt-0.5 ${themeStyles.textMuted}`}>Авторизация через OAuth 2.0</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                      {connections.google && (
+                        <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={syncSettings.googleTwoWay} 
+                            onChange={(e) => setSyncSettings({...syncSettings, googleTwoWay: e.target.checked})} 
+                            className="w-4 h-4 rounded text-blue-500 accent-blue-500" 
+                          />
+                          2-Way Sync (Beta)
+                        </label>
+                      )}
+                      <button 
+                        onClick={handleGoogleConnect}
+                        disabled={isSyncing}
+                        className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${connections.google ? 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20' : 'bg-blue-500 text-white shadow-md shadow-blue-500/20 hover:bg-blue-600'}`}
+                      >
+                        {isSyncing ? <RefreshCw size={14} className="animate-spin"/> : (connections.google ? 'Отключить' : 'Подключить Google')}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Yandex Calendar (CalDAV) */}
+                  <div className={`p-5 rounded-2xl border ${themeStyles.panelBorder} ${theme === 'dark' ? 'bg-[#18181b]' : 'bg-white'} flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors ${connections.yandex && 'border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.1)]'}`}>
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <img src="https://yandex.ru/favicon.ico" alt="Y" className="w-8 h-8" />
+                      <div>
+                        <h4 className="font-bold text-sm">Яндекс.Календарь</h4>
+                        <p className={`text-xs mt-0.5 ${themeStyles.textMuted}`}>Подключение по протоколу CalDAV</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                       {connections.yandex && (
+                        <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={syncSettings.yandexTwoWay} 
+                            onChange={(e) => setSyncSettings({...syncSettings, yandexTwoWay: e.target.checked})} 
+                            className="w-4 h-4 rounded text-amber-500 accent-amber-500" 
+                          />
+                          2-Way Sync (Beta)
+                        </label>
+                      )}
+                      <button 
+                        onClick={() => connections.yandex ? handleYandexDisconnect() : setShowYandexModal(true)}
+                        disabled={isSyncing}
+                        className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${connections.yandex ? 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20' : 'bg-amber-500 text-white shadow-md shadow-amber-500/20 hover:bg-amber-600'}`}
+                      >
+                        {connections.yandex ? 'Отключить' : 'Настроить CalDAV'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`mt-5 p-4 rounded-xl flex items-start gap-3 bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-500`}>
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <p className="text-xs font-medium leading-relaxed">
+                    Двусторонняя синхронизация (Two-way sync) работает в режиме Beta. Если событие изменено одновременно в ABQD и внешнем календаре, применяется правило <span className="font-bold">Last Write Wins</span> (побеждает последнее изменение).
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- МОДАЛКА ВВОДА ДАННЫХ ДЛЯ YANDEX CALDAV --- */}
+      {showYandexModal && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className={`relative w-full max-w-sm rounded-[2rem] p-8 flex flex-col ${themeStyles.panel} ${themeStyles.panelBorder} shadow-2xl animate-in zoom-in-95`}>
+              <div className="flex items-center gap-4 mb-6">
+                 <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                    <img src="https://yandex.ru/favicon.ico" alt="Y" className="w-6 h-6" />
+                 </div>
+                 <div>
+                   <h3 className="text-xl font-black">Доступ CalDAV</h3>
+                   <p className={`text-xs mt-1 ${themeStyles.textMuted}`}>Для Яндекс.Календаря</p>
+                 </div>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                 <div className="space-y-1.5">
+                   <label className={`text-[10px] font-black uppercase tracking-widest opacity-60 ${themeStyles.text} flex items-center gap-1.5`}><Mail size={12}/> Email Яндекс</label>
+                   <input type="email" placeholder="ваша-почта@yandex.ru" value={yandexCreds.email} onChange={e => setYandexCreds({...yandexCreds, email: e.target.value})} className={`w-full p-4 rounded-2xl border outline-none font-medium text-sm transition-all ${themeStyles.input} ${themeStyles.text}`} />
+                 </div>
+                 <div className="space-y-1.5">
+                   <div className="flex justify-between items-center">
+                     <label className={`text-[10px] font-black uppercase tracking-widest opacity-60 ${themeStyles.text} flex items-center gap-1.5`}><KeyRound size={12}/> Пароль приложения</label>
+                     <a href="https://id.yandex.ru/security/app-passwords" target="_blank" rel="noreferrer" className="text-[10px] font-bold text-amber-500 hover:underline flex items-center gap-1"><Info size={10}/> Как получить?</a>
+                   </div>
+                   <input type="password" placeholder="••••••••" value={yandexCreds.appPassword} onChange={e => setYandexCreds({...yandexCreds, appPassword: e.target.value})} className={`w-full p-4 rounded-2xl border outline-none font-medium text-sm transition-all ${themeStyles.input} ${themeStyles.text}`} />
+                 </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={() => setShowYandexModal(false)} className={`flex-1 py-3.5 rounded-xl font-bold text-sm border ${themeStyles.panelBorder} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>Отмена</button>
+                <button onClick={handleYandexConnectSubmit} disabled={isSyncing} className={`flex-1 py-3.5 rounded-xl font-bold text-sm bg-amber-500 text-white shadow-md hover:bg-amber-600 transition-colors flex items-center justify-center`}>
+                  {isSyncing ? <RefreshCw size={16} className="animate-spin"/> : 'Подключить'}
+                </button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -939,20 +1043,34 @@ export default function App() {
   const [currentView, setCurrentView] = useState('kanban'); 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
-  const [deals, setDeals] = useState(INITIAL_DEALS);
-  const [stages, setStages] = useState(INITIAL_STAGES);
-  const [flows, setFlows] = useState(INITIAL_FLOWS); 
+  // --- ОБНОВЛЕНИЕ: Загрузка состояний из localStorage для защиты от потери данных при F5 ---
+  const [deals, setDeals] = useState(() => {
+    try { const saved = localStorage.getItem('abqd_deals'); return saved ? JSON.parse(saved) : INITIAL_DEALS; } 
+    catch(e) { return INITIAL_DEALS; }
+  });
+  const [stages, setStages] = useState(() => {
+    try { const saved = localStorage.getItem('abqd_stages'); return saved ? JSON.parse(saved) : INITIAL_STAGES; } 
+    catch(e) { return INITIAL_STAGES; }
+  });
+  const [flows, setFlows] = useState(() => {
+    try { const saved = localStorage.getItem('abqd_flows'); return saved ? JSON.parse(saved) : INITIAL_FLOWS; } 
+    catch(e) { return INITIAL_FLOWS; }
+  });
   
   const [selectedId, setSelectedId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Состояния для перетаскивания (Drag & Drop)
   const [draggedStageIdx, setDraggedStageIdx] = useState(null);
   const [dragOverStageIdx, setDragOverStageIdx] = useState(null);
   const [draggedDealId, setDraggedDealId] = useState(null);
 
+  // Сохранение темы и всех данных при изменении
   useEffect(() => localStorage.setItem('abqd_theme', theme), [theme]);
+  useEffect(() => localStorage.setItem('abqd_deals', JSON.stringify(deals)), [deals]);
+  useEffect(() => localStorage.setItem('abqd_stages', JSON.stringify(stages)), [stages]);
+  useEffect(() => localStorage.setItem('abqd_flows', JSON.stringify(flows)), [flows]);
+
   const themeStyles = useMemo(() => getThemeStyles(theme), [theme]);
 
   const handleSaveDeal = useCallback((updatedDeal) => {
@@ -968,7 +1086,6 @@ export default function App() {
     }
   };
 
-  // --- Функции для перетаскивания (DND) ---
   const handleDragOver = (e, index) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -1005,7 +1122,6 @@ export default function App() {
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  // --- Функции для колонок (Добавление/Удаление) ---
   const handleAddStage = () => {
     const title = window.prompt("Введите название новой колонки:", "Новый этап");
     if (title) {
@@ -1036,7 +1152,6 @@ export default function App() {
   return (
     <div className={`flex h-screen w-full font-sans transition-colors duration-500 relative overflow-hidden ${themeStyles.bg} ${themeStyles.text}`}>
       
-      {/* Боковая панель */}
       <aside className={`hidden sm:flex relative border-r p-5 transition-all duration-300 z-40 ${isSidebarCollapsed ? 'w-24' : 'w-72'} ${themeStyles.sidebar} ${themeStyles.panelBorder}`}>
         <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className={`absolute -right-3.5 top-12 w-7 h-7 rounded-full border flex items-center justify-center shadow-sm transition-all hover:scale-110 z-50 ${themeStyles.panel} ${themeStyles.panelBorder} ${themeStyles.textMuted} hover:text-indigo-500 dark:hover:text-indigo-400`}>
           {isSidebarCollapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
@@ -1056,7 +1171,6 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Мобильная навигация */}
       <nav className="sm:hidden fixed bottom-6 left-4 right-4 h-16 rounded-[2rem] z-50 flex items-center justify-around px-2 shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-white/10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl transition-all">
         {[
           { id: 'kanban', label: 'Доска', Icon: LayoutDashboard },
@@ -1110,7 +1224,6 @@ export default function App() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] font-black px-2 py-1 rounded-lg bg-black/5 dark:bg-white/5 ${themeStyles.textMuted}`}>{filteredDeals.filter(d => d.stage === stage.key).length}</span>
-                    {/* Кнопка удаления колонки */}
                     <button onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.key); }} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-rose-500 hover:bg-rose-500/10 rounded-lg cursor-pointer" title="Удалить колонку">
                       <Trash2 size={14} />
                     </button>
@@ -1160,7 +1273,6 @@ export default function App() {
               </div>
             ))}
 
-            {/* Кнопка добавления новой колонки */}
             <div 
               onClick={handleAddStage}
               className="flex-none w-[85vw] max-w-[320px] sm:w-[320px] flex flex-col items-center justify-center gap-3 border-2 border-dashed border-black/10 dark:border-white/10 rounded-[2.5rem] opacity-50 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 hover:border-indigo-500/30 transition-all cursor-pointer h-full max-h-[80vh] min-h-[400px]"
