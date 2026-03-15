@@ -26,3 +26,4 @@
 ## Server mapping (prod)
 - Served dir: `/opt/abqd/static` -> symlink -> `/var/www/abqd/prod/frontend`
 - API: `https://api.abqd.ru/`
+test feature branch crm workflow 2026-03-15
