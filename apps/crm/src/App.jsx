@@ -961,6 +961,13 @@ export default function App() {
     setTimeout(() => setIsSyncing(false), 400); 
   }, []);
 
+  const handleDeleteDeal = (dealId) => {
+    if (window.confirm("Вы уверены, что хотите удалить эту сделку? Это действие нельзя отменить.")) {
+      setDeals(prev => prev.filter(d => d.id !== dealId));
+      setSelectedId(null);
+    }
+  };
+
   // --- Функции для перетаскивания (DND) ---
   const handleDragOver = (e, index) => {
     e.preventDefault();
@@ -1187,14 +1194,19 @@ export default function App() {
                   <div className={`hidden sm:flex w-14 h-14 rounded-2xl items-center justify-center shadow-inner ${selectedDeal.priority === 'high' ? 'bg-rose-500/10 text-rose-500' : selectedDeal.priority === 'medium' ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-500/10 text-slate-500'}`}><Target size={24}/></div>
                   <div className="min-w-0">
                     <h2 className="text-xl sm:text-2xl font-black tracking-tight truncate pr-4">{selectedDeal.company}</h2>
-                    <div className="flex items-center gap-3 mt-1.5">
+                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                       <span className="text-[10px] font-black uppercase opacity-40 tracking-widest">ID: {selectedDeal.id}</span>
                       <span className="opacity-20 text-[10px]">•</span>
                       <span className="text-[10px] font-black uppercase text-orange-500 flex items-center gap-1"><Flame size={12} className="mb-0.5"/> {selectedDeal.touches || 0} касаний</span>
+                      <button onClick={() => handleDeleteDeal(selectedDeal.id)} className="ml-1 p-1 rounded-md bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-colors flex items-center justify-center" title="Удалить сделку">
+                        <Trash2 size={12}/>
+                      </button>
                     </div>
                   </div>
                 </div>
-                <button onClick={() => setSelectedId(null)} className="p-2 sm:p-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"><X size={20}/></button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setSelectedId(null)} className="p-2 sm:p-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"><X size={20}/></button>
+                </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-5 sm:p-8 space-y-8 custom-scrollbar">
