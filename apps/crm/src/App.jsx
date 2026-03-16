@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
-  Search, Moon, Sun, Plus, CheckCircle2, AlertCircle, Clock, Zap, Bot,
-  BarChart3, X, User, Target, Phone, Trash2, PanelLeftClose, PanelLeftOpen, Cloud,
-  Check, PlusCircle, GripHorizontal, LayoutDashboard, CalendarDays, ChevronLeft,
-  ChevronRight, Users, Briefcase, Bell, Globe, Link2, Settings, Lock,
-  RefreshCw, TrendingUp, Activity, PieChart, ArrowUpRight, ArrowDownRight,
-  ShieldAlert, Download, Filter, Sparkles, Send, BrainCircuit, ChevronDown, Flag,
-  Video, Mail, MapPin, ExternalLink, MessageCircle, Share2, BarChart2, Flame,
-  CreditCard, ChevronUp, Star, MessageSquare, Play, Pause, Edit3, ArrowLeft,
+  Search, Moon, Sun, Plus, AlertCircle, Clock, Zap, Bot,
+  BarChart3, X, Target, Phone, Trash2, PanelLeftClose, PanelLeftOpen, Cloud,
+  GripHorizontal, LayoutDashboard, CalendarDays, ChevronLeft,
+  ChevronRight, Globe, RefreshCw, Activity, PieChart, ArrowUpRight,
+  Sparkles, Send, BrainCircuit, ChevronDown, Flag,
+  Mail, MapPin, ExternalLink, MessageCircle, Share2, BarChart2, Flame,
+  CreditCard, Star, MessageSquare, Play, Pause, Edit3, ArrowLeft,
   Copy, Smartphone, Workflow, KeyRound, Info
 } from 'lucide-react';
 
 /**
  * ABQD CRM — Универсальный Dashboard (Premium UI Edition)
- * Обновление: Локальное сохранение состояния CRM (deals / stages / flows) через localStorage.
- * Обновление: Календарь подготовлен под ICS MVP + OAuth + CalDAV.
+ * Источник истины для CRM:
+ * - deals / stages / theme -> API /api/v1/crm/state
+ * - flows -> localStorage (пока backend schema не поддерживает flows)
  */
 
 // ==========================================
@@ -210,6 +210,26 @@ const STORAGE_KEYS = {
   flows: 'abqd_crm_flows_v1',
 };
 
+const CRM_API_BASE = 'https://api.abqd.ru/api/v1/crm';
+const AUTH_TOKEN_KEY = 'abqd_token';
+
+const getAuthToken = () => {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY) || '';
+  } catch {
+    return '';
+  }
+};
+
+const getAuthHeaders = () => {
+  const token = getAuthToken();
+  if (!token) return null;
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+  };
+};
+
 const safeReadJSON = (key, fallback) => {
   try {
     const raw = localStorage.getItem(key);
@@ -225,7 +245,7 @@ const safeWriteJSON = (key, value) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    // ignore
+    // ignore storage errors
   }
 };
 
@@ -266,8 +286,11 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
   };
 
   const handleSave = () => {
-    if (editingFlowId === 'new') setFlows([...flows, editingData]);
-    else setFlows(flows.map(f => f.id === editingData.id ? editingData : f));
+    if (editingFlowId === 'new') {
+      setFlows([...flows, editingData]);
+    } else {
+      setFlows(flows.map(f => f.id === editingData.id ? editingData : f));
+    }
     setEditingFlowId(null);
     setEditingData(null);
   };
@@ -435,7 +458,7 @@ const BotFlowsView = ({ themeStyles, theme, flows, setFlows }) => {
               else nodes.push(newNode);
               setEditingData({ ...editingData, nodes });
             }}
-            className={`mt-6 w-full py-4 rounded-xl border-2 border-dashed border-indigo-500/20 text-indigo-500 font-bold text-sm hover:bg-indigo-500/5 hover:border-indigo-500/50 transition-all flex items-center justify-center gap-2`}
+            className="mt-6 w-full py-4 rounded-xl border-2 border-dashed border-indigo-500/20 text-indigo-500 font-bold text-sm hover:bg-indigo-500/5 hover:border-indigo-500/50 transition-all flex items-center justify-center gap-2"
           >
             <Plus size={18} /> Добавить шаг
           </button>
@@ -744,7 +767,7 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
           <button onClick={() => setIsDynamicsOpen(!isDynamicsOpen)} className="w-full p-6 sm:p-10 flex items-center justify-between group outline-none">
             <div className="flex items-center gap-5 text-left">
               <div className={`w-16 h-16 rounded-[1.25rem] flex items-center justify-center shadow-inner ${theme === 'dark' ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'} group-hover:scale-105 transition-transform duration-500`}>
-                <BarChart2 size={32} strokeWidth={1.5} />
+                <BarChart3 size={32} strokeWidth={1.5} />
               </div>
               <div>
                 <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${themeStyles.text}`}>Матрица потенциала</h3>
@@ -764,13 +787,20 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
                     <PieChart size={14} /> Объем средств по этапам
                   </h4>
                   <div className="flex items-end justify-between gap-2 sm:gap-4 h-72 sm:h-80 pb-2 border-b-2 border-black/5 dark:border-white/5 mt-auto relative">
-                    {stageStats.filter(s => s.key !== 'won').map((s, i) => {
-                      const maxVal = Math.max(...stageStats.filter(x => x.key !== 'won').map(x => x.sum)) || 1;
-                      const height = Math.max((s.sum / maxVal) * 100, 8);
+                    {stages.map((s, i) => {
+                      if (s.key === 'won') return null;
+                      const maxVal = Math.max(...stages.filter(x => x.key !== 'won').map(x => {
+                        const stageDeals = deals.filter(d => d.stage === x.key);
+                        return stageDeals.reduce((acc, d) => acc + (Number(d.amount) || 0), 0);
+                      }), 1);
+                      const stageDeals = deals.filter(d => d.stage === s.key);
+                      const sum = stageDeals.reduce((acc, d) => acc + (Number(d.amount) || 0), 0);
+                      const height = Math.max((sum / maxVal) * 100, 8);
+
                       return (
                         <div key={i} className="flex-1 flex flex-col items-center justify-end group relative h-full">
                           <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-black px-4 py-2 rounded-xl shadow-xl z-20 transform translate-y-2 group-hover:translate-y-0 pointer-events-none whitespace-nowrap">
-                            {formatMoney(s.sum)}
+                            {formatMoney(sum)}
                           </div>
                           <div
                             style={{ height: `${height}%` }}
@@ -778,7 +808,7 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
                           >
                             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/20 to-transparent" />
                           </div>
-                          <span className={`text-[10px] font-bold mt-5 text-center truncate w-full opacity-60 group-hover:opacity-100 transition-opacity ${themeStyles.text}`}>{s.label}</span>
+                          <span className={`text-[10px] font-bold mt-5 text-center truncate w-full opacity-60 group-hover:opacity-100 transition-opacity ${themeStyles.text}`}>{s.title}</span>
                         </div>
                       );
                     })}
@@ -837,14 +867,11 @@ const AnalyticsView = ({ deals, themeStyles, theme, setTheme, stages }) => {
 
 const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
   const [viewDate, setViewDate] = useState(new Date());
-
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [syncSettings, setSyncSettings] = useState({ googleTwoWay: false, yandexTwoWay: false });
   const [connections, setConnections] = useState({ google: false, yandex: false });
-
   const [showYandexModal, setShowYandexModal] = useState(false);
   const [yandexCreds, setYandexCreds] = useState({ email: '', appPassword: '' });
-
   const [isSyncing, setIsSyncing] = useState(false);
   const [icsToken] = useState('abqd_cal_8f9x2k1l');
 
@@ -982,7 +1009,7 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
               <div className={`p-6 rounded-[2rem] border ${themeStyles.panelBorder} ${theme === 'dark' ? 'bg-white/[0.02]' : 'bg-slate-50'}`}>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
-                    <Globe size={24} />
+                    <Cloud size={24} />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-black flex items-center gap-2">Подписка по ссылке (ICS) <Badge className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20">Самый надежный</Badge></h3>
@@ -1065,10 +1092,10 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
                   </div>
                 </div>
 
-                <div className={`mt-5 p-4 rounded-xl flex items-start gap-3 bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-500`}>
+                <div className="mt-5 p-4 rounded-xl flex items-start gap-3 bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-500">
                   <AlertCircle size={16} className="mt-0.5 shrink-0" />
                   <p className="text-xs font-medium leading-relaxed">
-                    Двусторонняя синхронизация (Two-way sync) работает в режиме Beta. Если событие изменено одновременно в ABQD и внешнем календаре, применяется правило <span className="font-bold">Last Write Wins</span> (побеждает последнее изменение).
+                    Двусторонняя синхронизация (Two-way sync) работает в режиме Beta. Если событие изменено одновременно в ABQD и внешнем календаре, применяется правило <span className="font-bold">Last Write Wins</span>.
                   </p>
                 </div>
               </div>
@@ -1106,7 +1133,7 @@ const CalendarView = ({ deals, themeStyles, theme, onOpenDeal }) => {
 
             <div className="flex gap-3">
               <button onClick={() => setShowYandexModal(false)} className={`flex-1 py-3.5 rounded-xl font-bold text-sm border ${themeStyles.panelBorder} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>Отмена</button>
-              <button onClick={handleYandexConnectSubmit} disabled={isSyncing} className={`flex-1 py-3.5 rounded-xl font-bold text-sm bg-amber-500 text-white shadow-md hover:bg-amber-600 transition-colors flex items-center justify-center`}>
+              <button onClick={handleYandexConnectSubmit} disabled={isSyncing} className="flex-1 py-3.5 rounded-xl font-bold text-sm bg-amber-500 text-white shadow-md hover:bg-amber-600 transition-colors flex items-center justify-center">
                 {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : 'Подключить'}
               </button>
             </div>
@@ -1145,12 +1172,13 @@ export default function App() {
   const [dragOverStageIdx, setDragOverStageIdx] = useState(null);
   const [draggedDealId, setDraggedDealId] = useState(null);
 
+  const apiLoadedRef = useRef(false);
+  const saveTimerRef = useRef(null);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEYS.theme, theme);
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [theme]);
 
   useEffect(() => {
@@ -1166,6 +1194,102 @@ export default function App() {
   }, [flows]);
 
   const themeStyles = useMemo(() => getThemeStyles(theme), [theme]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadState = async () => {
+      const headers = getAuthHeaders();
+      if (!headers) {
+        apiLoadedRef.current = true;
+        return;
+      }
+
+      setIsSyncing(true);
+
+      try {
+        const res = await fetch(`${CRM_API_BASE}/state`, {
+          method: 'GET',
+          headers,
+        });
+
+        if (!res.ok) {
+          throw new Error(`CRM state GET failed: ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (cancelled) return;
+
+        const state = data?.state || {};
+
+        if (Array.isArray(state.deals) && state.deals.length > 0) {
+          setDeals(state.deals);
+        }
+
+        if (Array.isArray(state.stages) && state.stages.length > 0) {
+          setStages(state.stages);
+        }
+
+        if (typeof state.theme === 'string' && state.theme) {
+          setTheme(state.theme);
+        }
+      } catch (err) {
+        console.error('CRM API load failed:', err);
+      } finally {
+        if (!cancelled) {
+          apiLoadedRef.current = true;
+          setIsSyncing(false);
+        }
+      }
+    };
+
+    loadState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!apiLoadedRef.current) return;
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        setIsSyncing(true);
+
+        const res = await fetch(`${CRM_API_BASE}/state`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            deals,
+            stages,
+            theme,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`CRM state PUT failed: ${res.status}`);
+        }
+      } catch (err) {
+        console.error('CRM API save failed:', err);
+      } finally {
+        setIsSyncing(false);
+      }
+    }, 700);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, [deals, stages, theme]);
 
   const handleSaveDeal = useCallback((updatedDeal) => {
     setIsSyncing(true);
@@ -1441,7 +1565,7 @@ export default function App() {
                 <div className="grid grid-cols-3 gap-3">
                   <a href={`https://wa.me/${selectedDeal.phone?.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={() => handleSaveDeal({ ...selectedDeal, touches: (selectedDeal.touches || 0) + 1 })} className="flex flex-col sm:flex-row items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-500 text-white font-bold text-[10px] sm:text-sm shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all"><MessageCircle size={18} /> <span className="hidden sm:inline">WhatsApp</span></a>
                   <a href={`https://t.me/${selectedDeal.phone?.startsWith('+') ? selectedDeal.phone : '+' + selectedDeal.phone}`} target="_blank" rel="noreferrer" onClick={() => handleSaveDeal({ ...selectedDeal, touches: (selectedDeal.touches || 0) + 1 })} className="flex flex-col sm:flex-row items-center justify-center gap-2 py-3 rounded-2xl bg-sky-500 text-white font-bold text-[10px] sm:text-sm shadow-lg shadow-sky-500/20 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all"><Send size={18} /> <span className="hidden sm:inline">Telegram</span></a>
-                  <a href={`https://max.ru/direct/${selectedDeal.phone}`} target="_blank" rel="noreferrer" onClick={() => handleSaveDeal({ ...selectedDeal, touches: (selectedDeal.touches || 0) + 1 })} className="flex flex-col sm:flex-row items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 text-white font-bold text-[10px] sm:text-sm shadow-lg shadow-indigo-600/20 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all"><Share2 size={18} /> <span className="hidden sm:inline">MAX</span></a>
+                  <a href={`https://max.ru/direct/${selectedDeal.phone}`} target="_blank" rel="noreferrer" onClick={() => handleSaveDeal({ ...selectedDeal, touches: (selectedDeal.touches || 0) + 1 })} className="flex flex-col sm:flex-row items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 text-white font-bold text-[10px] sm:text-sm shadow-lg shadow-indigo-600/20 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all"><MessageSquare size={18} /> <span className="hidden sm:inline">MAX</span></a>
                 </div>
               </div>
 
@@ -1453,7 +1577,7 @@ export default function App() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase opacity-40 px-1 tracking-widest">Сумма сделки (₽)</label>
-                    <input type="number" className={`w-full p-4 rounded-2xl border outline-none transition-all text-sm font-black text-indigo-500 ${themeStyles.input}`} value={selectedDeal.amount} onChange={(e) => handleSaveDeal({ ...selectedDeal, amount: e.target.value })} />
+                    <input type="number" className={`w-full p-4 rounded-2xl border outline-none transition-all text-sm font-black text-indigo-500 ${themeStyles.input}`} value={selectedDeal.amount} onChange={(e) => handleSaveDeal({ ...selectedDeal, amount: Number(e.target.value) || 0 })} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase opacity-40 px-1 flex items-center gap-1.5 tracking-widest"><Phone size={12} /> Телефон</label>
@@ -1469,7 +1593,7 @@ export default function App() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase opacity-40 px-1 flex items-center gap-1.5 tracking-widest"><Star size={12} /> Приоритет</label>
                     <select className={`w-full p-3.5 rounded-xl border outline-none font-black text-xs transition-all ${themeStyles.input} ${themeStyles.text} [&>option]:bg-white dark:[&>option]:bg-[#222226]`} value={selectedDeal.priority || 'medium'} onChange={(e) => handleSaveDeal({ ...selectedDeal, priority: e.target.value })}>
-                      {PRIORITIES.map(p => <option key={p.key} value={p.key} className={p.color}>{p.title}</option>)}
+                      {PRIORITIES.map(p => <option key={p.key} value={p.key}>{p.title}</option>)}
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -1525,42 +1649,43 @@ export default function App() {
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-          border-radius: 10px;
-          margin: 4px 0;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(99,102,241,0.4);
-          border-radius: 10px;
-          border: 2px solid transparent;
-          background-clip: padding-box;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(99,102,241,0.8);
-        }
-
-        @media (max-width: 640px) {
           .custom-scrollbar::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-            display: block;
+            width: 8px;
+            height: 8px;
           }
           .custom-scrollbar::-webkit-scrollbar-track {
             background: transparent;
-            margin: 2px;
+            border-radius: 10px;
+            margin: 4px 0;
           }
           .custom-scrollbar::-webkit-scrollbar-thumb {
             background: rgba(99,102,241,0.4);
-            border-radius: 4px;
-            border: none;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
           }
-        }
-      `}} />
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99,102,241,0.8);
+          }
+
+          @media (max-width: 640px) {
+            .custom-scrollbar::-webkit-scrollbar {
+              width: 5px;
+              height: 5px;
+              display: block;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+              background: transparent;
+              margin: 2px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+              background: rgba(99,102,241,0.4);
+              border-radius: 4px;
+              border: none;
+            }
+          }
+        `
+      }} />
     </div>
   );
 }
