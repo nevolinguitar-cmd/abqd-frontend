@@ -1,8 +1,12 @@
-name: Deploy frontend (self-hosted) v3 (no-sudo)
+name: Deploy frontend contours (self-hosted) v4
 
 on:
   push:
     branches: ["main", "develop"]
+    paths:
+      - "apps/crm/**"
+      - "frontend/**"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
 jobs:
@@ -17,13 +21,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           if [ "${{ github.ref_name }}" = "main" ]; then
             TARGET_DIR="/var/www/abqd/prod/frontend"
+            URL_PREFIX=""
+            ENV_NAME="prod"
           else
             TARGET_DIR="/var/www/abqd/stage/frontend"
+            URL_PREFIX="/__stage"
+            ENV_NAME="stage"
           fi
+
           echo "TARGET_DIR=$TARGET_DIR" >> "$GITHUB_ENV"
+          echo "URL_PREFIX=$URL_PREFIX" >> "$GITHUB_ENV"
+          echo "ENV_NAME=$ENV_NAME" >> "$GITHUB_ENV"
+
           echo "Deploy target: $TARGET_DIR"
+          echo "Environment:   $ENV_NAME"
 
       - name: Ensure target dir exists (no sudo)
         shell: bash
@@ -50,7 +64,121 @@ jobs:
 
           echo "OK: repo structure clean"
 
-      - name: Build CRM (Vite) -> frontend/dashboard
+      - name: Detect changed contours
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DEPLOY_CRM=0
+          DEPLOY_ROOT=0
+          DEPLOY_AUTH=0
+          DEPLOY_ACCOUNT=0
+          DEPLOY_TARIFFS=0
+          DEPLOY_CONSTRUCTOR=0
+          DEPLOY_PUBLIC_U=0
+          DEPLOY_ASSETS=0
+          DEPLOY_CALENDAR=0
+          DEPLOY_PAY=0
+          DEPLOY_DOCS_PAGE=0
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run detected -> force deploy all known contours"
+
+            DEPLOY_CRM=1
+            DEPLOY_ROOT=1
+            DEPLOY_AUTH=1
+            DEPLOY_ACCOUNT=1
+            DEPLOY_TARIFFS=1
+            DEPLOY_CONSTRUCTOR=1
+            DEPLOY_PUBLIC_U=1
+            DEPLOY_ASSETS=1
+            DEPLOY_CALENDAR=1
+            DEPLOY_PAY=1
+            DEPLOY_DOCS_PAGE=1
+          else
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.sha }}"
+
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              CHANGED="$(git ls-files)"
+            else
+              CHANGED="$(git diff --name-only "$BEFORE" "$AFTER" || true)"
+            fi
+
+            echo "Changed files:"
+            printf '%s\n' "$CHANGED"
+
+            printf '%s\n' "$CHANGED" | grep -Eq '^apps/crm/' && DEPLOY_CRM=1 || true
+
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/auth/' && DEPLOY_AUTH=1 || true
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/account/' && DEPLOY_ACCOUNT=1 || true
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/tariffs/' && DEPLOY_TARIFFS=1 || true
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/constructor/' && DEPLOY_CONSTRUCTOR=1 || true
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/u/' && DEPLOY_PUBLIC_U=1 || true
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/assets/' && DEPLOY_ASSETS=1 || true
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/calendar/' && DEPLOY_CALENDAR=1 || true
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/pay/' && DEPLOY_PAY=1 || true
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/docs/' && DEPLOY_DOCS_PAGE=1 || true
+
+            # top-level files inside frontend/, e.g. frontend/index.html
+            printf '%s\n' "$CHANGED" | grep -Eq '^frontend/[^/]+$' && DEPLOY_ROOT=1 || true
+          fi
+
+          ANY_DEPLOY=0
+          for v in \
+            "$DEPLOY_CRM" \
+            "$DEPLOY_ROOT" \
+            "$DEPLOY_AUTH" \
+            "$DEPLOY_ACCOUNT" \
+            "$DEPLOY_TARIFFS" \
+            "$DEPLOY_CONSTRUCTOR" \
+            "$DEPLOY_PUBLIC_U" \
+            "$DEPLOY_ASSETS" \
+            "$DEPLOY_CALENDAR" \
+            "$DEPLOY_PAY" \
+            "$DEPLOY_DOCS_PAGE"; do
+            if [ "$v" = "1" ]; then
+              ANY_DEPLOY=1
+            fi
+          done
+
+          {
+            echo "DEPLOY_CRM=$DEPLOY_CRM"
+            echo "DEPLOY_ROOT=$DEPLOY_ROOT"
+            echo "DEPLOY_AUTH=$DEPLOY_AUTH"
+            echo "DEPLOY_ACCOUNT=$DEPLOY_ACCOUNT"
+            echo "DEPLOY_TARIFFS=$DEPLOY_TARIFFS"
+            echo "DEPLOY_CONSTRUCTOR=$DEPLOY_CONSTRUCTOR"
+            echo "DEPLOY_PUBLIC_U=$DEPLOY_PUBLIC_U"
+            echo "DEPLOY_ASSETS=$DEPLOY_ASSETS"
+            echo "DEPLOY_CALENDAR=$DEPLOY_CALENDAR"
+            echo "DEPLOY_PAY=$DEPLOY_PAY"
+            echo "DEPLOY_DOCS_PAGE=$DEPLOY_DOCS_PAGE"
+            echo "ANY_DEPLOY=$ANY_DEPLOY"
+          } >> "$GITHUB_ENV"
+
+          echo "=== Deploy plan ==="
+          echo "DEPLOY_CRM=$DEPLOY_CRM"
+          echo "DEPLOY_ROOT=$DEPLOY_ROOT"
+          echo "DEPLOY_AUTH=$DEPLOY_AUTH"
+          echo "DEPLOY_ACCOUNT=$DEPLOY_ACCOUNT"
+          echo "DEPLOY_TARIFFS=$DEPLOY_TARIFFS"
+          echo "DEPLOY_CONSTRUCTOR=$DEPLOY_CONSTRUCTOR"
+          echo "DEPLOY_PUBLIC_U=$DEPLOY_PUBLIC_U"
+          echo "DEPLOY_ASSETS=$DEPLOY_ASSETS"
+          echo "DEPLOY_CALENDAR=$DEPLOY_CALENDAR"
+          echo "DEPLOY_PAY=$DEPLOY_PAY"
+          echo "DEPLOY_DOCS_PAGE=$DEPLOY_DOCS_PAGE"
+          echo "ANY_DEPLOY=$ANY_DEPLOY"
+
+      - name: No deployable contour changes
+        if: env.ANY_DEPLOY != '1'
+        shell: bash
+        run: |
+          echo "No deployable contour changes detected. Skip."
+
+      - name: Build CRM (Vite)
+        if: env.DEPLOY_CRM == '1'
         shell: bash
         run: |
           set -euo pipefail
@@ -63,38 +191,151 @@ jobs:
           npm run build
           cd ../..
 
-          test -d "./apps/crm/dist" || { echo "ERROR: apps/crm/dist not found after build"; exit 1; }
+          test -f "./apps/crm/dist/index.html" || { echo "ERROR: apps/crm/dist/index.html not found after build"; exit 1; }
 
-          rm -rf ./frontend/dashboard
-          mkdir -p ./frontend/dashboard
-          rsync -rltDz --delete ./apps/crm/dist/ ./frontend/dashboard/
+          echo "OK: CRM built"
 
-          test -f ./frontend/dashboard/index.html || { echo "ERROR: CRM index.html not found in frontend/dashboard"; exit 1; }
-          echo "OK: CRM built into ./frontend/dashboard"
-
-      - name: Deploy (rsync without owner/group/perms)
+      - name: Deploy selected contours
+        if: env.ANY_DEPLOY == '1'
         shell: bash
         run: |
           set -euo pipefail
 
-          rsync -rltDz --delete \
-            --delete-excluded \
-            --exclude='*.bak*' \
-            --exclude='*.repo.bak*' \
-            --exclude='.git/' \
-            --no-owner --no-group --no-perms --omit-dir-times \
-            ./frontend/ "$TARGET_DIR/"
+          sync_dir() {
+            local src="$1"
+            local dst="$2"
+            local label="$3"
 
-          echo "Deployed files (top):"
-          ls -la "$TARGET_DIR" | head -n 50
+            if [ ! -d "$src" ]; then
+              echo "SKIP: $label source not found -> $src"
+              return 0
+            fi
+
+            mkdir -p "$dst"
+
+            rsync -rltDz --delete \
+              --delete-excluded \
+              --exclude='*.bak*' \
+              --exclude='*.repo.bak*' \
+              --exclude='.git/' \
+              --no-owner --no-group --no-perms --omit-dir-times \
+              "$src/" "$dst/"
+
+            echo "OK: deployed $label"
+          }
+
+          sync_root_files() {
+            mkdir -p "$TARGET_DIR"
+
+            rsync -rltDz --delete \
+              --delete-excluded \
+              --exclude='*/' \
+              --exclude='*.bak*' \
+              --exclude='*.repo.bak*' \
+              --exclude='.git/' \
+              --no-owner --no-group --no-perms --omit-dir-times \
+              "./frontend/" "$TARGET_DIR/"
+
+            echo "OK: deployed frontend root files"
+          }
+
+          if [ "$DEPLOY_ROOT" = "1" ]; then
+            sync_root_files
+          fi
+
+          if [ "$DEPLOY_AUTH" = "1" ]; then
+            sync_dir "./frontend/auth" "$TARGET_DIR/auth" "auth"
+          fi
+
+          if [ "$DEPLOY_ACCOUNT" = "1" ]; then
+            sync_dir "./frontend/account" "$TARGET_DIR/account" "account"
+          fi
+
+          if [ "$DEPLOY_TARIFFS" = "1" ]; then
+            sync_dir "./frontend/tariffs" "$TARGET_DIR/tariffs" "tariffs"
+          fi
+
+          if [ "$DEPLOY_CONSTRUCTOR" = "1" ]; then
+            sync_dir "./frontend/constructor" "$TARGET_DIR/constructor" "constructor"
+          fi
+
+          if [ "$DEPLOY_PUBLIC_U" = "1" ]; then
+            sync_dir "./frontend/u" "$TARGET_DIR/u" "public profile"
+          fi
+
+          if [ "$DEPLOY_ASSETS" = "1" ]; then
+            sync_dir "./frontend/assets" "$TARGET_DIR/assets" "shared assets"
+          fi
+
+          if [ "$DEPLOY_CALENDAR" = "1" ]; then
+            sync_dir "./frontend/calendar" "$TARGET_DIR/calendar" "calendar"
+          fi
+
+          if [ "$DEPLOY_PAY" = "1" ]; then
+            sync_dir "./frontend/pay" "$TARGET_DIR/pay" "pay"
+          fi
+
+          if [ "$DEPLOY_DOCS_PAGE" = "1" ]; then
+            sync_dir "./frontend/docs" "$TARGET_DIR/docs" "frontend docs page"
+          fi
+
+          if [ "$DEPLOY_CRM" = "1" ]; then
+            mkdir -p "$TARGET_DIR/dashboard"
+
+            rsync -rltDz --delete \
+              --delete-excluded \
+              --exclude='*.bak*' \
+              --exclude='*.repo.bak*' \
+              --exclude='.git/' \
+              --no-owner --no-group --no-perms --omit-dir-times \
+              "./apps/crm/dist/" "$TARGET_DIR/dashboard/"
+
+            echo "OK: deployed CRM dashboard"
+          fi
+
+          echo "=== Target tree (top) ==="
+          ls -la "$TARGET_DIR" | head -n 80
 
       - name: Healthcheck (local nginx, avoid DNS)
+        if: env.ANY_DEPLOY == '1'
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            curl -kfsSI https://127.0.0.1/dashboard/ -H "Host: app.abqd.ru" | head -n 20
-            curl -kfsSI https://127.0.0.1/tariffs/   -H "Host: app.abqd.ru" | head -n 20
-          else
-            echo "Skip host healthcheck for non-main branch."
+
+          check_url() {
+            local path="$1"
+            echo "CHECK $path"
+            curl -kfsSI "https://127.0.0.1$path" -H "Host: app.abqd.ru" | head -n 20
+          }
+
+          if [ "$DEPLOY_CRM" = "1" ]; then
+            check_url "$URL_PREFIX/dashboard/"
+          fi
+
+          if [ "$DEPLOY_AUTH" = "1" ]; then
+            check_url "$URL_PREFIX/auth/"
+          fi
+
+          if [ "$DEPLOY_ACCOUNT" = "1" ]; then
+            check_url "$URL_PREFIX/account/"
+          fi
+
+          if [ "$DEPLOY_TARIFFS" = "1" ]; then
+            check_url "$URL_PREFIX/tariffs/"
+          fi
+
+          if [ "$DEPLOY_CONSTRUCTOR" = "1" ]; then
+            check_url "$URL_PREFIX/constructor/"
+          fi
+
+          if [ "$DEPLOY_CALENDAR" = "1" ]; then
+            check_url "$URL_PREFIX/calendar/"
+          fi
+
+          if [ "$DEPLOY_PAY" = "1" ]; then
+            check_url "$URL_PREFIX/pay/"
+          fi
+
+          if [ "$DEPLOY_DOCS_PAGE" = "1" ]; then
+            check_url "$URL_PREFIX/docs/"
           fi
