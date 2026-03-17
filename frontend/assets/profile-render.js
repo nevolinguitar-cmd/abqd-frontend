@@ -1,4 +1,4 @@
-/* ABQD • profile-render.js • v2 • 2026-03-18
+/* ABQD • profile-render.js • v1 • 2026-01-08
    Один рендер для constructor и /u
    ES5 compatible
 */
@@ -64,6 +64,7 @@
     document.documentElement.setAttribute('data-theme', theme);
   }
 
+  // ===== adapter: API payload -> constructor-like state =====
   function pick(){
     for (var i=0;i<arguments.length;i++){
       var v = arguments[i];
@@ -75,114 +76,52 @@
   }
 
   function normalizeBtnStyle(s){
-    s = clean(s).toLowerCase();
-    if (s === 'primary' || s === 'accent' || s === 'metal') return 'primary';
+    s = (s || '').toString().toLowerCase();
+    if (s === 'primary' || s === 'accent') return 'primary';
     return 'ghost';
   }
 
-  function asArray(x){
-    return Array.isArray(x) ? x : [];
-  }
-
-  function unwrapState(payload){
+  function apiToConstructorState(payload){
+    // payload can be:
+    //  A) {slug, state: <constructor-state>}  (мы так сохраняем сейчас)
+    //  B) {slug, state: {profile:{name,...}, buttons...}}  (state-based)
+    //  C) {slug, profile:{...}} (старое / не используем, но терпим)
     var st = payload && payload.state ? payload.state : (payload || {});
     if (!st || typeof st !== 'object') st = {};
 
-    while (st && typeof st === 'object' && st.state && typeof st.state === 'object') {
-      var onlyWrapper = true;
-      for (var k in st) {
-        if (st.hasOwnProperty(k) && k !== 'state' && k !== 'updated_at' && k !== 'ok' && k !== 'slug' && k !== 'user_key') {
-          onlyWrapper = false;
-          break;
-        }
-      }
-      if (!onlyWrapper) break;
-      st = st.state;
-    }
+    // looks-like old constructor
+    var looksOld = (typeof st.fullName === 'string') || (typeof st.avatarDataUrl === 'string') || Array.isArray(st.points) || Array.isArray(st.gallery);
+    if (looksOld) return st;
 
-    return st || {};
-  }
-
-  // ===== adapter: API payload -> constructor-like state =====
-  function apiToConstructorState(payload){
-    var st = unwrapState(payload);
-    var p = (st && st.profile && typeof st.profile === 'object') ? st.profile : {};
-
-    // looks-like old constructor-like state
-    var looksOld =
-      (typeof st.fullName === 'string') ||
-      (typeof st.avatarDataUrl === 'string') ||
-      (typeof st.bannerDataUrl === 'string') ||
-      (typeof st.logoDataUrl === 'string') ||
-      (typeof st.callPhone === 'string') ||
-      (typeof st.callButtonStyle === 'string') ||
-      Array.isArray(st.points) ||
-      Array.isArray(st.gallery) ||
-      Array.isArray(st.buttons);
-
-    if (looksOld) {
-      var old = {};
-      old.slug = pick(st.slug, payload && payload.slug, '');
-      old.theme = pick(st.theme, 'soft');
-      old.ctaTheme = pick(st.ctaTheme, 'auto');
-
-      old.fullName = pick(st.fullName, p.name, 'Профиль');
-      old.role = pick(st.role, p.role, '');
-      old.about = pick(st.about, p.about, '');
-
-      old.phone = pick(st.phone, st.callPhone, p.phone, '');
-      old.callStyle = normalizeBtnStyle(pick(st.callStyle, st.callButtonStyle, 'ghost'));
-
-      old.avatarDataUrl = pick(st.avatarDataUrl, st.avatarUrl, p.avatarDataUrl, p.avatarUrl, p.avatar, '');
-      old.bannerDataUrl = pick(st.bannerDataUrl, st.bannerUrl, p.bannerDataUrl, p.bannerUrl, p.banner, '');
-      old.logoDataUrl = pick(st.logoDataUrl, st.logoUrl, p.logoDataUrl, p.logoUrl, p.logo, '');
-      old.logoLink = pick(st.logoLink, p.logoLink, 'https://abqd.ru');
-
-      old.buttons = asArray(st.buttons);
-      for (var ib=0; ib<old.buttons.length; ib++){
-        if (old.buttons[ib]) old.buttons[ib].style = normalizeBtnStyle(old.buttons[ib].style);
-      }
-
-      old.pointsTitle = pick(st.pointsTitle, 'Ссылки');
-      old.points = asArray(st.points);
-
-      old.galleryTitle = pick(st.galleryTitle, 'Работы');
-      old.gallery = asArray(st.gallery);
-
-      old.chips = asArray(st.chips);
-      return old;
-    }
-
-    // new nested profile format -> build old-like state
+    // state-based -> build old-like to reuse renderer
+    var p = (st && st.profile) ? st.profile : {};
     var out = {};
-    out.slug = pick(st.slug, payload && payload.slug, '');
     out.theme = pick(st.theme, 'soft');
-    out.ctaTheme = pick(st.ctaTheme, 'auto');
 
     out.fullName = pick(p.name, p.fullName, payload && payload.title, 'Профиль');
-    out.role = pick(p.role, p.subtitle, p.tagline, '');
-    out.about = pick(p.about, p.bio, payload && payload.description, '');
+    out.role     = pick(p.role, p.subtitle, p.tagline, '');
+    out.about    = pick(p.about, p.bio, payload && payload.description, '');
 
-    out.phone = pick(st.phone, st.callPhone, p.phone, p.tel, p.mobile, '');
-    out.callStyle = normalizeBtnStyle(pick(st.callStyle, st.callButtonStyle, p.callStyle, 'ghost'));
+    out.phone    = pick(p.phone, p.tel, p.mobile, '');
+    out.callStyle = normalizeBtnStyle(p.callStyle || st.callStyle || 'ghost');
 
-    out.avatarDataUrl = pick(p.avatarDataUrl, p.avatarUrl, p.avatar, '');
-    out.bannerDataUrl = pick(p.bannerDataUrl, p.bannerUrl, p.banner, '');
-    out.logoDataUrl = pick(p.logoDataUrl, p.logoUrl, p.logo, '');
-    out.logoLink = pick(p.logoLink, 'https://abqd.ru');
+    out.avatarDataUrl = pick(p.avatarUrl, p.avatar, p.avatarDataUrl, '');
+    out.bannerDataUrl = pick(p.bannerUrl, p.bannerDataUrl, p.banner, '');
+    out.logoDataUrl   = pick(p.logoUrl, p.logoDataUrl, '');
+    out.logoLink      = pick(p.logoLink, '');
 
-    out.buttons = asArray(st.buttons);
-    for (var i=0; i<out.buttons.length; i++){
+    out.buttons = Array.isArray(st.buttons) ? st.buttons : [];
+    for (var i=0;i<out.buttons.length;i++){
       if (out.buttons[i]) out.buttons[i].style = normalizeBtnStyle(out.buttons[i].style);
     }
 
     out.pointsTitle = pick(st.pointsTitle, 'Ссылки');
-    out.points = asArray(st.points);
+    out.points      = Array.isArray(st.points) ? st.points : [];
 
     out.galleryTitle = pick(st.galleryTitle, 'Работы');
-    out.gallery = asArray(st.gallery);
+    out.gallery      = Array.isArray(st.gallery) ? st.gallery : [];
 
-    out.chips = asArray(st.chips);
+    out.chips = Array.isArray(st.chips) ? st.chips : [];
     return out;
   }
 
@@ -191,25 +130,32 @@
     state = state || {};
     applyTheme(state.theme || 'soft');
 
+<<<<<<< HEAD
+     // --- ABQD_U_PROFILE_NORMALIZE_v1 ---
+=======
     // --- ABQD_U_PROFILE_NORMALIZE_v1 ---
-    var profile = (state && state.profile && typeof state.profile === 'object') ? state.profile : {};
+>>>>>>> 7df1fb6 (fix(u): normalize nested profile state and bust renderer cache)
+var profile = (state && state.profile && typeof state.profile === 'object') ? state.profile : {};
 
-    if (!clean(state.fullName) && clean(profile.name)) state.fullName = profile.name;
-    if (!clean(state.role) && clean(profile.role)) state.role = profile.role;
-    if (!clean(state.about) && clean(profile.about)) state.about = profile.about;
+if (!clean(state.fullName) && clean(profile.name)) state.fullName = profile.name;
+if (!clean(state.role) && clean(profile.role)) state.role = profile.role;
+if (!clean(state.about) && clean(profile.about)) state.about = profile.about;
 
-    if (!clean(state.phone) && clean(state.callPhone)) state.phone = state.callPhone;
-    if (!clean(state.phone) && clean(profile.phone)) state.phone = profile.phone;
+if (!clean(state.phone) && clean(state.callPhone)) state.phone = state.callPhone;
+if (!clean(state.phone) && clean(profile.phone)) state.phone = profile.phone;
 
-    if (!clean(state.avatarDataUrl)) state.avatarDataUrl = clean(profile.avatarDataUrl) || clean(profile.avatarUrl) || clean(profile.avatar);
-    if (!clean(state.bannerDataUrl)) state.bannerDataUrl = clean(profile.bannerDataUrl) || clean(profile.bannerUrl) || clean(profile.banner);
-    if (!clean(state.logoDataUrl)) state.logoDataUrl = clean(profile.logoDataUrl) || clean(profile.logoUrl) || clean(profile.logo);
+if (!clean(state.avatarDataUrl)) state.avatarDataUrl = clean(profile.avatarDataUrl) || clean(profile.avatarUrl) || clean(profile.avatar);
+if (!clean(state.bannerDataUrl)) state.bannerDataUrl = clean(profile.bannerDataUrl) || clean(profile.bannerUrl) || clean(profile.banner);
+if (!clean(state.logoDataUrl)) state.logoDataUrl = clean(profile.logoDataUrl) || clean(profile.logoUrl) || clean(profile.logo);
 
-    if (!clean(state.logoLink)) state.logoLink = clean(profile.logoLink) || 'https://abqd.ru';
-    if (!clean(state.callStyle) && clean(state.callButtonStyle)) state.callStyle = state.callButtonStyle;
-    state.callStyle = normalizeBtnStyle(state.callStyle);
+if (!clean(state.logoLink)) state.logoLink = clean(profile.logoLink) || 'https://abqd.ru';
+if (!clean(state.callStyle) && clean(state.callButtonStyle)) state.callStyle = state.callButtonStyle;
 
+<<<<<<< HEAD
     var nameRaw = clean(state.fullName);
+=======
+var nameRaw = clean(state.fullName);
+>>>>>>> 7df1fb6 (fix(u): normalize nested profile state and bust renderer cache)
     var nameEmpty = !nameRaw;
     var showName = nameEmpty ? 'Профиль' : nameRaw;
 
@@ -307,7 +253,7 @@
         if (!btn || !clean(btn.label)) continue;
         var a2 = document.createElement('a');
         a2.textContent = btn.label;
-        a2.className = (normalizeBtnStyle(btn.style) === 'primary') ? 'primary' : '';
+        a2.className = (btn.style === 'primary') ? 'primary' : '';
         a2.href = normUrl(btn.url) || '#';
         a2.target = '_blank';
         a2.rel = 'noopener';
@@ -464,11 +410,11 @@
     var gallerySection = $('gallerySection');
     if (gallerySection && gallerySection.classList) gallerySection.classList.toggle('hide', !(gal && gal.length));
 
-    // optional footer
+    // optional footer (если элемент есть)
     var footer = $('profileFooter');
     if (footer){
-      footer.innerHTML = '';
-      try{ footer.style.display='none'; }catch(_e){}
+      var year = new Date().getFullYear();
+      footer.innerHTML = ''; try{ footer.style.display='none'; }catch(_e){}
     }
   }
 
@@ -482,3 +428,4 @@
     wrapFixedChars: wrapFixedChars
   };
 })(window);
+
