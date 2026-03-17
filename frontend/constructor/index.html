@@ -1,1157 +1,1170 @@
-<!-- 
-  ABQD • Конструктор профиля • Tilda-safe snippet (v6.2 Classic Scroll & Cloud Sync)
-  
-  ВАЖНО: Вставлять в блок T123 (HTML-код).
-  Не вставлять в ZeroBlock как HTML-элемент, если там используется document.write.
--->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ABQD Конструктор профиля</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<style>
-  :root {
-    --font: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    
-    /* --- SIZING & SPACING --- */
-    --r-card: 24px;
-    --r-input: 14px;
-    --r-btn: 99px;
-    
-    /* --- PREVIEW SPECS --- */
-    --avatar: 88px;
-    --heroOverlap: -50px;
+  <style>
+    :root {
+      --font: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      
+      /* --- SIZING & SPACING --- */
+      --r-card: 24px;
+      --r-input: 14px;
+      --r-btn: 99px;
+      
+      /* --- PREVIEW SPECS --- */
+      --avatar: 88px;
+      --heroOverlap: -50px;
 
-    /* --- DARK THEME (Default) --- */
-    --bg-app: #050507;
-    --bg-panel: rgba(20, 21, 26, 0.6);
-    --border-panel: rgba(255, 255, 255, 0.08);
-    
-    --page-gradient: 
-      radial-gradient(at 0% 0%, rgba(109, 92, 255, 0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(255, 77, 157, 0.12) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(109, 92, 255, 0.1) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, rgba(255, 255, 255, 0.03) 0px, transparent 50%);
+      /* --- DARK THEME (Default) --- */
+      --bg-app: #050507;
+      --bg-panel: rgba(20, 21, 26, 0.6);
+      --border-panel: rgba(255, 255, 255, 0.08);
+      
+      --page-gradient: 
+        radial-gradient(at 0% 0%, rgba(109, 92, 255, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(255, 77, 157, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(109, 92, 255, 0.1) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, rgba(255, 255, 255, 0.03) 0px, transparent 50%);
 
-    --text-main: #ffffff;
-    --text-muted: rgba(255, 255, 255, 0.5);
-    --text-label: rgba(255, 255, 255, 0.7);
+      --text-main: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.5);
+      --text-label: rgba(255, 255, 255, 0.7);
 
-    --input-bg: rgba(0, 0, 0, 0.3);
-    --input-border: rgba(255, 255, 255, 0.1);
-    --input-focus: rgba(109, 92, 255, 0.5);
+      --input-bg: rgba(0, 0, 0, 0.3);
+      --input-border: rgba(255, 255, 255, 0.1);
+      --input-focus: rgba(109, 92, 255, 0.5);
 
-    --accent-1: #6d5cff;
-    --accent-2: #ff4d9d;
-    --accent-grad: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      --accent-1: #6d5cff;
+      --accent-2: #ff4d9d;
+      --accent-grad: linear-gradient(135deg, var(--accent-1), var(--accent-2));
 
-    --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
-    --glass-blur: 24px;
-    
-    --logo-filter: invert(1) brightness(1.2); 
+      --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+      --glass-blur: 24px;
+      
+      --logo-filter: invert(1) brightness(1.2); 
 
-    /* Colors strictly for the Profile Preview (Dark) */
-    --p-bg: #0b0c10;
-    --p-card: rgba(20, 22, 28, 0.7);
-    --p-border: rgba(255,255,255,0.12);
-    --p-text: #fff;
-    --p-text-muted: rgba(255,255,255,0.6);
-  }
-
-  html[data-theme="soft"] {
-    /* --- LIGHT THEME --- */
-    --bg-app: #f2f4f8;
-    --bg-panel: rgba(255, 255, 255, 0.75);
-    --border-panel: rgba(255, 255, 255, 0.6);
-
-    --page-gradient: 
-      radial-gradient(at 10% 10%, rgba(37, 99, 235, 0.08) 0px, transparent 60%),
-      radial-gradient(at 90% 20%, rgba(124, 58, 237, 0.08) 0px, transparent 60%),
-      linear-gradient(180deg, #ffffff 0%, #f0f4fa 100%);
-
-    --text-main: #1a1c23;
-    --text-muted: rgba(0, 0, 0, 0.45);
-    --text-label: rgba(0, 0, 0, 0.6);
-
-    --input-bg: rgba(255, 255, 255, 0.6);
-    --input-border: rgba(0, 0, 0, 0.06);
-    --input-focus: rgba(37, 99, 235, 0.4);
-
-    --accent-1: #2563eb;
-    --accent-2: #7c3aed;
-    --accent-grad: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-
-    --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.08);
-    
-    --logo-filter: none;
-
-    /* Profile Preview (Light) */
-    --p-bg: #ffffff;
-    --p-card: rgba(255,255,255,0.8);
-    --p-border: rgba(0,0,0,0.06);
-    --p-text: #1a1c23;
-    --p-text-muted: rgba(0,0,0,0.5);
-  }
-
-  /* --- BASE --- */
-  .abqdRoot {
-    font-family: var(--font);
-    background-color: var(--bg-app);
-    background-image: var(--page-gradient);
-    color: var(--text-main);
-    min-height: 100vh;
-    padding: 40px 20px;
-    box-sizing: border-box;
-    position: relative;
-    overflow-x: hidden;
-  }
-  .abqdRoot * { box-sizing: border-box; outline: none; }
-  
-  .abqdRoot input, 
-  .abqdRoot textarea, 
-  .abqdRoot select, 
-  .abqdRoot button {
-    font-family: var(--font) !important;
-  }
-  
-  .wrap {
-    max-width: 1280px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 2;
-  }
-
-  /* --- HEADER & LOGO --- */
-  .top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 32px;
-    gap: 24px;
-    flex-wrap: wrap;
-  }
-  
-  .brand-block { display: flex; flex-direction: column; gap: 12px; }
-  .brand-logo-link { display: block; width: fit-content; text-decoration: none; opacity: 0.9; transition: opacity 0.2s ease; }
-  .brand-logo-link:hover { opacity: 1; }
-  .brand-logo { display: block; height: auto; filter: var(--logo-filter); transition: filter 0.3s ease; }
-  
-  @media (min-width: 981px) { .brand-logo { max-height: 32px; width: auto; } }
-  @media (max-width: 980px) { .brand-logo { max-height: 24px; width: auto; } }
-
-  h1 {
-    font-weight: 900;
-    font-size: clamp(24px, 4vw, 36px);
-    margin: 0;
-    letter-spacing: -0.02em;
-    background: linear-gradient(180deg, var(--text-main), var(--text-muted));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .subline { margin-top: 8px; font-size: 13px; font-weight: 500; color: var(--text-muted); max-width: 600px; line-height: 1.4; }
-
-  /* --- THEME TOGGLE --- */
-  .seg { background: var(--input-bg); padding: 4px; border-radius: 99px; border: 1px solid var(--border-panel); display: flex; position: relative; }
-  .seg button { background: transparent; border: none; color: var(--text-muted); font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 99px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.05em; }
-  .seg button.active { background: var(--bg-app); color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-  html[data-theme="soft"] .seg button.active { background: #fff; }
-
-  /* --- GRID LAYOUT --- */
-  .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 32px; align-items: start; }
-
-  /* --- GLASS PANELS (Common) --- */
-  .card {
-    background: var(--bg-panel);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    border: 1px solid var(--border-panel);
-    border-radius: var(--r-card);
-    box-shadow: var(--glass-shadow);
-  }
-  
-  /* --- EDITOR COLUMN --- */
-  .editorCard { display: flex; flex-direction: column; overflow: hidden; position: relative; }
-
-  /* Editor Header */
-  .cardHd {
-    padding: 20px; border-bottom: 1px solid var(--border-panel); background: rgba(255,255,255,0.02);
-    display: flex; flex-direction: column; gap: 16px;
-  }
-  .cardHd b { font-size: 18px; letter-spacing: -0.01em; font-weight: 800; display: block; }
-  
-  .sheet-handle { display: none; }
-  .close-sheet-btn { display: none; }
-
-  /* Editor Tabs */
-  .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab { background: transparent; border: 1px solid transparent; color: var(--text-muted); font-weight: 700; font-size: 12px; padding: 8px 14px; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
-  .tab:hover { color: var(--text-main); background: var(--input-bg); }
-  .tab.active { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(109, 92, 255, 0.3); border: none; }
-
-  /* Editor Area */
-  .editorInner { padding: 0; }
-  .pad { padding: 24px 20px; }
-
-  /* --- FORMS & INPUTS --- */
-  label { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-label); letter-spacing: 0.05em; }
-  input, textarea, select { width: 100%; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--r-input); padding: 14px; font-size: 14px; font-weight: 600; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
-  input:focus, textarea:focus, select:focus { border-color: var(--accent-1); box-shadow: 0 0 0 3px var(--input-focus); background: var(--bg-app); }
-  textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
-  
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-  @media(max-width: 500px) { .row { grid-template-columns: 1fr; } }
-  .help, .mini { font-size: 12px; color: var(--text-muted); line-height: 1.4; font-weight: 500; }
-  input[type="file"]::file-selector-button { background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-panel); padding: 6px 12px; border-radius: 8px; font-size: 12px; margin-right: 12px; cursor: pointer; font-weight: 700; }
-
-  /* --- BUTTONS (Editor Actions) --- */
-  .btnRow { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
-  .btn { border: none; background: var(--text-main); color: var(--bg-app); font-weight: 800; font-size: 13px; padding: 12px 20px; border-radius: var(--r-btn); cursor: pointer; transition: transform 0.1s, opacity 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
-  .btn:hover { opacity: 0.9; }
-  .btn:active { transform: scale(0.98); }
-  .btn.outline { background: transparent; border: 1px solid var(--border-panel); color: var(--text-main); }
-  .btn.outline:hover { border-color: var(--text-muted); }
-  .btn.danger { color: #ff4d4d; background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255,77,77,0.2); }
-  .btn.small { padding: 6px 12px; font-size: 11px; }
-  .resetLink { background: none; border: none; color: var(--text-muted); font-size: 12px; text-decoration: underline; cursor: pointer; margin-left: auto; font-weight: 600; }
-
-  /* --- PREVIEW COLUMN BASE (The Phone) --- */
-  #previewCard {
-    background: var(--p-bg); border-radius: var(--r-card); border: none;
-    box-shadow: var(--glass-shadow);
-    color: var(--p-text);
-    position: relative; /* Классическое поведение, крутится вместе со страницей */
-    overflow: hidden;
-  }
-  #previewCard .cardHdPhone { background: transparent; border: none; padding: 24px; text-align: center; display: flex; justify-content: center; align-items: center; }
-  .phone-brand-logo { height: 18px; width: auto; opacity: 0.7; filter: var(--logo-filter); }
-
-  /* --- INLINE EDIT HOVERS --- */
-  [data-edit] {
-    position: relative;
-    border-radius: 16px;
-    transition: background 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-  }
-  @media (hover: hover) {
-    [data-edit]:hover {
-      box-shadow: inset 0 0 0 2px var(--border-panel);
-      background: rgba(125,125,125,0.05);
+      /* Colors strictly for the Profile Preview (Dark) */
+      --p-bg: #0b0c10;
+      --p-card: rgba(20, 22, 28, 0.7);
+      --p-border: rgba(255,255,255,0.12);
+      --p-text: #fff;
+      --p-text-muted: rgba(255,255,255,0.6);
     }
-  }
-  [data-edit]:active { background: rgba(125,125,125,0.1); }
 
-  /* --- PREVIEW CONTENT STYLES --- */
-  .hero { position: relative; padding-bottom: 20px; }
-  .bannerWrap { padding: 12px; }
-  .banner { border-radius: 24px; height: 180px; background: #2a2a2a; overflow: hidden; position: relative; }
-  .banner img { width: 100%; height: 100%; object-fit: cover; }
-  .heroHead { padding: 0 24px; margin-top: var(--heroOverlap); position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 16px; }
-  .avatar { width: var(--avatar); height: var(--avatar); border-radius: 50%; border: 4px solid var(--p-bg); background: var(--p-bg); overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
-  .avatarInner { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #eee; color: #333; }
-  .avatar img { width: 100%; height: 100%; object-fit: cover; }
-  
-  .nm { font-size: 20px; font-weight: 800; line-height: 1.1; margin: 0; color: var(--p-text) !important; pointer-events: none; }
-  .rl { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--p-text-muted); margin-top: 4px; letter-spacing: 0.05em; pointer-events: none;}
-  .about { padding: 20px 24px; }
-  .aboutText { font-size: 14px; line-height: 1.6; color: var(--p-text); opacity: 0.9; margin-bottom: 20px; font-weight: 500; pointer-events: none;}
-  
-  .cta { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
-  .ctaBtn { padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 13px; text-decoration: none; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); background: rgba(125,125,125,0.1); color: var(--p-text); }
-  .ctaBtn--glass { background: rgba(125,125,125,0.1); backdrop-filter: blur(10px); }
-  .ctaBtn--metal { background: linear-gradient(180deg, #333, #111); color: #fff; border: none; }
-  html[data-theme="soft"] .ctaBtn--metal { background: linear-gradient(180deg, #fff, #ddd); color: #000; }
-  .ctaBtn--accent { background: var(--accent-grad); color: #fff; border: none; box-shadow: 0 8px 16px -4px rgba(109,92,255,0.4); }
+    html[data-theme="soft"] {
+      /* --- LIGHT THEME --- */
+      --bg-app: #f2f4f8;
+      --bg-panel: rgba(255, 255, 255, 0.75);
+      --border-panel: rgba(255, 255, 255, 0.6);
 
-  .chipsRow { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 24px 24px; pointer-events: none; }
-  .chipA { padding: 8px 14px; border-radius: 99px; font-size: 12px; font-weight: 700; text-decoration: none; border: 1px solid var(--p-border); color: var(--p-text); }
-  .chipA--accent { background: var(--accent-grad); color: #fff; border: none; }
-  .chipA--outline { background: transparent; border-color: var(--p-border); opacity: 0.8; }
+      --page-gradient: 
+        radial-gradient(at 10% 10%, rgba(37, 99, 235, 0.08) 0px, transparent 60%),
+        radial-gradient(at 90% 20%, rgba(124, 58, 237, 0.08) 0px, transparent 60%),
+        linear-gradient(180deg, #ffffff 0%, #f0f4fa 100%);
 
-  .section { padding: 0 24px 24px; }
-  .secTitle { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--p-text-muted); font-weight: 800; margin-bottom: 12px; pointer-events: none; }
-  
-  .list { display: flex; flex-direction: column; gap: 8px; pointer-events: none;}
-  .item { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; background: var(--p-card); border: 1px solid var(--p-border); color: var(--p-text); text-decoration: none; }
-  .check { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-grad); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; flex-shrink: 0; font-weight: 800; }
-  .itT { font-size: 14px; font-weight: 700; margin: 0; }
-  .itD { font-size: 12px; opacity: 0.7; margin: 2px 0 0; font-weight: 500; }
+      --text-main: #1a1c23;
+      --text-muted: rgba(0, 0, 0, 0.45);
+      --text-label: rgba(0, 0, 0, 0.6);
 
-  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; pointer-events: none;}
-  .work { aspect-ratio: 1; border-radius: 12px; overflow: hidden; position: relative; background: #333; }
-  .workImg { width: 100%; height: 100%; }
-  .workImg img { width: 100%; height: 100%; object-fit: cover; }
-  .workBody { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: #fff; }
-  .workT { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;}
-  .workM { display: none; }
+      --input-bg: rgba(255, 255, 255, 0.6);
+      --input-border: rgba(0, 0, 0, 0.06);
+      --input-focus: rgba(37, 99, 235, 0.4);
 
-  .footer { text-align: center; padding: 20px; font-size: 11px; opacity: 0.4; color: var(--p-text); font-weight: 600; }
+      --accent-1: #2563eb;
+      --accent-2: #7c3aed;
+      --accent-grad: linear-gradient(135deg, var(--accent-1), var(--accent-2));
 
-  .hide { display: none !important; }
-  .editorSpacer { height: 60px; }
+      --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.08);
+      
+      --logo-filter: none;
 
-  .saveStatus { margin-top: 16px; font-size: 11px; display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-weight: 700; }
-  .saveDot { width: 6px; height: 6px; border-radius: 50%; background: #00c853; transition: background 0.3s;}
-  [data-state="dirty"] .saveDot { background: #ffab00; }
-  [data-state="saving"] .saveDot { background: #2979ff; }
-  [data-state="error"] .saveDot { background: #ff4d4d; }
+      /* Profile Preview (Light) */
+      --p-bg: #ffffff;
+      --p-card: rgba(255,255,255,0.8);
+      --p-border: rgba(0,0,0,0.06);
+      --p-text: #1a1c23;
+      --p-text-muted: rgba(0,0,0,0.5);
+    }
 
-  /* Mobile FAB Button */
-  .fab-edit {
-    display: none;
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999;
-    background: var(--text-main); color: var(--bg-app); padding: 16px 32px; border-radius: 99px;
-    font-weight: 800; font-size: 14px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    align-items: center; gap: 10px; cursor: pointer; transition: transform 0.2s, opacity 0.2s;
-  }
-  .fab-edit.hide-fab { transform: translate(-50%, 150%); opacity: 0; }
-
-  /* ========================================================
-     MOBILE APP EXPERIENCE (BOTTOM SHEET + INLINE CLICKS)
-     ======================================================== */
-  @media (max-width: 980px) {
-    .abqdRoot { padding: 0; background: var(--p-bg); color: var(--p-text); overflow-y: auto;} 
-    .wrap { padding: 0; }
-    
-    .top { padding: 16px 20px; margin-bottom: 0; background: var(--p-bg); position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--p-border); align-items: center;}
-    h1 { display: none; }
-    .subline { display: none; }
-    
-    .grid { display: block; }
-    #previewMount { padding: 0 0 100px 0; height: auto; }
-    
-    #previewCard { border: none; border-radius: 0; box-shadow: none; top: 0; min-height: auto; max-height: none; overflow-y: visible; position: relative;}
-    #previewCard .cardHdPhone { display: none; } 
-
-    .fab-edit { display: flex; text-transform: uppercase; letter-spacing: 0.05em;}
-
-    .editorCard {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      height: 70vh !important;
+    /* Сброс базовых стилей браузера */
+    body {
       margin: 0;
-      border-radius: 32px 32px 0 0;
-      z-index: 10000;
-      transform: translateY(100%);
-      transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1);
-      background: var(--bg-app);
-      border: 1px solid var(--border-panel);
-      border-bottom: none;
-      box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
+      padding: 0;
+      background-color: var(--bg-app);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- BASE --- */
+    .abqdRoot {
+      font-family: var(--font);
+      background-color: var(--bg-app);
+      background-image: var(--page-gradient);
       color: var(--text-main);
+      min-height: 100vh;
+      padding: 40px 20px;
+      box-sizing: border-box;
+      position: relative;
+      overflow-x: hidden;
     }
-    .editorCard.sheet-open { transform: translateY(0); }
-
-    .cardHd { 
-      padding: 12px 20px; border-radius: 32px 32px 0 0; 
-      flex-direction: column; gap: 12px; align-items: center; 
-      position: sticky; top: 0; z-index: 100;
+    .abqdRoot * { box-sizing: border-box; outline: none; }
+    
+    .abqdRoot input, 
+    .abqdRoot textarea, 
+    .abqdRoot select, 
+    .abqdRoot button {
+      font-family: var(--font) !important;
     }
-    .cardHd b { display: none; }
-    .sheet-handle { display: block; width: 40px; height: 5px; background: var(--text-muted); border-radius: 99px; opacity: 0.4; margin-bottom: 4px; }
-    .close-sheet-btn { display: block; margin-left: 12px; }
     
-    .editorSticky { position: static; height: calc(100% - 70px); overflow-y: auto; }
-  }
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
 
-  .toastWrap { position: fixed; bottom: 20px; right: 20px; z-index: 100000; }
-  .toast { background: var(--bg-app); border: 1px solid var(--border-panel); color: var(--text-main); padding: 12px 20px; border-radius: 12px; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-size: 13px; font-weight: 700; }
-</style>
-
-<div class="abqdRoot" data-abqd-constructor>
-  <div class="wrap" id="appWrap">
+    /* --- HEADER & LOGO --- */
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 32px;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
     
-    <!-- HEADER -->
-    <div class="top">
-      <div class="brand-block">
-        <a href="https://abqd.ru" target="_blank" class="brand-logo-link">
-          <picture>
-            <source srcset="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" media="(min-width: 981px)">
-            <img src="https://static.tildacdn.com/tild6464-3131-4736-b938-656238643465/_abqd.png" alt="ABQD" class="brand-logo">
-          </picture>
-        </a>
-        <div>
-          <h1>Конструктор профиля</h1>
-          <p class="subline">Настройки синхронизируются автоматически между устройствами.</p>
+    .brand-block { display: flex; flex-direction: column; gap: 12px; }
+    .brand-logo-link { display: block; width: fit-content; text-decoration: none; opacity: 0.9; transition: opacity 0.2s ease; }
+    .brand-logo-link:hover { opacity: 1; }
+    .brand-logo { display: block; height: auto; filter: var(--logo-filter); transition: filter 0.3s ease; }
+    
+    @media (min-width: 981px) { .brand-logo { max-height: 32px; width: auto; } }
+    @media (max-width: 980px) { .brand-logo { max-height: 24px; width: auto; } }
+
+    h1 {
+      font-weight: 900;
+      font-size: clamp(24px, 4vw, 36px);
+      margin: 0;
+      letter-spacing: -0.02em;
+      background: linear-gradient(180deg, var(--text-main), var(--text-muted));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subline { margin-top: 8px; font-size: 13px; font-weight: 500; color: var(--text-muted); max-width: 600px; line-height: 1.4; }
+
+    /* --- THEME TOGGLE --- */
+    .seg { background: var(--input-bg); padding: 4px; border-radius: 99px; border: 1px solid var(--border-panel); display: flex; position: relative; }
+    .seg button { background: transparent; border: none; color: var(--text-muted); font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 99px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.05em; }
+    .seg button.active { background: var(--bg-app); color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    html[data-theme="soft"] .seg button.active { background: #fff; }
+
+    /* --- GRID LAYOUT --- */
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 32px; align-items: start; }
+
+    /* --- GLASS PANELS (Common) --- */
+    .card {
+      background: var(--bg-panel);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--border-panel);
+      border-radius: var(--r-card);
+      box-shadow: var(--glass-shadow);
+    }
+    
+    /* --- EDITOR COLUMN --- */
+    .editorCard { display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+    /* Editor Header */
+    .cardHd {
+      padding: 20px; border-bottom: 1px solid var(--border-panel); background: rgba(255,255,255,0.02);
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .cardHd b { font-size: 18px; letter-spacing: -0.01em; font-weight: 800; display: block; }
+    
+    .sheet-handle { display: none; }
+    .close-sheet-btn { display: none; }
+
+    /* Editor Tabs */
+    .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { background: transparent; border: 1px solid transparent; color: var(--text-muted); font-weight: 700; font-size: 12px; padding: 8px 14px; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tab:hover { color: var(--text-main); background: var(--input-bg); }
+    .tab.active { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(109, 92, 255, 0.3); border: none; }
+
+    /* Editor Area */
+    .editorInner { padding: 0; }
+    .pad { padding: 24px 20px; }
+
+    /* --- FORMS & INPUTS --- */
+    label { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-label); letter-spacing: 0.05em; }
+    input, textarea, select { width: 100%; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--r-input); padding: 14px; font-size: 14px; font-weight: 600; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent-1); box-shadow: 0 0 0 3px var(--input-focus); background: var(--bg-app); }
+    textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
+    
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media(max-width: 500px) { .row { grid-template-columns: 1fr; } }
+    .help, .mini { font-size: 12px; color: var(--text-muted); line-height: 1.4; font-weight: 500; }
+    input[type="file"]::file-selector-button { background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-panel); padding: 6px 12px; border-radius: 8px; font-size: 12px; margin-right: 12px; cursor: pointer; font-weight: 700; }
+
+    /* --- BUTTONS (Editor Actions) --- */
+    .btnRow { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+    .btn { border: none; background: var(--text-main); color: var(--bg-app); font-weight: 800; font-size: 13px; padding: 12px 20px; border-radius: var(--r-btn); cursor: pointer; transition: transform 0.1s, opacity 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+    .btn.outline { background: transparent; border: 1px solid var(--border-panel); color: var(--text-main); }
+    .btn.outline:hover { border-color: var(--text-muted); }
+    .btn.danger { color: #ff4d4d; background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255,77,77,0.2); }
+    .btn.small { padding: 6px 12px; font-size: 11px; }
+    .resetLink { background: none; border: none; color: var(--text-muted); font-size: 12px; text-decoration: underline; cursor: pointer; margin-left: auto; font-weight: 600; }
+
+    /* --- PREVIEW COLUMN BASE (The Phone) --- */
+    #previewCard {
+      background: var(--p-bg); border-radius: var(--r-card); border: none;
+      box-shadow: var(--glass-shadow);
+      color: var(--p-text);
+      position: relative;
+      overflow: hidden;
+    }
+    #previewCard .cardHdPhone { background: transparent; border: none; padding: 24px; text-align: center; display: flex; justify-content: center; align-items: center; }
+    .phone-brand-logo { height: 18px; width: auto; opacity: 0.7; filter: var(--logo-filter); }
+
+    /* --- INLINE EDIT HOVERS --- */
+    [data-edit] {
+      position: relative;
+      border-radius: 16px;
+      transition: background 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    @media (hover: hover) {
+      [data-edit]:hover {
+        box-shadow: inset 0 0 0 2px var(--border-panel);
+        background: rgba(125,125,125,0.05);
+      }
+    }
+    [data-edit]:active { background: rgba(125,125,125,0.1); }
+
+    /* --- PREVIEW CONTENT STYLES --- */
+    .hero { position: relative; padding-bottom: 20px; }
+    .bannerWrap { padding: 12px; }
+    .banner { border-radius: 24px; height: 180px; background: #2a2a2a; overflow: hidden; position: relative; }
+    .banner img { width: 100%; height: 100%; object-fit: cover; }
+    .heroHead { padding: 0 24px; margin-top: var(--heroOverlap); position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 16px; }
+    .avatar { width: var(--avatar); height: var(--avatar); border-radius: 50%; border: 4px solid var(--p-bg); background: var(--p-bg); overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+    .avatarInner { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #eee; color: #333; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .nm { font-size: 20px; font-weight: 800; line-height: 1.1; margin: 0; color: var(--p-text) !important; pointer-events: none; }
+    .rl { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--p-text-muted); margin-top: 4px; letter-spacing: 0.05em; pointer-events: none;}
+    .about { padding: 20px 24px; }
+    .aboutText { font-size: 14px; line-height: 1.6; color: var(--p-text); opacity: 0.9; margin-bottom: 20px; font-weight: 500; pointer-events: none;}
+    
+    .cta { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
+    .ctaBtn { padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 13px; text-decoration: none; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); background: rgba(125,125,125,0.1); color: var(--p-text); }
+    .ctaBtn--glass { background: rgba(125,125,125,0.1); backdrop-filter: blur(10px); }
+    .ctaBtn--metal { background: linear-gradient(180deg, #333, #111); color: #fff; border: none; }
+    html[data-theme="soft"] .ctaBtn--metal { background: linear-gradient(180deg, #fff, #ddd); color: #000; }
+    .ctaBtn--accent { background: var(--accent-grad); color: #fff; border: none; box-shadow: 0 8px 16px -4px rgba(109,92,255,0.4); }
+
+    .chipsRow { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 24px 24px; pointer-events: none; }
+    .chipA { padding: 8px 14px; border-radius: 99px; font-size: 12px; font-weight: 700; text-decoration: none; border: 1px solid var(--p-border); color: var(--p-text); }
+    .chipA--accent { background: var(--accent-grad); color: #fff; border: none; }
+    .chipA--outline { background: transparent; border-color: var(--p-border); opacity: 0.8; }
+
+    .section { padding: 0 24px 24px; }
+    .secTitle { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--p-text-muted); font-weight: 800; margin-bottom: 12px; pointer-events: none; }
+    
+    .list { display: flex; flex-direction: column; gap: 8px; pointer-events: none;}
+    .item { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; background: var(--p-card); border: 1px solid var(--p-border); color: var(--p-text); text-decoration: none; }
+    .check { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-grad); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; flex-shrink: 0; font-weight: 800; }
+    .itT { font-size: 14px; font-weight: 700; margin: 0; }
+    .itD { font-size: 12px; opacity: 0.7; margin: 2px 0 0; font-weight: 500; }
+
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; pointer-events: none;}
+    .work { aspect-ratio: 1; border-radius: 12px; overflow: hidden; position: relative; background: #333; }
+    .workImg { width: 100%; height: 100%; }
+    .workImg img { width: 100%; height: 100%; object-fit: cover; }
+    .workBody { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: #fff; }
+    .workT { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;}
+    .workM { display: none; }
+
+    .footer { text-align: center; padding: 20px; font-size: 11px; opacity: 0.4; color: var(--p-text); font-weight: 600; }
+
+    .hide { display: none !important; }
+    .editorSpacer { height: 60px; }
+
+    .saveStatus { margin-top: 16px; font-size: 11px; display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-weight: 700; }
+    .saveDot { width: 6px; height: 6px; border-radius: 50%; background: #00c853; transition: background 0.3s;}
+    [data-state="dirty"] .saveDot { background: #ffab00; }
+    [data-state="saving"] .saveDot { background: #2979ff; }
+    [data-state="error"] .saveDot { background: #ff4d4d; }
+
+    /* Mobile FAB Button */
+    .fab-edit {
+      display: none;
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999;
+      background: var(--text-main); color: var(--bg-app); padding: 16px 32px; border-radius: 99px;
+      font-weight: 800; font-size: 14px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      align-items: center; gap: 10px; cursor: pointer; transition: transform 0.2s, opacity 0.2s;
+    }
+    .fab-edit.hide-fab { transform: translate(-50%, 150%); opacity: 0; }
+
+    /* ========================================================
+       MOBILE APP EXPERIENCE (BOTTOM SHEET + INLINE CLICKS)
+       ======================================================== */
+    @media (max-width: 980px) {
+      .abqdRoot { padding: 0; background: var(--p-bg); color: var(--p-text); overflow-y: auto;} 
+      .wrap { padding: 0; }
+      
+      .top { padding: 16px 20px; margin-bottom: 0; background: var(--p-bg); position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--p-border); align-items: center;}
+      h1 { display: none; }
+      .subline { display: none; }
+      
+      .grid { display: block; }
+      #previewMount { padding: 0 0 100px 0; height: auto; }
+      
+      #previewCard { border: none; border-radius: 0; box-shadow: none; top: 0; min-height: auto; max-height: none; overflow-y: visible; position: relative;}
+      #previewCard .cardHdPhone { display: none; } 
+
+      .fab-edit { display: flex; text-transform: uppercase; letter-spacing: 0.05em;}
+
+      .editorCard {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: 70vh !important;
+        margin: 0;
+        border-radius: 32px 32px 0 0;
+        z-index: 10000;
+        transform: translateY(100%);
+        transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+        background: var(--bg-app);
+        border: 1px solid var(--border-panel);
+        border-bottom: none;
+        box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
+        color: var(--text-main);
+      }
+      .editorCard.sheet-open { transform: translateY(0); }
+
+      .cardHd { 
+        padding: 12px 20px; border-radius: 32px 32px 0 0; 
+        flex-direction: column; gap: 12px; align-items: center; 
+        position: sticky; top: 0; z-index: 100;
+      }
+      .cardHd b { display: none; }
+      .sheet-handle { display: block; width: 40px; height: 5px; background: var(--text-muted); border-radius: 99px; opacity: 0.4; margin-bottom: 4px; }
+      .close-sheet-btn { display: block; margin-left: 12px; }
+      
+      .editorSticky { position: static; height: calc(100% - 70px); overflow-y: auto; }
+    }
+
+    .toastWrap { position: fixed; bottom: 20px; right: 20px; z-index: 100000; }
+    .toast { background: var(--bg-app); border: 1px solid var(--border-panel); color: var(--text-main); padding: 12px 20px; border-radius: 12px; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-size: 13px; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <div class="abqdRoot" data-abqd-constructor>
+    <div class="wrap" id="appWrap">
+      
+      <!-- HEADER -->
+      <div class="top">
+        <div class="brand-block">
+          <a href="https://abqd.ru" target="_blank" class="brand-logo-link">
+            <picture>
+              <source srcset="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" media="(min-width: 981px)">
+              <img src="https://static.tildacdn.com/tild6464-3131-4736-b938-656238643465/_abqd.png" alt="ABQD" class="brand-logo">
+            </picture>
+          </a>
+          <div>
+            <h1>Конструктор профиля</h1>
+            <p class="subline">Настройки синхронизируются автоматически между устройствами.</p>
+          </div>
+        </div>
+        <div class="seg" id="themeSeg">
+          <button type="button" data-theme="dark">Тёмная</button>
+          <button type="button" data-theme="soft">Светлая</button>
         </div>
       </div>
-      <div class="seg" id="themeSeg">
-        <button type="button" data-theme="dark">Тёмная</button>
-        <button type="button" data-theme="soft">Светлая</button>
+
+      <div class="grid">
+        <!-- EDITOR -->
+        <div class="card editorCard" id="editorCard">
+          <div class="cardHd">
+            <div class="sheet-handle"></div>
+            <b id="editorTitle">Редактор</b>
+            <div style="display:flex; width: 100%; align-items: center; justify-content: space-between;">
+              <div class="tabs" id="tabs">
+                <button class="tab active" data-tab="profile" type="button">Профиль</button>
+                <button class="tab" data-tab="buttons" type="button">Кнопки</button>
+                <button class="tab" data-tab="contacts" type="button">Контакты</button>
+                <button class="tab" data-tab="points" type="button">Ссылки</button>
+                <button class="tab" data-tab="gallery" type="button">Работа</button>
+              </div>
+              <button class="btn small outline close-sheet-btn" id="closeSheetBtn">Готово</button>
+            </div>
+          </div>
+
+          <div class="editorSticky" id="editorSticky">
+            <div class="editorInner" id="editorInner">
+              
+              <div class="pad" id="tab-profile">
+                <div class="row">
+                  <div><label>Имя Фамилия</label><input id="fullName" placeholder="Александр Петров" /></div>
+                  <div><label>Должность / Статус</label><input id="role" placeholder="CEO & Founder" /></div>
+                </div>
+                <div class="row">
+                  <div><label>Аватар (800×800)</label><input id="avatarFile" type="file" accept="image/*" /><input id="avatarUrl" placeholder="или ссылка на фото" style="margin-top:8px" /></div>
+                  <div><label>Баннер (1600×800)</label><input id="bannerFile" type="file" accept="image/*" /><input id="bannerUrl" placeholder="или ссылка на баннер" style="margin-top:8px" /></div>
+                </div>
+                <div class="row">
+                  <div><label>Логотип (PNG)</label><input id="logoFile" type="file" accept="image/*" /><input id="logoUrl" placeholder="или ссылка" style="margin-top:8px" /></div>
+                  <div><label>Ссылка с логотипа</label><input id="logoLink" placeholder="https://site.com" /></div>
+                </div>
+                <div style="margin-top:20px">
+                  <label>Обо мне</label>
+                  <textarea id="about" maxlength="500" placeholder="Расскажите о себе кратко..."></textarea>
+                  <div class="mini" style="text-align:right"><span id="aboutCount">0</span>/500</div>
+                </div>
+                <div class="row" style="margin-top:20px">
+                  <div><label>Slug (адрес страницы)</label><input id="slug" placeholder="alex-petrov" /><div class="help">app.abqd.ru/u/<b id="slugFull">...</b></div></div>
+                </div>
+                <div class="btnRow">
+                  <button class="btn" id="save" type="button">Сохранить изменения</button>
+                  <button class="btn outline" id="profileLink" type="button">Открыть ссылку</button>
+                  <button class="resetLink" id="reset" type="button">Сброс</button>
+                </div>
+                <div class="saveStatus" id="saveStatus" data-state="saved"><span class="saveDot"></span><span id="saveStatusText">Инициализация...</span></div>
+              </div>
+
+              <!-- OTHER TABS -->
+              <div class="pad hide" id="tab-buttons">
+                <div class="row">
+                  <div><label>Стиль кнопок</label><div class="seg" id="ctaThemeSeg"><button type="button" data-ctatheme="auto">Авто</button><button type="button" data-ctatheme="glass">Glass</button><button type="button" data-ctatheme="accent">Accent</button></div></div>
+                  <div><label>Цветовая схема</label><select id="accentPreset"><option value="brand">Brand (Default)</option><option value="royal">Royal Blue</option><option value="ruby">Ruby Red</option><option value="custom">Custom...</option></select></div>
+                </div>
+                <div class="row hide" id="accentCustomRow">
+                   <div><label>Color 1</label><input id="accentC1" type="color" value="#2563eb"></div>
+                   <div><label>Color 2</label><input id="accentC2" type="color" value="#7c3aed"></div>
+                </div>
+                <div style="margin: 20px 0; border-top: 1px solid var(--border-panel);"></div>
+                <div class="row">
+                  <div><label>Телефон для связи</label><input id="callPhone" placeholder="+7 999 000-00-00" /></div>
+                  <div><label>Стиль кнопки "Позвонить"</label><select id="callPhoneStyle"></select></div>
+                </div>
+                <div id="buttonsList" style="margin-top:20px;"></div>
+                <div class="btnRow"><button class="btn" id="addButton" type="button">+ Добавить кнопку</button></div>
+              </div>
+
+              <div class="pad hide" id="tab-contacts">
+                <div class="help" style="margin-bottom:16px">Маленькие "чипсы" для соцсетей (TG, WA, Insta).</div>
+                <div id="contactsList"></div>
+                <div class="btnRow"><button class="btn" id="addChip" type="button">+ Добавить контакт</button></div>
+              </div>
+
+              <div class="pad hide" id="tab-points">
+                 <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="pointsTitle" placeholder="Полезные ссылки" /></div>
+                 <div id="pointsList"></div>
+                 <div class="btnRow"><button class="btn" id="addPoint" type="button">+ Добавить ссылку</button></div>
+              </div>
+
+              <div class="pad hide" id="tab-gallery">
+                 <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="galleryTitle" placeholder="Мое портфолио" /></div>
+                 <div id="galleryList"></div>
+                 <div class="btnRow"><button class="btn" id="addGallery" type="button">+ Добавить работу</button></div>
+              </div>
+              
+              <div class="editorSpacer"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREVIEW -->
+        <div id="previewMount">
+          <div class="card" id="previewCard">
+            <div class="cardHdPhone">
+              <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" class="phone-brand-logo" alt="ABQD">
+            </div>
+
+            <div class="hero">
+              <div class="bannerWrap" data-edit="profile">
+                <div class="banner" id="bannerBox">
+                  <div class="bannerPlh" id="bannerPlh" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.3; font-weight:700; font-size:10px; text-transform:uppercase;">COVER</div>
+                </div>
+              </div>
+
+              <div class="heroHead" data-edit="profile">
+                <div class="avatar" id="avatarBox"><div class="avatarInner"><span class="fallback" style="font-size:24px; font-weight:800;">A</span></div></div>
+              </div>
+              
+              <div class="about" data-edit="profile">
+                <h2 class="nm" id="nameEl">Загрузка...</h2>
+                <div class="rl" id="roleEl">...</div>
+                <div style="height:12px"></div>
+                <p class="aboutText" id="aboutEl"></p>
+              </div>
+              
+              <div style="padding: 0 24px 20px" data-edit="buttons">
+                <div class="cta" id="ctaRow"></div>
+              </div>
+            </div>
+
+            <div class="section" id="contactsSection" data-edit="contacts">
+              <div class="secTitle" id="contactsTitleEl">Connect</div>
+              <div class="chipsRow" id="contactsPreview" style="padding:0"></div>
+            </div>
+
+            <div class="section" id="pointsSection" data-edit="points">
+              <div class="secTitle" id="pointsTitleEl">Links</div>
+              <div class="list" id="pointsPreview"></div>
+            </div>
+
+            <div class="section" id="gallerySection" data-edit="gallery">
+              <div class="secTitle" id="galleryTitleEl">Gallery</div>
+              <div class="grid3" id="galleryPreview"></div>
+            </div>
+
+            <div class="footer" id="profileFooter"></div>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="grid">
-      <!-- EDITOR -->
-      <div class="card editorCard" id="editorCard">
-        <div class="cardHd">
-          <div class="sheet-handle"></div>
-          <b id="editorTitle">Редактор</b>
-          <div style="display:flex; width: 100%; align-items: center; justify-content: space-between;">
-            <div class="tabs" id="tabs">
-              <button class="tab active" data-tab="profile" type="button">Профиль</button>
-              <button class="tab" data-tab="buttons" type="button">Кнопки</button>
-              <button class="tab" data-tab="contacts" type="button">Контакты</button>
-              <button class="tab" data-tab="points" type="button">Ссылки</button>
-              <button class="tab" data-tab="gallery" type="button">Работа</button>
-            </div>
-            <button class="btn small outline close-sheet-btn" id="closeSheetBtn">Готово</button>
-          </div>
-        </div>
+    <!-- MOBILE FAB -->
+    <button id="fabEdit" class="fab-edit">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      Настроить профиль
+    </button>
 
-        <div class="editorSticky" id="editorSticky">
-          <div class="editorInner" id="editorInner">
-            
-            <div class="pad" id="tab-profile">
-              <div class="row">
-                <div><label>Имя Фамилия</label><input id="fullName" placeholder="Александр Петров" /></div>
-                <div><label>Должность / Статус</label><input id="role" placeholder="CEO & Founder" /></div>
-              </div>
-              <div class="row">
-                <div><label>Аватар (800×800)</label><input id="avatarFile" type="file" accept="image/*" /><input id="avatarUrl" placeholder="или ссылка на фото" style="margin-top:8px" /></div>
-                <div><label>Баннер (1600×800)</label><input id="bannerFile" type="file" accept="image/*" /><input id="bannerUrl" placeholder="или ссылка на баннер" style="margin-top:8px" /></div>
-              </div>
-              <div class="row">
-                <div><label>Логотип (PNG)</label><input id="logoFile" type="file" accept="image/*" /><input id="logoUrl" placeholder="или ссылка" style="margin-top:8px" /></div>
-                <div><label>Ссылка с логотипа</label><input id="logoLink" placeholder="https://site.com" /></div>
-              </div>
-              <div style="margin-top:20px">
-                <label>Обо мне</label>
-                <textarea id="about" maxlength="500" placeholder="Расскажите о себе кратко..."></textarea>
-                <div class="mini" style="text-align:right"><span id="aboutCount">0</span>/500</div>
-              </div>
-              <div class="row" style="margin-top:20px">
-                <div><label>Slug (адрес страницы)</label><input id="slug" placeholder="alex-petrov" /><div class="help">app.abqd.ru/u/<b id="slugFull">...</b></div></div>
-              </div>
-              <div class="btnRow">
-                <button class="btn" id="save" type="button">Сохранить изменения</button>
-                <button class="btn outline" id="profileLink" type="button">Открыть ссылку</button>
-                <button class="resetLink" id="reset" type="button">Сброс</button>
-              </div>
-              <div class="saveStatus" id="saveStatus" data-state="saved"><span class="saveDot"></span><span id="saveStatusText">Инициализация...</span></div>
-            </div>
-
-            <!-- OTHER TABS -->
-            <div class="pad hide" id="tab-buttons">
-              <div class="row">
-                <div><label>Стиль кнопок</label><div class="seg" id="ctaThemeSeg"><button type="button" data-ctatheme="auto">Авто</button><button type="button" data-ctatheme="glass">Glass</button><button type="button" data-ctatheme="accent">Accent</button></div></div>
-                <div><label>Цветовая схема</label><select id="accentPreset"><option value="brand">Brand (Default)</option><option value="royal">Royal Blue</option><option value="ruby">Ruby Red</option><option value="custom">Custom...</option></select></div>
-              </div>
-              <div class="row hide" id="accentCustomRow">
-                 <div><label>Color 1</label><input id="accentC1" type="color" value="#2563eb"></div>
-                 <div><label>Color 2</label><input id="accentC2" type="color" value="#7c3aed"></div>
-              </div>
-              <div style="margin: 20px 0; border-top: 1px solid var(--border-panel);"></div>
-              <div class="row">
-                <div><label>Телефон для связи</label><input id="callPhone" placeholder="+7 999 000-00-00" /></div>
-                <div><label>Стиль кнопки "Позвонить"</label><select id="callPhoneStyle"></select></div>
-              </div>
-              <div id="buttonsList" style="margin-top:20px;"></div>
-              <div class="btnRow"><button class="btn" id="addButton" type="button">+ Добавить кнопку</button></div>
-            </div>
-
-            <div class="pad hide" id="tab-contacts">
-              <div class="help" style="margin-bottom:16px">Маленькие "чипсы" для соцсетей (TG, WA, Insta).</div>
-              <div id="contactsList"></div>
-              <div class="btnRow"><button class="btn" id="addChip" type="button">+ Добавить контакт</button></div>
-            </div>
-
-            <div class="pad hide" id="tab-points">
-               <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="pointsTitle" placeholder="Полезные ссылки" /></div>
-               <div id="pointsList"></div>
-               <div class="btnRow"><button class="btn" id="addPoint" type="button">+ Добавить ссылку</button></div>
-            </div>
-
-            <div class="pad hide" id="tab-gallery">
-               <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="galleryTitle" placeholder="Мое портфолио" /></div>
-               <div id="galleryList"></div>
-               <div class="btnRow"><button class="btn" id="addGallery" type="button">+ Добавить работу</button></div>
-            </div>
-            
-            <div class="editorSpacer"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PREVIEW -->
-      <div id="previewMount">
-        <div class="card" id="previewCard">
-          <div class="cardHdPhone">
-            <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" class="phone-brand-logo" alt="ABQD">
-          </div>
-
-          <div class="hero">
-            <div class="bannerWrap" data-edit="profile">
-              <div class="banner" id="bannerBox">
-                <div class="bannerPlh" id="bannerPlh" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.3; font-weight:700; font-size:10px; text-transform:uppercase;">COVER</div>
-              </div>
-            </div>
-
-            <div class="heroHead" data-edit="profile">
-              <div class="avatar" id="avatarBox"><div class="avatarInner"><span class="fallback" style="font-size:24px; font-weight:800;">A</span></div></div>
-            </div>
-            
-            <div class="about" data-edit="profile">
-              <h2 class="nm" id="nameEl">Загрузка...</h2>
-              <div class="rl" id="roleEl">...</div>
-              <div style="height:12px"></div>
-              <p class="aboutText" id="aboutEl"></p>
-            </div>
-            
-            <div style="padding: 0 24px 20px" data-edit="buttons">
-              <div class="cta" id="ctaRow"></div>
-            </div>
-          </div>
-
-          <div class="section" id="contactsSection" data-edit="contacts">
-            <div class="secTitle" id="contactsTitleEl">Connect</div>
-            <div class="chipsRow" id="contactsPreview" style="padding:0"></div>
-          </div>
-
-          <div class="section" id="pointsSection" data-edit="points">
-            <div class="secTitle" id="pointsTitleEl">Links</div>
-            <div class="list" id="pointsPreview"></div>
-          </div>
-
-          <div class="section" id="gallerySection" data-edit="gallery">
-            <div class="secTitle" id="galleryTitleEl">Gallery</div>
-            <div class="grid3" id="galleryPreview"></div>
-          </div>
-
-          <div class="footer" id="profileFooter"></div>
-        </div>
-      </div>
-
-    </div>
+    <div class="toastWrap" id="toastWrap"></div>
   </div>
 
-  <!-- MOBILE FAB -->
-  <button id="fabEdit" class="fab-edit">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-    Настроить профиль
-  </button>
+  <script>
+  (() => {
+    "use strict";
 
-  <div class="toastWrap" id="toastWrap"></div>
-</div>
+    const clone = (obj) => {
+      try { return structuredClone(obj); } catch (e) {}
+      return JSON.parse(JSON.stringify(obj));
+    };
+    const repAll = (s, a, b) => String(s).split(String(a)).join(String(b));
 
-<script>
-(() => {
-  const clone = (obj) => {
-    try { return structuredClone(obj); } catch (e) {}
-    return JSON.parse(JSON.stringify(obj));
-  };
-  const repAll = (s, a, b) => String(s).split(String(a)).join(String(b));
-
-  document.querySelectorAll("[data-abqd-constructor]").forEach((root) => {
-    initInstance(root);
-  });
-
-  function initInstance(root){
-    const $ = (id) => root.querySelector("#" + id);
-
-    // ==========================================
-    // НАСТРОЙКИ СИНХРОНИЗАЦИИ API (ЯНДЕКС VM)
-    // ==========================================
-    // Вставь сюда URL своего бекенда, который будет принимать/отдавать JSON
-    const API_ENDPOINT = "/api/profile"; 
-    
-    // Как мы идентифицируем пользователя? Если это встроено в ЛК, 
-    // сюда можно передавать ID пользователя (например, из переменной сессии)
-    const USER_PROFILE_ID = "user_12345"; 
-    // ==========================================
-
-
-    // --- MOBILE UI LOGIC ---
-    function isMobile() { return window.innerWidth <= 980; }
-    function openSheet() {
-      if(!isMobile()) return;
-      $("editorCard").classList.add("sheet-open");
-      $("fabEdit").classList.add("hide-fab");
-    }
-    function closeSheet() {
-      $("editorCard").classList.remove("sheet-open");
-      $("fabEdit").classList.remove("hide-fab");
-    }
-
-    const fabBtn = $("fabEdit");
-    const closeBtn = $("closeSheetBtn");
-    if(fabBtn) fabBtn.addEventListener("click", openSheet);
-    if(closeBtn) closeBtn.addEventListener("click", closeSheet);
-
-    root.addEventListener("click", (e) => {
-      if(!isMobile()) return;
-      const editZone = e.target.closest("[data-edit]");
-      if(e.target.closest(".editorCard")) return;
-      
-      if (editZone) {
-        e.preventDefault();
-        const targetTab = editZone.dataset.edit;
-        const tabBtn = root.querySelector(`.tab[data-tab="${targetTab}"]`);
-        if(tabBtn) tabBtn.click();
-        openSheet();
-      }
+    document.querySelectorAll("[data-abqd-constructor]").forEach((root) => {
+      initInstance(root);
     });
 
-    // --- CORE LOGIC & SYNC ---
-    const KEY = "abqd_constructor_data_" + USER_PROFILE_ID;
-    const STYLE_LABELS = { glass: "Стекло", accent: "Акцент", metal: "Металл", outline: "Обводка" };
-    const STYLE_SETS_CTA = { dark: ["glass", "accent", "metal"], soft: ["glass", "accent", "metal"] };
-    const STYLE_SETS_CHIPS = { dark: ["outline", "accent"], soft: ["outline", "accent"] };
-    const THEME_ACCENT = { dark: ["#ff4d9d", "#6d5cff"], soft: ["#2563eb", "#7c3aed"] };
+    function initInstance(root){
+      const $ = (id) => root.querySelector("#" + id);
 
-    const ACCENT_PRESETS = {
-      brand: (theme) => THEME_ACCENT[theme] || THEME_ACCENT.soft,
-      royal: () => ["#2563eb", "#7c3aed"],
-      ruby:  () => ["#ef4444", "#a855f7"],
-      graphite: () => ["#64748b", "#0f172a"],
-    };
-
-    function clean(s){ return String((s === null || s === undefined) ? "" : s).trim(); }
-    function escapeHtml(s){
-      s = String((s === null || s === undefined) ? "" : s);
-      s = repAll(s, "&", "&amp;"); s = repAll(s, "<", "&lt;"); s = repAll(s, ">", "&gt;");
-      s = repAll(s, "\"", "&quot;"); s = repAll(s, "'", "&#039;");
-      return s;
-    }
-
-    function hexToRgb(hex){
-      hex = clean(hex); if (!hex) return null;
-      if (hex[0] === "#") hex = hex.slice(1);
-      if (hex.length === 3) hex = hex.split("").map(c => c + c).join("");
-      if (hex.length !== 6) return null;
-      const n = parseInt(hex, 16);
-      if (!Number.isFinite(n)) return null;
-      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-    }
-
-    function setAccentVars(c1, c2) {
-      const theme = state.theme || "soft";
-      const dflt = THEME_ACCENT[theme] || THEME_ACCENT.soft;
-      const r1 = hexToRgb(c1) || hexToRgb(dflt[0]);
-      const r2 = hexToRgb(c2) || hexToRgb(dflt[1]);
-      document.documentElement.style.setProperty("--accent-1", c1);
-      document.documentElement.style.setProperty("--accent-2", c2);
-      document.documentElement.style.setProperty("--ctaAcc1rgb", r1.join(","));
-      document.documentElement.style.setProperty("--ctaAcc2rgb", r2.join(","));
-    }
-
-    function applyButtonThemeVars(){
-      const theme = state.theme || "soft";
-      const preset = state.accentPreset || "brand";
-      let pair;
-      if (preset === "custom") pair = [state.accentC1, state.accentC2];
-      else {
-        const fn = ACCENT_PRESETS[preset] || ACCENT_PRESETS.brand;
-        pair = fn(theme);
-      }
-      setAccentVars(pair[0], pair[1]);
-      const customRow = $("accentCustomRow");
-      if (customRow) customRow.classList.toggle("hide", (preset !== "custom") && (clean(state.ctaTheme) !== "accent"));
-    }
-
-    const defaultState = {
-      slug: "ivan-ivanov", theme: "dark", ctaTheme: "auto", accentPreset: "brand",
-      accentC1: "#2563eb", accentC2: "#7c3aed", metalPreset: "aluminum", callPhoneStyle: "metal",
-      fullName: "Иванов Иван", role: "CREATIVE DIRECTOR",
-      about: "Создаю цифровые продукты и архитектурные решения. Свяжитесь со мной для сотрудничества.",
-      avatarDataUrl: "", bannerDataUrl: "", logoDataUrl: "", logoLink: "https://abqd.ru",
-      callPhone: "",
-      buttons: [ { label: "Telegram", url: "https://t.me/", style: "accent" } ],
-      pointsTitle: "Ссылки",
-      points: [ { title: "Мой сайт", text: "", url: "" }, { title: "Портфолио PDF", text: "", url: "" } ],
-      galleryTitle: "Работы",
-      gallery: [ { title: "Проект А", text: "Описание", img: "", url: "" }, { title: "Проект Б", text: "Описание", img: "", url: "" } ],
-      chips: [ { label: "TG", url: "https://t.me/", style: "outline" }, { label: "Mail", url: "mailto:", style: "outline" } ]
-    };
-
-    const storageGet = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
-    const storageSet = (v) => { try { localStorage.setItem(KEY, v); return true; } catch (e) { return false; } };
-
-    const normUrl = (u) => {
-      u = clean(u); if (!u) return "";
-      const low = u.toLowerCase();
-      if (low.startsWith("http://") || low.startsWith("https://") || low.startsWith("mailto:") || low.startsWith("tel:") || low.startsWith("tg://")) return u;
-      return "https://" + u;
-    };
-
-    const contactUrl = (u) => {
-      u = clean(u); if (!u) return "";
-      const low = u.toLowerCase();
-      if (low.startsWith("http://") || low.startsWith("https://") || low.startsWith("mailto:") || low.startsWith("tel:") || low.startsWith("tg://")) return u;
-      if (low.includes("@") && !low.includes(" ")) return "mailto:" + u;
-      const hasDigit = /\d/.test(u);
-      if (hasDigit && u.length > 6 && !u.includes("http")) {
-         const digits = u.replace(/[^\d+]/g, "");
-         return "tel:" + digits;
-      }
-      return "https://" + u;
-    };
-
-    const normalizeSlug = (s) => {
-      s = clean(s).toLowerCase(); if (!s) return "";
-      return s.replace(/[^a-z0-9\-\.]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-    };
-
-    // --- СИНХРОНИЗАЦИЯ С API (ЯНДЕКС VM) ---
-    async function fetchWithTimeout(url, options = {}, timeout = 5000) {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeout);
-      const response = await fetch(url, { ...options, signal: controller.signal });
-      clearTimeout(id);
-      return response;
-    }
-
-    async function loadDataFromCloud() {
-      try {
-        const url = `${API_ENDPOINT}?userId=${USER_PROFILE_ID}`;
-        const res = await fetchWithTimeout(url, { method: "GET" }, 5000);
-        if (res.ok) {
-          return await res.json();
-        }
-      } catch (e) {
-        console.warn("API Sync Load failed, falling back to local:", e);
-      }
-      return null;
-    }
-
-    async function saveDataToCloud(dataObj) {
-      try {
-        const url = `${API_ENDPOINT}?userId=${USER_PROFILE_ID}`;
-        const res = await fetchWithTimeout(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dataObj)
-        }, 5000);
-        return res.ok;
-      } catch (e) {
-        console.warn("API Sync Save failed:", e);
-        return false;
-      }
-    }
-
-    let state = clone(defaultState); 
-    let dirty = false;
-    let saveTimer = null;
-    const AUTOSAVE_MS = 1200;
-
-    const setSaveStatus = (mode, note) => {
-      const box = $("saveStatus");
-      const tx = $("saveStatusText");
-      if (!box || !tx) return;
-      box.dataset.state = mode;
-      tx.textContent = note;
-    };
-
-    const persistNow = async () => {
-      storageSet(JSON.stringify(state));
-      dirty = false;
-      setSaveStatus("saving", "Синхронизация с сервером...");
-
-      const isCloudSuccess = await saveDataToCloud(state);
+      // ==========================================
+      // НАСТРОЙКИ СИНХРОНИЗАЦИИ API (ЯНДЕКС VM)
+      // ==========================================
+      // Теперь, когда файл лежит на сервере Node.js, мы используем локальный роут
+      const API_ENDPOINT = "/api/profile"; 
       
-      if (isCloudSuccess) {
-        setSaveStatus("saved", "Сохранено в облаке");
-      } else {
-        setSaveStatus("error", "Сохранено локально (ошибка сети)");
+      const USER_PROFILE_ID = "user_12345"; 
+      // ==========================================
+
+
+      // --- MOBILE UI LOGIC ---
+      function isMobile() { return window.innerWidth <= 980; }
+      function openSheet() {
+        if(!isMobile()) return;
+        $("editorCard").classList.add("sheet-open");
+        $("fabEdit").classList.add("hide-fab");
       }
-    };
+      function closeSheet() {
+        $("editorCard").classList.remove("sheet-open");
+        $("fabEdit").classList.remove("hide-fab");
+      }
 
-    const persist = () => {
-      dirty = true;
-      setSaveStatus("dirty", "Сохранение...");
-      if (saveTimer) clearTimeout(saveTimer);
-      saveTimer = window.setTimeout(() => {
-        persistNow();
-      }, AUTOSAVE_MS);
-    };
+      const fabBtn = $("fabEdit");
+      const closeBtn = $("closeSheetBtn");
+      if(fabBtn) fabBtn.addEventListener("click", openSheet);
+      if(closeBtn) closeBtn.addEventListener("click", closeSheet);
 
-    window.addEventListener("beforeunload", () => { if (dirty) { storageSet(JSON.stringify(state)); } });
-
-    function toast(title, subtitle){
-      const wrap = $("toastWrap");
-      if (!wrap) return;
-      const t = document.createElement("div");
-      t.className = "toast";
-      t.innerHTML = "<div>" + escapeHtml(title) + "</div>" + (subtitle ? "<small>" + escapeHtml(subtitle) + "</small>" : "");
-      wrap.appendChild(t);
-      setTimeout(() => t.remove(), 2500);
-    }
-
-    function safeOn(id, evt, handler) {
-      const el = $(id); if (!el) return;
-      el.addEventListener(evt, handler);
-    }
-
-    function sanitizeButtonStyles() {
-      const allowedBtn = new Set(["glass", "accent", "metal"]);
-      state.buttons = Array.isArray(state.buttons) ? state.buttons : [];
-      state.buttons.forEach(b => { if (b && !allowedBtn.has(b.style)) b.style = "glass"; });
-      state.chips = Array.isArray(state.chips) ? state.chips : [];
-      state.chips.forEach(c => { if(c && (c.style==="glass"||c.style==="metal")) c.style="outline"; });
-    }
-
-    function setTheme(t) {
-      if (t !== "dark" && t !== "soft") t = "soft";
-      state.theme = t;
-      document.documentElement.setAttribute("data-theme", t);
-      const seg = $("themeSeg");
-      if (seg) seg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.theme === t));
-      applyButtonThemeVars();
-    }
-
-    function setCtaTheme(v){
-      v = clean(v || "auto");
-      if (!["auto","glass","metal","accent"].includes(v)) v = "auto";
-      state.ctaTheme = v;
-      if (v === "accent") {
-        if (state.accentPreset !== "custom") {
-           const theme = state.theme || "soft";
-           const fn = ACCENT_PRESETS[state.accentPreset] || ACCENT_PRESETS.brand;
-           const pair = fn(theme);
-           state.accentPreset = "custom"; state.accentC1 = pair[0]; state.accentC2 = pair[1];
-           const ap = $("accentPreset"); if (ap) ap.value = "custom";
-           const c1 = $("accentC1"); if (c1) c1.value = state.accentC1;
-           const c2 = $("accentC2"); if (c2) c2.value = state.accentC2;
+      root.addEventListener("click", (e) => {
+        if(!isMobile()) return;
+        const editZone = e.target.closest("[data-edit]");
+        if(e.target.closest(".editorCard")) return;
+        
+        if (editZone) {
+          e.preventDefault();
+          const targetTab = editZone.dataset.edit;
+          const tabBtn = root.querySelector(`.tab[data-tab="${targetTab}"]`);
+          if(tabBtn) tabBtn.click();
+          openSheet();
         }
-      }
-      const seg = $("ctaThemeSeg");
-      if (seg) seg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.ctatheme === v));
-      applyButtonThemeVars();
-      renderButtonsList();
-      renderContactsList();
-    }
-
-    function resolveCtaStyle(styleRaw) {
-      styleRaw = clean(styleRaw) || "glass";
-      if (styleRaw !== "glass" && styleRaw !== "metal" && styleRaw !== "accent") return "glass";
-      return styleRaw;
-    }
-    function resolveChipStyle(styleRaw) {
-      styleRaw = clean(styleRaw) || "outline";
-      if (styleRaw === "glass" || styleRaw === "metal") styleRaw = "outline";
-      if (styleRaw !== "outline" && styleRaw !== "accent") return "outline";
-      return styleRaw;
-    }
-    function readFileAsDataURL(file) {
-      return new Promise((resolve) => {
-        if (!file) return resolve("");
-        const fr = new FileReader();
-        fr.onload = () => resolve(String(fr.result || ""));
-        fr.onerror = () => resolve("");
-        fr.readAsDataURL(file);
       });
-    }
-    function buildProfileUrl() {
-      const slug = normalizeSlug(state.slug || "");
-      return "https://app.abqd.ru/u/" + (slug || "");
-    }
 
-    function renderPreview() {
-      const nameEl = $("nameEl"); if (nameEl) nameEl.textContent = state.fullName || "Имя Фамилия";
-      const roleEl = $("roleEl"); if (roleEl) roleEl.textContent = state.role || "Должность";
-      const aboutEl = $("aboutEl"); if (aboutEl) aboutEl.textContent = state.about || "";
-      
-      const slugInput = $("slug"); if (slugInput) slugInput.value = state.slug || "";
-      const slugFull = $("slugFull"); if (slugFull) slugFull.textContent = (state.slug || "...");
+      // --- CORE LOGIC & SYNC ---
+      const KEY = "abqd_constructor_data_" + USER_PROFILE_ID;
+      const STYLE_LABELS = { glass: "Стекло", accent: "Акцент", metal: "Металл", outline: "Обводка" };
+      const STYLE_SETS_CTA = { dark: ["glass", "accent", "metal"], soft: ["glass", "accent", "metal"] };
+      const STYLE_SETS_CHIPS = { dark: ["outline", "accent"], soft: ["outline", "accent"] };
+      const THEME_ACCENT = { dark: ["#ff4d9d", "#6d5cff"], soft: ["#2563eb", "#7c3aed"] };
 
-      const bannerBox = $("bannerBox"); const bannerPlh = $("bannerPlh");
-      if (bannerBox) {
-         bannerBox.querySelectorAll("img").forEach(x => x.remove());
-         if (state.bannerDataUrl) {
-           const img = document.createElement("img"); img.src = state.bannerDataUrl;
-           bannerBox.appendChild(img);
-           if(bannerPlh) bannerPlh.classList.add("hide");
-         } else if(bannerPlh) bannerPlh.classList.remove("hide");
-         
-         bannerBox.querySelectorAll(".bannerLogo").forEach(x => x.remove());
-         if (state.logoDataUrl) {
-           const a = document.createElement("a"); a.className = "bannerLogo";
-           a.href = normUrl(state.logoLink) || "#"; a.target = "_blank";
-           const im = document.createElement("img"); im.src = state.logoDataUrl;
-           a.appendChild(im); bannerBox.appendChild(a);
-         }
+      const ACCENT_PRESETS = {
+        brand: (theme) => THEME_ACCENT[theme] || THEME_ACCENT.soft,
+        royal: () => ["#2563eb", "#7c3aed"],
+        ruby:  () => ["#ef4444", "#a855f7"],
+        graphite: () => ["#64748b", "#0f172a"],
+      };
+
+      function clean(s){ return String((s === null || s === undefined) ? "" : s).trim(); }
+      function escapeHtml(s){
+        s = String((s === null || s === undefined) ? "" : s);
+        s = repAll(s, "&", "&amp;"); s = repAll(s, "<", "&lt;"); s = repAll(s, ">", "&gt;");
+        s = repAll(s, "\"", "&quot;"); s = repAll(s, "'", "&#039;");
+        return s;
       }
 
-      const av = $("avatarBox");
-      if (av) {
-        av.innerHTML = "";
-        const inner = document.createElement("div"); inner.className = "avatarInner";
-        if (state.avatarDataUrl) {
-          const img = document.createElement("img"); img.src = state.avatarDataUrl; inner.appendChild(img);
+      function hexToRgb(hex){
+        hex = clean(hex); if (!hex) return null;
+        if (hex[0] === "#") hex = hex.slice(1);
+        if (hex.length === 3) hex = hex.split("").map(c => c + c).join("");
+        if (hex.length !== 6) return null;
+        const n = parseInt(hex, 16);
+        if (!Number.isFinite(n)) return null;
+        return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      }
+
+      function setAccentVars(c1, c2) {
+        const theme = state.theme || "soft";
+        const dflt = THEME_ACCENT[theme] || THEME_ACCENT.soft;
+        const r1 = hexToRgb(c1) || hexToRgb(dflt[0]);
+        const r2 = hexToRgb(c2) || hexToRgb(dflt[1]);
+        document.documentElement.style.setProperty("--accent-1", c1);
+        document.documentElement.style.setProperty("--accent-2", c2);
+        document.documentElement.style.setProperty("--ctaAcc1rgb", r1.join(","));
+        document.documentElement.style.setProperty("--ctaAcc2rgb", r2.join(","));
+      }
+
+      function applyButtonThemeVars(){
+        const theme = state.theme || "soft";
+        const preset = state.accentPreset || "brand";
+        let pair;
+        if (preset === "custom") pair = [state.accentC1, state.accentC2];
+        else {
+          const fn = ACCENT_PRESETS[preset] || ACCENT_PRESETS.brand;
+          pair = fn(theme);
+        }
+        setAccentVars(pair[0], pair[1]);
+        const customRow = $("accentCustomRow");
+        if (customRow) customRow.classList.toggle("hide", (preset !== "custom") && (clean(state.ctaTheme) !== "accent"));
+      }
+
+      const defaultState = {
+        slug: "ivan-ivanov", theme: "dark", ctaTheme: "auto", accentPreset: "brand",
+        accentC1: "#2563eb", accentC2: "#7c3aed", metalPreset: "aluminum", callPhoneStyle: "metal",
+        fullName: "Иванов Иван", role: "CREATIVE DIRECTOR",
+        about: "Создаю цифровые продукты и архитектурные решения. Свяжитесь со мной для сотрудничества.",
+        avatarDataUrl: "", bannerDataUrl: "", logoDataUrl: "", logoLink: "https://abqd.ru",
+        callPhone: "",
+        buttons: [ { label: "Telegram", url: "https://t.me/", style: "accent" } ],
+        pointsTitle: "Ссылки",
+        points: [ { title: "Мой сайт", text: "", url: "" }, { title: "Портфолио PDF", text: "", url: "" } ],
+        galleryTitle: "Работы",
+        gallery: [ { title: "Проект А", text: "Описание", img: "", url: "" }, { title: "Проект Б", text: "Описание", img: "", url: "" } ],
+        chips: [ { label: "TG", url: "https://t.me/", style: "outline" }, { label: "Mail", url: "mailto:", style: "outline" } ]
+      };
+
+      const storageGet = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+      const storageSet = (v) => { try { localStorage.setItem(KEY, v); return true; } catch (e) { return false; } };
+
+      const normUrl = (u) => {
+        u = clean(u); if (!u) return "";
+        const low = u.toLowerCase();
+        if (low.startsWith("http://") || low.startsWith("https://") || low.startsWith("mailto:") || low.startsWith("tel:") || low.startsWith("tg://")) return u;
+        return "https://" + u;
+      };
+
+      const contactUrl = (u) => {
+        u = clean(u); if (!u) return "";
+        const low = u.toLowerCase();
+        if (low.startsWith("http://") || low.startsWith("https://") || low.startsWith("mailto:") || low.startsWith("tel:") || low.startsWith("tg://")) return u;
+        if (low.includes("@") && !low.includes(" ")) return "mailto:" + u;
+        const hasDigit = /\d/.test(u);
+        if (hasDigit && u.length > 6 && !u.includes("http")) {
+           const digits = u.replace(/[^\d+]/g, "");
+           return "tel:" + digits;
+        }
+        return "https://" + u;
+      };
+
+      const normalizeSlug = (s) => {
+        s = clean(s).toLowerCase(); if (!s) return "";
+        return s.replace(/[^a-z0-9\-\.]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      };
+
+      // --- СИНХРОНИЗАЦИЯ С API (ЯНДЕКС VM) ---
+      async function fetchWithTimeout(url, options = {}, timeout = 5000) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return response;
+      }
+
+      async function loadDataFromCloud() {
+        try {
+          const url = `${API_ENDPOINT}?userId=${USER_PROFILE_ID}`;
+          const res = await fetchWithTimeout(url, { method: "GET" }, 5000);
+          if (res.ok) {
+            return await res.json();
+          }
+        } catch (e) {
+          console.warn("API Sync Load failed, falling back to local:", e);
+        }
+        return null;
+      }
+
+      async function saveDataToCloud(dataObj) {
+        try {
+          const url = `${API_ENDPOINT}?userId=${USER_PROFILE_ID}`;
+          const res = await fetchWithTimeout(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dataObj)
+          }, 5000);
+          return res.ok;
+        } catch (e) {
+          console.warn("API Sync Save failed:", e);
+          return false;
+        }
+      }
+
+      let state = clone(defaultState); 
+      let dirty = false;
+      let saveTimer = null;
+      const AUTOSAVE_MS = 1200;
+
+      const setSaveStatus = (mode, note) => {
+        const box = $("saveStatus");
+        const tx = $("saveStatusText");
+        if (!box || !tx) return;
+        box.dataset.state = mode;
+        tx.textContent = note;
+      };
+
+      const persistNow = async () => {
+        storageSet(JSON.stringify(state));
+        dirty = false;
+        setSaveStatus("saving", "Синхронизация с сервером...");
+
+        const isCloudSuccess = await saveDataToCloud(state);
+        
+        if (isCloudSuccess) {
+          setSaveStatus("saved", "Сохранено в облаке");
         } else {
-          const letter = (state.fullName || "A").slice(0, 1).toUpperCase();
-          inner.innerHTML = `<span class="fallback">${letter}</span>`;
+          setSaveStatus("error", "Сохранено локально (ошибка сети)");
         }
-        av.appendChild(inner);
+      };
+
+      const persist = () => {
+        dirty = true;
+        setSaveStatus("dirty", "Сохранение...");
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = window.setTimeout(() => {
+          persistNow();
+        }, AUTOSAVE_MS);
+      };
+
+      window.addEventListener("beforeunload", () => { if (dirty) { storageSet(JSON.stringify(state)); } });
+
+      function toast(title, subtitle){
+        const wrap = $("toastWrap");
+        if (!wrap) return;
+        const t = document.createElement("div");
+        t.className = "toast";
+        t.innerHTML = "<div>" + escapeHtml(title) + "</div>" + (subtitle ? "<small>" + escapeHtml(subtitle) + "</small>" : "");
+        wrap.appendChild(t);
+        setTimeout(() => t.remove(), 2500);
       }
 
-      const forced = ["glass","metal","accent"].includes(state.ctaTheme) ? state.ctaTheme : "";
-      const cta = $("ctaRow");
-      if (cta) {
-        cta.innerHTML = "";
-        const phone = clean(state.callPhone);
-        if (phone) {
-           const a = document.createElement("a"); a.textContent = "Позвонить";
-           a.href = contactUrl(phone); 
-           const st = forced || resolveCtaStyle(state.callPhoneStyle || "metal");
-           a.className = "ctaBtn ctaBtn--" + st;
-           cta.appendChild(a);
+      function safeOn(id, evt, handler) {
+        const el = $(id); if (!el) return;
+        el.addEventListener(evt, handler);
+      }
+
+      function sanitizeButtonStyles() {
+        const allowedBtn = new Set(["glass", "accent", "metal"]);
+        state.buttons = Array.isArray(state.buttons) ? state.buttons : [];
+        state.buttons.forEach(b => { if (b && !allowedBtn.has(b.style)) b.style = "glass"; });
+        state.chips = Array.isArray(state.chips) ? state.chips : [];
+        state.chips.forEach(c => { if(c && (c.style==="glass"||c.style==="metal")) c.style="outline"; });
+      }
+
+      function setTheme(t) {
+        if (t !== "dark" && t !== "soft") t = "soft";
+        state.theme = t;
+        document.documentElement.setAttribute("data-theme", t);
+        const seg = $("themeSeg");
+        if (seg) seg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.theme === t));
+        applyButtonThemeVars();
+      }
+
+      function setCtaTheme(v){
+        v = clean(v || "auto");
+        if (!["auto","glass","metal","accent"].includes(v)) v = "auto";
+        state.ctaTheme = v;
+        if (v === "accent") {
+          if (state.accentPreset !== "custom") {
+             const theme = state.theme || "soft";
+             const fn = ACCENT_PRESETS[state.accentPreset] || ACCENT_PRESETS.brand;
+             const pair = fn(theme);
+             state.accentPreset = "custom"; state.accentC1 = pair[0]; state.accentC2 = pair[1];
+             const ap = $("accentPreset"); if (ap) ap.value = "custom";
+             const c1 = $("accentC1"); if (c1) c1.value = state.accentC1;
+             const c2 = $("accentC2"); if (c2) c2.value = state.accentC2;
+          }
         }
-        (state.buttons || []).slice(0,6).forEach(btn => {
-           if(!btn || !clean(btn.label)) return;
-           const a = document.createElement("a"); a.textContent = btn.label;
-           a.href = normUrl(btn.url); a.target="_blank";
-           const st = forced || resolveCtaStyle(btn.style);
-           a.className = "ctaBtn ctaBtn--" + st;
-           cta.appendChild(a);
+        const seg = $("ctaThemeSeg");
+        if (seg) seg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.ctatheme === v));
+        applyButtonThemeVars();
+        renderButtonsList();
+        renderContactsList();
+      }
+
+      function resolveCtaStyle(styleRaw) {
+        styleRaw = clean(styleRaw) || "glass";
+        if (styleRaw !== "glass" && styleRaw !== "metal" && styleRaw !== "accent") return "glass";
+        return styleRaw;
+      }
+      function resolveChipStyle(styleRaw) {
+        styleRaw = clean(styleRaw) || "outline";
+        if (styleRaw === "glass" || styleRaw === "metal") styleRaw = "outline";
+        if (styleRaw !== "outline" && styleRaw !== "accent") return "outline";
+        return styleRaw;
+      }
+      function readFileAsDataURL(file) {
+        return new Promise((resolve) => {
+          if (!file) return resolve("");
+          const fr = new FileReader();
+          fr.onload = () => resolve(String(fr.result || ""));
+          fr.onerror = () => resolve("");
+          fr.readAsDataURL(file);
+        });
+      }
+      function buildProfileUrl() {
+        const slug = normalizeSlug(state.slug || "");
+        return "https://app.abqd.ru/u/" + (slug || "");
+      }
+
+      function renderPreview() {
+        const nameEl = $("nameEl"); if (nameEl) nameEl.textContent = state.fullName || "Имя Фамилия";
+        const roleEl = $("roleEl"); if (roleEl) roleEl.textContent = state.role || "Должность";
+        const aboutEl = $("aboutEl"); if (aboutEl) aboutEl.textContent = state.about || "";
+        
+        const slugInput = $("slug"); if (slugInput) slugInput.value = state.slug || "";
+        const slugFull = $("slugFull"); if (slugFull) slugFull.textContent = (state.slug || "...");
+
+        const bannerBox = $("bannerBox"); const bannerPlh = $("bannerPlh");
+        if (bannerBox) {
+           bannerBox.querySelectorAll("img").forEach(x => x.remove());
+           if (state.bannerDataUrl) {
+             const img = document.createElement("img"); img.src = state.bannerDataUrl;
+             bannerBox.appendChild(img);
+             if(bannerPlh) bannerPlh.classList.add("hide");
+           } else if(bannerPlh) bannerPlh.classList.remove("hide");
+           
+           bannerBox.querySelectorAll(".bannerLogo").forEach(x => x.remove());
+           if (state.logoDataUrl) {
+             const a = document.createElement("a"); a.className = "bannerLogo";
+             a.href = normUrl(state.logoLink) || "#"; a.target = "_blank";
+             const im = document.createElement("img"); im.src = state.logoDataUrl;
+             a.appendChild(im); bannerBox.appendChild(a);
+           }
+        }
+
+        const av = $("avatarBox");
+        if (av) {
+          av.innerHTML = "";
+          const inner = document.createElement("div"); inner.className = "avatarInner";
+          if (state.avatarDataUrl) {
+            const img = document.createElement("img"); img.src = state.avatarDataUrl; inner.appendChild(img);
+          } else {
+            const letter = (state.fullName || "A").slice(0, 1).toUpperCase();
+            inner.innerHTML = `<span class="fallback">${letter}</span>`;
+          }
+          av.appendChild(inner);
+        }
+
+        const forced = ["glass","metal","accent"].includes(state.ctaTheme) ? state.ctaTheme : "";
+        const cta = $("ctaRow");
+        if (cta) {
+          cta.innerHTML = "";
+          const phone = clean(state.callPhone);
+          if (phone) {
+             const a = document.createElement("a"); a.textContent = "Позвонить";
+             a.href = contactUrl(phone); 
+             const st = forced || resolveCtaStyle(state.callPhoneStyle || "metal");
+             a.className = "ctaBtn ctaBtn--" + st;
+             cta.appendChild(a);
+          }
+          (state.buttons || []).slice(0,6).forEach(btn => {
+             if(!btn || !clean(btn.label)) return;
+             const a = document.createElement("a"); a.textContent = btn.label;
+             a.href = normUrl(btn.url); a.target="_blank";
+             const st = forced || resolveCtaStyle(btn.style);
+             a.className = "ctaBtn ctaBtn--" + st;
+             cta.appendChild(a);
+          });
+        }
+
+        const contactsPreview = $("contactsPreview");
+        if (contactsPreview) {
+          contactsPreview.innerHTML = "";
+          (state.chips || []).slice(0,20).forEach(c => {
+             const lbl = clean(c?.label); const url = clean(c?.url);
+             if(!lbl && !url) return;
+             const a = document.createElement("a");
+             const st = resolveChipStyle(c.style);
+             a.className = "chipA chipA--" + st;
+             a.textContent = lbl || url; a.href = contactUrl(url); a.target="_blank";
+             contactsPreview.appendChild(a);
+          });
+          $("contactsSection").classList.toggle("hide", contactsPreview.children.length===0);
+        }
+
+        const pointsPreview = $("pointsPreview");
+        if (pointsPreview) {
+          pointsPreview.innerHTML = "";
+          const titleEl = $("pointsTitleEl"); if(titleEl) titleEl.textContent = state.pointsTitle || "Links";
+          (state.points || []).slice(0,12).forEach(p => {
+             if(!p || (!p.title && !p.url)) return;
+             const node = document.createElement("a"); node.className = "item";
+             node.href = normUrl(p.url); node.target="_blank";
+             node.innerHTML = `<div class="check">✓</div><div><p class="itT">${escapeHtml(p.title||p.url)}</p><p class="itD">${escapeHtml(p.text||"")}</p></div>`;
+             pointsPreview.appendChild(node);
+          });
+          $("pointsSection").classList.toggle("hide", pointsPreview.children.length===0);
+        }
+
+        const galleryPreview = $("galleryPreview");
+        if (galleryPreview) {
+          galleryPreview.innerHTML = "";
+          const titleEl = $("galleryTitleEl"); if(titleEl) titleEl.textContent = state.galleryTitle || "Gallery";
+          (state.gallery || []).slice(0,12).forEach(g => {
+             if(!g || (!g.img && !g.title)) return;
+             const card = document.createElement("div"); card.className = "work";
+             if(g.img) card.innerHTML = `<div class="workImg"><img src="${g.img}"></div>`;
+             card.innerHTML += `<div class="workBody"><p class="workT">${escapeHtml(g.title)}</p></div>`;
+             galleryPreview.appendChild(card);
+          });
+          $("gallerySection").classList.toggle("hide", galleryPreview.children.length===0);
+        }
+      }
+
+      function renderStyleOptions(theme, kind){
+        const t = theme || "soft";
+        const list = (kind === "chips") ? STYLE_SETS_CHIPS[t] : STYLE_SETS_CTA[t];
+        return list.map(v => `<option value="${v}">${STYLE_LABELS[v]||v}</option>`).join("");
+      }
+
+      function renderButtonsList() {
+        const bl = $("buttonsList"); if (!bl) return;
+        const opts = renderStyleOptions(state.theme, "cta");
+        bl.innerHTML = "";
+        (state.buttons || []).forEach((b, i) => {
+           const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
+           div.innerHTML = `
+             <div class="row">
+               <div><label>Текст</label><input data-b="label" data-i="${i}" value="${escapeHtml(b.label)}"></div>
+               <div><label>URL</label><input data-b="url" data-i="${i}" value="${escapeHtml(b.url)}"></div>
+             </div>
+             <div class="row">
+               <div><label>Стиль</label><select data-b="style" data-i="${i}">${opts}</select></div>
+               <div style="text-align:right; align-self:end"><button class="btn danger small" data-act="rmButton" data-i="${i}">Del</button></div>
+             </div>`;
+           bl.appendChild(div);
+           div.querySelector("select").value = resolveCtaStyle(b.style);
         });
       }
 
-      const contactsPreview = $("contactsPreview");
-      if (contactsPreview) {
-        contactsPreview.innerHTML = "";
-        (state.chips || []).slice(0,20).forEach(c => {
-           const lbl = clean(c?.label); const url = clean(c?.url);
-           if(!lbl && !url) return;
-           const a = document.createElement("a");
-           const st = resolveChipStyle(c.style);
-           a.className = "chipA chipA--" + st;
-           a.textContent = lbl || url; a.href = contactUrl(url); a.target="_blank";
-           contactsPreview.appendChild(a);
+      function renderContactsList() {
+        const cl = $("contactsList"); if (!cl) return;
+        const opts = renderStyleOptions(state.theme, "chips");
+        cl.innerHTML = "";
+        (state.chips || []).forEach((c, i) => {
+           const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
+           div.innerHTML = `
+             <div class="row">
+               <div><label>Label</label><input data-c="label" data-i="${i}" value="${escapeHtml(c.label)}"></div>
+               <div><label>Link/Phone</label><input data-c="url" data-i="${i}" value="${escapeHtml(c.url)}"></div>
+             </div>
+             <div class="row">
+               <div><label>Стиль</label><select data-c="style" data-i="${i}">${opts}</select></div>
+               <div style="text-align:right; align-self:end"><button class="btn danger small" data-act="rmChip" data-i="${i}">Del</button></div>
+             </div>`;
+           cl.appendChild(div);
+           div.querySelector("select").value = resolveChipStyle(c.style);
         });
-        $("contactsSection").classList.toggle("hide", contactsPreview.children.length===0);
       }
 
-      const pointsPreview = $("pointsPreview");
-      if (pointsPreview) {
-        pointsPreview.innerHTML = "";
-        const titleEl = $("pointsTitleEl"); if(titleEl) titleEl.textContent = state.pointsTitle || "Links";
-        (state.points || []).slice(0,12).forEach(p => {
-           if(!p || (!p.title && !p.url)) return;
-           const node = document.createElement("a"); node.className = "item";
-           node.href = normUrl(p.url); node.target="_blank";
-           node.innerHTML = `<div class="check">✓</div><div><p class="itT">${escapeHtml(p.title||p.url)}</p><p class="itD">${escapeHtml(p.text||"")}</p></div>`;
-           pointsPreview.appendChild(node);
+      function renderPointsList() {
+        const pl = $("pointsList"); if(!pl) return;
+        pl.innerHTML = "";
+        (state.points||[]).forEach((p,i)=>{
+          const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
+          div.innerHTML = `
+            <div class="row">
+              <div><label>Title</label><input data-p="title" data-i="${i}" value="${escapeHtml(p.title)}"></div>
+              <div><label>URL</label><input data-p="url" data-i="${i}" value="${escapeHtml(p.url)}"></div>
+            </div>
+            <div><label>Desc</label><textarea data-p="text" data-i="${i}" style="min-height:60px">${escapeHtml(p.text)}</textarea></div>
+            <div style="text-align:right; margin-top:10px"><button class="btn danger small" data-act="rmPoint" data-i="${i}">Del</button></div>`;
+          pl.appendChild(div);
         });
-        $("pointsSection").classList.toggle("hide", pointsPreview.children.length===0);
       }
 
-      const galleryPreview = $("galleryPreview");
-      if (galleryPreview) {
-        galleryPreview.innerHTML = "";
-        const titleEl = $("galleryTitleEl"); if(titleEl) titleEl.textContent = state.galleryTitle || "Gallery";
-        (state.gallery || []).slice(0,12).forEach(g => {
-           if(!g || (!g.img && !g.title)) return;
-           const card = document.createElement("div"); card.className = "work";
-           if(g.img) card.innerHTML = `<div class="workImg"><img src="${g.img}"></div>`;
-           card.innerHTML += `<div class="workBody"><p class="workT">${escapeHtml(g.title)}</p></div>`;
-           galleryPreview.appendChild(card);
+      function renderGalleryList() {
+        const gl = $("galleryList"); if(!gl) return;
+        gl.innerHTML = "";
+        (state.gallery||[]).forEach((g,i)=>{
+          const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
+          div.innerHTML = `
+            <div class="row">
+               <div><label>Название</label><input data-g="title" data-i="${i}" value="${escapeHtml(g.title)}"></div>
+               <div><label>Фото</label><input type="file" data-gfile="1" data-i="${i}"></div>
+            </div>
+            <div style="text-align:right"><button class="btn danger small" data-act="rmGallery" data-i="${i}">Del</button></div>`;
+          gl.appendChild(div);
         });
-        $("gallerySection").classList.toggle("hide", galleryPreview.children.length===0);
-      }
-    }
-
-    function renderStyleOptions(theme, kind){
-      const t = theme || "soft";
-      const list = (kind === "chips") ? STYLE_SETS_CHIPS[t] : STYLE_SETS_CTA[t];
-      return list.map(v => `<option value="${v}">${STYLE_LABELS[v]||v}</option>`).join("");
-    }
-
-    function renderButtonsList() {
-      const bl = $("buttonsList"); if (!bl) return;
-      const opts = renderStyleOptions(state.theme, "cta");
-      bl.innerHTML = "";
-      (state.buttons || []).forEach((b, i) => {
-         const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
-         div.innerHTML = `
-           <div class="row">
-             <div><label>Текст</label><input data-b="label" data-i="${i}" value="${escapeHtml(b.label)}"></div>
-             <div><label>URL</label><input data-b="url" data-i="${i}" value="${escapeHtml(b.url)}"></div>
-           </div>
-           <div class="row">
-             <div><label>Стиль</label><select data-b="style" data-i="${i}">${opts}</select></div>
-             <div style="text-align:right; align-self:end"><button class="btn danger small" data-act="rmButton" data-i="${i}">Del</button></div>
-           </div>`;
-         bl.appendChild(div);
-         div.querySelector("select").value = resolveCtaStyle(b.style);
-      });
-    }
-
-    function renderContactsList() {
-      const cl = $("contactsList"); if (!cl) return;
-      const opts = renderStyleOptions(state.theme, "chips");
-      cl.innerHTML = "";
-      (state.chips || []).forEach((c, i) => {
-         const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
-         div.innerHTML = `
-           <div class="row">
-             <div><label>Label</label><input data-c="label" data-i="${i}" value="${escapeHtml(c.label)}"></div>
-             <div><label>Link/Phone</label><input data-c="url" data-i="${i}" value="${escapeHtml(c.url)}"></div>
-           </div>
-           <div class="row">
-             <div><label>Стиль</label><select data-c="style" data-i="${i}">${opts}</select></div>
-             <div style="text-align:right; align-self:end"><button class="btn danger small" data-act="rmChip" data-i="${i}">Del</button></div>
-           </div>`;
-         cl.appendChild(div);
-         div.querySelector("select").value = resolveChipStyle(c.style);
-      });
-    }
-
-    function renderPointsList() {
-      const pl = $("pointsList"); if(!pl) return;
-      pl.innerHTML = "";
-      (state.points||[]).forEach((p,i)=>{
-        const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
-        div.innerHTML = `
-          <div class="row">
-            <div><label>Title</label><input data-p="title" data-i="${i}" value="${escapeHtml(p.title)}"></div>
-            <div><label>URL</label><input data-p="url" data-i="${i}" value="${escapeHtml(p.url)}"></div>
-          </div>
-          <div><label>Desc</label><textarea data-p="text" data-i="${i}" style="min-height:60px">${escapeHtml(p.text)}</textarea></div>
-          <div style="text-align:right; margin-top:10px"><button class="btn danger small" data-act="rmPoint" data-i="${i}">Del</button></div>`;
-        pl.appendChild(div);
-      });
-    }
-
-    function renderGalleryList() {
-      const gl = $("galleryList"); if(!gl) return;
-      gl.innerHTML = "";
-      (state.gallery||[]).forEach((g,i)=>{
-        const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
-        div.innerHTML = `
-          <div class="row">
-             <div><label>Название</label><input data-g="title" data-i="${i}" value="${escapeHtml(g.title)}"></div>
-             <div><label>Фото</label><input type="file" data-gfile="1" data-i="${i}"></div>
-          </div>
-          <div style="text-align:right"><button class="btn danger small" data-act="rmGallery" data-i="${i}">Del</button></div>`;
-        gl.appendChild(div);
-      });
-    }
-
-    function renderAllLists(){ renderButtonsList(); renderContactsList(); renderPointsList(); renderGalleryList(); }
-    function syncFieldsFromState() {
-       $("fullName").value = state.fullName||""; $("role").value = state.role||"";
-       $("about").value = state.about||""; $("slug").value = state.slug||"";
-       $("callPhone").value = state.callPhone||""; $("logoLink").value = state.logoLink||"";
-       $("pointsTitle").value = state.pointsTitle||""; $("galleryTitle").value = state.galleryTitle||"";
-       
-       const cps = $("callPhoneStyle");
-       if (cps) {
-          cps.innerHTML = renderStyleOptions(state.theme, "cta");
-          cps.value = resolveCtaStyle(state.callPhoneStyle || "metal");
-       }
-
-       const theme = state.theme || "soft";
-       $("themeSeg").querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.theme===theme));
-    }
-
-    // Handlers
-    safeOn("themeSeg", "click", (e)=>{
-      const b = e.target.closest("button[data-theme]"); if(!b) return;
-      setTheme(b.dataset.theme); persist(); renderPreview();
-    });
-    safeOn("ctaThemeSeg", "click", (e)=>{
-      const b = e.target.closest("button[data-ctatheme]"); if(!b) return;
-      setCtaTheme(b.dataset.ctatheme); persist(); renderPreview();
-    });
-    safeOn("tabs", "click", (e)=>{
-      const t = e.target.closest(".tab"); if(!t) return;
-      root.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); t.classList.add("active");
-      const n = t.dataset.tab;
-      ["profile","buttons","contacts","points","gallery"].forEach(k=> $("tab-"+k).classList.toggle("hide", k!==n));
-    });
-    
-    // Inputs
-    root.addEventListener("input", (e)=>{
-      const el = e.target;
-      if(el.id === "fullName") state.fullName = el.value;
-      if(el.id === "role") state.role = el.value;
-      if(el.id === "about") { state.about = el.value; $("aboutCount").textContent=el.value.length; }
-      if(el.id === "slug") state.slug = el.value;
-      if(el.id === "callPhone") state.callPhone = el.value;
-      if(el.id === "logoLink") state.logoLink = el.value;
-      if(el.id === "pointsTitle") state.pointsTitle = el.value;
-      if(el.id === "galleryTitle") state.galleryTitle = el.value;
-      if(el.id === "accentC1") { state.accentC1 = el.value; applyButtonThemeVars(); }
-      
-      if(el.dataset.b) { state.buttons[el.dataset.i][el.dataset.b] = el.value; }
-      if(el.dataset.c) { state.chips[el.dataset.i][el.dataset.c] = el.value; }
-      if(el.dataset.p) { state.points[el.dataset.i][el.dataset.p] = el.value; }
-      if(el.dataset.g) { state.gallery[el.dataset.i][el.dataset.g] = el.value; }
-      
-      persist(); renderPreview();
-    });
-
-    // File Inputs
-    root.addEventListener("change", async (e)=>{
-       const el = e.target;
-       if(el.id==="avatarFile") { state.avatarDataUrl = await readFileAsDataURL(el.files[0]); }
-       if(el.id==="bannerFile") { state.bannerDataUrl = await readFileAsDataURL(el.files[0]); }
-       if(el.id==="logoFile") { state.logoDataUrl = await readFileAsDataURL(el.files[0]); }
-       if(el.dataset.gfile) { state.gallery[el.dataset.i].img = await readFileAsDataURL(el.files[0]); }
-       
-       if(el.dataset.b==="style") { state.buttons[el.dataset.i].style = el.value; }
-       if(el.dataset.c==="style") { state.chips[el.dataset.i].style = el.value; }
-       if(el.id==="accentPreset") { state.accentPreset = el.value; applyButtonThemeVars(); }
-       if(el.id==="callPhoneStyle") { state.callPhoneStyle = el.value; }
-       
-       persist(); renderPreview();
-    });
-
-    // Clicks
-    root.addEventListener("click", (e)=>{
-       const b = e.target.closest("button[data-act]"); if(!b) return;
-       const i = Number(b.dataset.i);
-       if(b.dataset.act==="rmButton") { state.buttons.splice(i,1); renderButtonsList(); }
-       if(b.dataset.act==="rmChip") { state.chips.splice(i,1); renderContactsList(); }
-       if(b.dataset.act==="rmPoint") { state.points.splice(i,1); renderPointsList(); }
-       if(b.dataset.act==="rmGallery") { state.gallery.splice(i,1); renderGalleryList(); }
-       persist(); renderPreview();
-    });
-
-    safeOn("addButton", "click", ()=>{ state.buttons.push({label:"New",url:"",style:"glass"}); renderButtonsList(); persist(); renderPreview(); });
-    safeOn("addChip", "click", ()=>{ state.chips.push({label:"Link",url:"",style:"outline"}); renderContactsList(); persist(); renderPreview(); });
-    safeOn("addPoint", "click", ()=>{ state.points.push({title:"Link",url:"",text:""}); renderPointsList(); persist(); renderPreview(); });
-    safeOn("addGallery", "click", ()=>{ state.gallery.push({title:"Work",img:""}); renderGalleryList(); persist(); renderPreview(); });
-
-    safeOn("save", "click", ()=>{ persistNow(); closeSheet(); });
-    safeOn("reset", "click", ()=>{ if(confirm("Сбросить все?")) { state=clone(defaultState); persistNow(); renderAllLists(); renderPreview(); syncFieldsFromState(); }});
-    safeOn("profileLink", "click", ()=>{ 
-       const url = buildProfileUrl(); 
-       window.open(url, '_blank'); 
-    });
-
-    // ИНИЦИАЛИЗАЦИЯ И ЗАГРУЗКА
-    async function init() {
-      setSaveStatus("saving", "Загрузка из облака...");
-      
-      // 1. Пытаемся получить данные с Yandex VM
-      const cloudData = await loadDataFromCloud();
-      
-      // 2. Если облако не ответило, берем из localStorage
-      const localDataRaw = storageGet();
-      const localData = localDataRaw ? JSON.parse(localDataRaw) : null;
-
-      // 3. Сливаем данные: Приоритет облаку -> потом локал -> потом дефолт
-      const mergedData = cloudData || localData || clone(defaultState);
-      state = { ...clone(defaultState), ...mergedData };
-
-      // Если загрузились успешно, сохраним локально актуальный стейт
-      if(cloudData) {
-         storageSet(JSON.stringify(state));
       }
 
-      sanitizeButtonStyles();
-      setTheme(state.theme || "dark");
-      syncFieldsFromState();
-      setCtaTheme(state.ctaTheme);
-      renderAllLists();
-      renderPreview();
+      function renderAllLists(){ renderButtonsList(); renderContactsList(); renderPointsList(); renderGalleryList(); }
+      function syncFieldsFromState() {
+         $("fullName").value = state.fullName||""; $("role").value = state.role||"";
+         $("about").value = state.about||""; $("slug").value = state.slug||"";
+         $("callPhone").value = state.callPhone||""; $("logoLink").value = state.logoLink||"";
+         $("pointsTitle").value = state.pointsTitle||""; $("galleryTitle").value = state.galleryTitle||"";
+         
+         const cps = $("callPhoneStyle");
+         if (cps) {
+            cps.innerHTML = renderStyleOptions(state.theme, "cta");
+            cps.value = resolveCtaStyle(state.callPhoneStyle || "metal");
+         }
+
+         const theme = state.theme || "soft";
+         $("themeSeg").querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.theme===theme));
+      }
+
+      // Handlers
+      safeOn("themeSeg", "click", (e)=>{
+        const b = e.target.closest("button[data-theme]"); if(!b) return;
+        setTheme(b.dataset.theme); persist(); renderPreview();
+      });
+      safeOn("ctaThemeSeg", "click", (e)=>{
+        const b = e.target.closest("button[data-ctatheme]"); if(!b) return;
+        setCtaTheme(b.dataset.ctatheme); persist(); renderPreview();
+      });
+      safeOn("tabs", "click", (e)=>{
+        const t = e.target.closest(".tab"); if(!t) return;
+        root.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); t.classList.add("active");
+        const n = t.dataset.tab;
+        ["profile","buttons","contacts","points","gallery"].forEach(k=> $("tab-"+k).classList.toggle("hide", k!==n));
+      });
       
-      setSaveStatus("saved", cloudData ? "Синхронизировано" : "Загружено локально");
+      // Inputs
+      root.addEventListener("input", (e)=>{
+        const el = e.target;
+        if(el.id === "fullName") state.fullName = el.value;
+        if(el.id === "role") state.role = el.value;
+        if(el.id === "about") { state.about = el.value; $("aboutCount").textContent=el.value.length; }
+        if(el.id === "slug") state.slug = el.value;
+        if(el.id === "callPhone") state.callPhone = el.value;
+        if(el.id === "logoLink") state.logoLink = el.value;
+        if(el.id === "pointsTitle") state.pointsTitle = el.value;
+        if(el.id === "galleryTitle") state.galleryTitle = el.value;
+        if(el.id === "accentC1") { state.accentC1 = el.value; applyButtonThemeVars(); }
+        
+        if(el.dataset.b) { state.buttons[el.dataset.i][el.dataset.b] = el.value; }
+        if(el.dataset.c) { state.chips[el.dataset.i][el.dataset.c] = el.value; }
+        if(el.dataset.p) { state.points[el.dataset.i][el.dataset.p] = el.value; }
+        if(el.dataset.g) { state.gallery[el.dataset.i][el.dataset.g] = el.value; }
+        
+        persist(); renderPreview();
+      });
+
+      // File Inputs
+      root.addEventListener("change", async (e)=>{
+         const el = e.target;
+         if(el.id==="avatarFile") { state.avatarDataUrl = await readFileAsDataURL(el.files[0]); }
+         if(el.id==="bannerFile") { state.bannerDataUrl = await readFileAsDataURL(el.files[0]); }
+         if(el.id==="logoFile") { state.logoDataUrl = await readFileAsDataURL(el.files[0]); }
+         if(el.dataset.gfile) { state.gallery[el.dataset.i].img = await readFileAsDataURL(el.files[0]); }
+         
+         if(el.dataset.b==="style") { state.buttons[el.dataset.i].style = el.value; }
+         if(el.dataset.c==="style") { state.chips[el.dataset.i].style = el.value; }
+         if(el.id==="accentPreset") { state.accentPreset = el.value; applyButtonThemeVars(); }
+         if(el.id==="callPhoneStyle") { state.callPhoneStyle = el.value; }
+         
+         persist(); renderPreview();
+      });
+
+      // Clicks
+      root.addEventListener("click", (e)=>{
+         const b = e.target.closest("button[data-act]"); if(!b) return;
+         const i = Number(b.dataset.i);
+         if(b.dataset.act==="rmButton") { state.buttons.splice(i,1); renderButtonsList(); }
+         if(b.dataset.act==="rmChip") { state.chips.splice(i,1); renderContactsList(); }
+         if(b.dataset.act==="rmPoint") { state.points.splice(i,1); renderPointsList(); }
+         if(b.dataset.act==="rmGallery") { state.gallery.splice(i,1); renderGalleryList(); }
+         persist(); renderPreview();
+      });
+
+      safeOn("addButton", "click", ()=>{ state.buttons.push({label:"New",url:"",style:"glass"}); renderButtonsList(); persist(); renderPreview(); });
+      safeOn("addChip", "click", ()=>{ state.chips.push({label:"Link",url:"",style:"outline"}); renderContactsList(); persist(); renderPreview(); });
+      safeOn("addPoint", "click", ()=>{ state.points.push({title:"Link",url:"",text:""}); renderPointsList(); persist(); renderPreview(); });
+      safeOn("addGallery", "click", ()=>{ state.gallery.push({title:"Work",img:""}); renderGalleryList(); persist(); renderPreview(); });
+
+      safeOn("save", "click", ()=>{ persistNow(); closeSheet(); });
+      safeOn("reset", "click", ()=>{ if(confirm("Сбросить все?")) { state=clone(defaultState); persistNow(); renderAllLists(); renderPreview(); syncFieldsFromState(); }});
+      safeOn("profileLink", "click", ()=>{ 
+         const url = buildProfileUrl(); 
+         window.open(url, '_blank'); 
+      });
+
+      // ИНИЦИАЛИЗАЦИЯ И ЗАГРУЗКА
+      async function init() {
+        setSaveStatus("saving", "Загрузка из облака...");
+        
+        // 1. Пытаемся получить данные с Yandex VM
+        const cloudData = await loadDataFromCloud();
+        
+        // 2. Если облако не ответило, берем из localStorage
+        const localDataRaw = storageGet();
+        const localData = localDataRaw ? JSON.parse(localDataRaw) : null;
+
+        // 3. Сливаем данные: Приоритет облаку -> потом локал -> потом дефолт
+        const mergedData = cloudData || localData || clone(defaultState);
+        state = { ...clone(defaultState), ...mergedData };
+
+        // Если загрузились успешно, сохраним локально актуальный стейт
+        if(cloudData) {
+           storageSet(JSON.stringify(state));
+        }
+
+        sanitizeButtonStyles();
+        setTheme(state.theme || "dark");
+        syncFieldsFromState();
+        setCtaTheme(state.ctaTheme);
+        renderAllLists();
+        renderPreview();
+        
+        setSaveStatus("saved", cloudData ? "Синхронизировано" : "Загружено локально");
+      }
+      
+      init();
     }
-    
-    init();
-  }
-})();
-</script>
+  })();
+  </script>
+</body>
+</html>
