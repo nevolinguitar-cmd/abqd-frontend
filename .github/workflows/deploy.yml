@@ -1,4 +1,4 @@
-name: Deploy frontend contours (self-hosted) v4
+name: Deploy frontend contours (self-hosted) v5 (single-world)
 
 on:
   push:
@@ -8,6 +8,10 @@ on:
       - "frontend/**"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -23,7 +27,7 @@ jobs:
           set -euo pipefail
 
           if [ "${{ github.ref_name }}" = "main" ]; then
-            TARGET_DIR="/var/www/abqd/prod/frontend"
+            TARGET_DIR="/opt/abqd/static"
             URL_PREFIX=""
             ENV_NAME="prod"
           else
@@ -218,6 +222,7 @@ jobs:
               --exclude='*.bak*' \
               --exclude='*.repo.bak*' \
               --exclude='.git/' \
+              --exclude='.github/' \
               --no-owner --no-group --no-perms --omit-dir-times \
               "$src/" "$dst/"
 
@@ -233,6 +238,7 @@ jobs:
               --exclude='*.bak*' \
               --exclude='*.repo.bak*' \
               --exclude='.git/' \
+              --exclude='.github/' \
               --no-owner --no-group --no-perms --omit-dir-times \
               "./frontend/" "$TARGET_DIR/"
 
@@ -287,6 +293,7 @@ jobs:
               --exclude='*.bak*' \
               --exclude='*.repo.bak*' \
               --exclude='.git/' \
+              --exclude='.github/' \
               --no-owner --no-group --no-perms --omit-dir-times \
               "./apps/crm/dist/" "$TARGET_DIR/dashboard/"
 
@@ -326,6 +333,10 @@ jobs:
 
           if [ "$DEPLOY_CONSTRUCTOR" = "1" ]; then
             check_url "$URL_PREFIX/constructor/"
+          fi
+
+          if [ "$DEPLOY_PUBLIC_U" = "1" ]; then
+            check_url "$URL_PREFIX/u/"
           fi
 
           if [ "$DEPLOY_CALENDAR" = "1" ]; then
