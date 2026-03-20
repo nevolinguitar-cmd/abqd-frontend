@@ -1,38 +1,34 @@
+<!-- ABQD_HEADER_INCLUDE_v1 --><script>(function(){var s=document.createElement("script");s.src="/assets/header.js?v=HDR_20260223_225322";s.defer=true;document.head.appendChild(s);})();</script>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Конструктор профиля ABQD</title>
-  <!-- ABQD_HEADER_INCLUDE_v1 --><script>(function(){var s=document.createElement("script");s.src="/assets/header.js?v=HDR_20260223_225322";s.defer=true;document.head.appendChild(s);})();</script>
+  <title>ABQD Конструктор профиля</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
-    body:not(.u-page) .abqdRoot { padding-top: 90px !important; }
-    @media (max-width: 768px) { .mobile-footer { display: none !important; } }
-
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      background-color: var(--bg-app) !important;
-      height: 100%;
-    }
-
     :root {
       --font: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      
+      /* --- SIZING & SPACING --- */
       --r-card: 24px;
       --r-input: 14px;
       --r-btn: 99px;
+      
+      /* --- PREVIEW SPECS --- */
       --avatar: 88px;
       --heroOverlap: -50px;
 
+      /* --- DARK THEME (Default) --- */
       --bg-app: #050507;
       --bg-panel: rgba(20, 21, 26, 0.6);
       --border-panel: rgba(255, 255, 255, 0.08);
-
-      --page-gradient:
+      
+      --page-gradient: 
         radial-gradient(at 0% 0%, rgba(109, 92, 255, 0.15) 0px, transparent 50%),
         radial-gradient(at 100% 0%, rgba(255, 77, 157, 0.12) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(109, 92, 255, 0.1) 0px, transparent 50%),
@@ -52,8 +48,10 @@
 
       --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
       --glass-blur: 24px;
-      --logo-filter: invert(1) brightness(1.2);
+      
+      --logo-filter: invert(1) brightness(1.2); 
 
+      /* Colors strictly for the Profile Preview (Dark) */
       --p-bg: #0b0c10;
       --p-card: rgba(20, 22, 28, 0.7);
       --p-border: rgba(255,255,255,0.12);
@@ -62,11 +60,12 @@
     }
 
     html[data-theme="soft"] {
+      /* --- LIGHT THEME --- */
       --bg-app: #f2f4f8;
       --bg-panel: rgba(255, 255, 255, 0.75);
       --border-panel: rgba(255, 255, 255, 0.6);
 
-      --page-gradient:
+      --page-gradient: 
         radial-gradient(at 10% 10%, rgba(37, 99, 235, 0.08) 0px, transparent 60%),
         radial-gradient(at 90% 20%, rgba(124, 58, 237, 0.08) 0px, transparent 60%),
         linear-gradient(180deg, #ffffff 0%, #f0f4fa 100%);
@@ -84,8 +83,10 @@
       --accent-grad: linear-gradient(135deg, var(--accent-1), var(--accent-2));
 
       --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.08);
+      
       --logo-filter: none;
 
+      /* Profile Preview (Light) */
       --p-bg: #ffffff;
       --p-card: rgba(255,255,255,0.8);
       --p-border: rgba(0,0,0,0.06);
@@ -93,6 +94,16 @@
       --p-text-muted: rgba(0,0,0,0.5);
     }
 
+    /* Сброс базовых стилей браузера */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-app);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- BASE --- */
     .abqdRoot {
       font-family: var(--font);
       background-color: var(--bg-app);
@@ -104,16 +115,15 @@
       position: relative;
       overflow-x: hidden;
     }
-
     .abqdRoot * { box-sizing: border-box; outline: none; }
-
-    .abqdRoot input,
-    .abqdRoot textarea,
-    .abqdRoot select,
+    
+    .abqdRoot input, 
+    .abqdRoot textarea, 
+    .abqdRoot select, 
     .abqdRoot button {
       font-family: var(--font) !important;
     }
-
+    
     .wrap {
       max-width: 1280px;
       margin: 0 auto;
@@ -121,6 +131,7 @@
       z-index: 2;
     }
 
+    /* --- HEADER & LOGO --- */
     .top {
       display: flex;
       justify-content: space-between;
@@ -129,12 +140,12 @@
       gap: 24px;
       flex-wrap: wrap;
     }
-
+    
     .brand-block { display: flex; flex-direction: column; gap: 12px; }
     .brand-logo-link { display: block; width: fit-content; text-decoration: none; opacity: 0.9; transition: opacity 0.2s ease; }
     .brand-logo-link:hover { opacity: 1; }
     .brand-logo { display: block; height: auto; filter: var(--logo-filter); transition: filter 0.3s ease; }
-
+    
     @media (min-width: 981px) { .brand-logo { max-height: 32px; width: auto; } }
     @media (max-width: 980px) { .brand-logo { max-height: 24px; width: auto; } }
 
@@ -147,56 +158,18 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    .subline { margin-top: 8px; font-size: 13px; font-weight: 500; color: var(--text-muted); max-width: 600px; line-height: 1.4; }
 
-    .subline {
-      margin-top: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      max-width: 600px;
-      line-height: 1.4;
-    }
-
-    .seg {
-      background: var(--input-bg);
-      padding: 4px;
-      border-radius: 99px;
-      border: 1px solid var(--border-panel);
-      display: flex;
-      position: relative;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .seg button {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 700;
-      padding: 8px 16px;
-      border-radius: 99px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .seg button.active {
-      background: var(--bg-app);
-      color: var(--text-main);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
+    /* --- THEME TOGGLE --- */
+    .seg { background: var(--input-bg); padding: 4px; border-radius: 99px; border: 1px solid var(--border-panel); display: flex; position: relative; }
+    .seg button { background: transparent; border: none; color: var(--text-muted); font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 99px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.05em; }
+    .seg button.active { background: var(--bg-app); color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     html[data-theme="soft"] .seg button.active { background: #fff; }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 32px;
-      align-items: start;
-    }
+    /* --- GRID LAYOUT --- */
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 32px; align-items: start; }
 
+    /* --- GLASS PANELS (Common) --- */
     .card {
       background: var(--bg-panel);
       backdrop-filter: blur(var(--glass-blur));
@@ -205,595 +178,167 @@
       border-radius: var(--r-card);
       box-shadow: var(--glass-shadow);
     }
+    
+    /* --- EDITOR COLUMN --- */
+    .editorCard { display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
-    .editorCard { display: flex; flex-direction: column; overflow: hidden; }
-
+    /* Editor Header */
     .cardHd {
-      padding: 20px;
-      border-bottom: 1px solid var(--border-panel);
-      background: rgba(255,255,255,0.02);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      padding: 20px; border-bottom: 1px solid var(--border-panel); background: rgba(255,255,255,0.02);
+      display: flex; flex-direction: column; gap: 16px;
     }
-
-    .cardHd b {
-      font-size: 18px;
-      letter-spacing: -0.01em;
-      font-weight: 800;
-      display: block;
-    }
-
+    .cardHd b { font-size: 18px; letter-spacing: -0.01em; font-weight: 800; display: block; }
+    
     .sheet-handle { display: none; }
     .close-sheet-btn { display: none; }
 
-    .tabs {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
-    }
-
+    /* Editor Tabs */
+    .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
     .tabs::-webkit-scrollbar { display: none; }
-
-    .tab {
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-muted);
-      font-weight: 700;
-      font-size: 12px;
-      padding: 8px 14px;
-      border-radius: 12px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: 0.2s;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
+    .tab { background: transparent; border: 1px solid transparent; color: var(--text-muted); font-weight: 700; font-size: 12px; padding: 8px 14px; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
     .tab:hover { color: var(--text-main); background: var(--input-bg); }
-    .tab.active {
-      background: var(--accent-grad);
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(109, 92, 255, 0.3);
-      border: none;
-    }
+    .tab.active { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(109, 92, 255, 0.3); border: none; }
 
-    .editorInner {
-      flex: 1;
-      overflow-y: auto !important;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 250px !important;
-    }
-
+    /* Editor Area */
+    .editorInner { padding: 0; }
     .pad { padding: 24px 20px; }
 
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      color: var(--text-label);
-      letter-spacing: 0.05em;
-    }
-
-    input, textarea, select {
-      width: 100%;
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      color: var(--text-main);
-      border-radius: var(--r-input);
-      padding: 14px;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    input:focus, textarea:focus, select:focus {
-      border-color: var(--accent-1);
-      box-shadow: 0 0 0 3px var(--input-focus);
-      background: var(--bg-app);
-    }
-
+    /* --- FORMS & INPUTS --- */
+    label { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-label); letter-spacing: 0.05em; }
+    input, textarea, select { width: 100%; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--r-input); padding: 14px; font-size: 14px; font-weight: 600; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent-1); box-shadow: 0 0 0 3px var(--input-focus); background: var(--bg-app); }
     textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
+    
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     @media(max-width: 500px) { .row { grid-template-columns: 1fr; } }
+    .help, .mini { font-size: 12px; color: var(--text-muted); line-height: 1.4; font-weight: 500; }
+    input[type="file"]::file-selector-button { background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-panel); padding: 6px 12px; border-radius: 8px; font-size: 12px; margin-right: 12px; cursor: pointer; font-weight: 700; }
 
-    .help, .mini {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.4;
-      font-weight: 500;
-    }
-
-    input[type="file"]::file-selector-button {
-      background: var(--bg-app);
-      color: var(--text-main);
-      border: 1px solid var(--border-panel);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      margin-right: 12px;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .btnRow {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      border: none;
-      background: var(--text-main);
-      color: var(--bg-app);
-      font-weight: 800;
-      font-size: 13px;
-      padding: 12px 20px;
-      border-radius: var(--r-btn);
-      cursor: pointer;
-      transition: transform 0.1s, opacity 0.2s;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
+    /* --- BUTTONS (Editor Actions) --- */
+    .btnRow { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+    .btn { border: none; background: var(--text-main); color: var(--bg-app); font-weight: 800; font-size: 13px; padding: 12px 20px; border-radius: var(--r-btn); cursor: pointer; transition: transform 0.1s, opacity 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
     .btn:hover { opacity: 0.9; }
     .btn:active { transform: scale(0.98); }
-
-    .btn.outline {
-      background: transparent;
-      border: 1px solid var(--border-panel);
-      color: var(--text-main);
-    }
-
+    .btn.outline { background: transparent; border: 1px solid var(--border-panel); color: var(--text-main); }
     .btn.outline:hover { border-color: var(--text-muted); }
-
-    .btn.danger {
-      color: #ff4d4d;
-      background: rgba(255, 77, 77, 0.1);
-      border: 1px solid rgba(255,77,77,0.2);
-    }
-
+    .btn.danger { color: #ff4d4d; background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255,77,77,0.2); }
     .btn.small { padding: 6px 12px; font-size: 11px; }
+    .resetLink { background: none; border: none; color: var(--text-muted); font-size: 12px; text-decoration: underline; cursor: pointer; margin-left: auto; font-weight: 600; }
 
-    .resetLink {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 12px;
-      text-decoration: underline;
-      cursor: pointer;
-      margin-left: auto;
-      font-weight: 600;
-    }
-
-    #previewMount { position: relative; padding-top: 18px; }
-
+    /* --- PREVIEW COLUMN BASE (The Phone) --- */
     #previewCard {
-      background: var(--p-bg);
-      border-radius: 40px;
-      border: 8px solid var(--border-panel);
-      box-shadow: 0 0 0 2px rgba(0,0,0,0.1), 0 30px 60px rgba(0,0,0,0.4);
-      overflow: hidden;
-      position: sticky;
-      top: 20px;
-      min-height: 600px;
+      background: var(--p-bg); border-radius: var(--r-card); border: none;
+      box-shadow: var(--glass-shadow);
       color: var(--p-text);
+      position: relative;
+      overflow: hidden;
     }
+    #previewCard .cardHdPhone { background: transparent; border: none; padding: 24px; text-align: center; display: flex; justify-content: center; align-items: center; }
+    .phone-brand-logo { height: 18px; width: auto; opacity: 0.7; filter: var(--logo-filter); }
 
-    #previewCard .cardHdPhone {
-      background: transparent;
-      border: none;
-      padding: 24px;
-      text-align: center;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .phone-brand-logo {
-      height: 18px;
-      width: auto;
-      opacity: 0.7;
-      filter: var(--logo-filter);
-    }
-
+    /* --- INLINE EDIT HOVERS --- */
     [data-edit] {
       position: relative;
       border-radius: 16px;
       transition: background 0.2s, box-shadow 0.2s;
       cursor: pointer;
     }
-
     @media (hover: hover) {
       [data-edit]:hover {
         box-shadow: inset 0 0 0 2px var(--border-panel);
         background: rgba(125,125,125,0.05);
       }
     }
-
     [data-edit]:active { background: rgba(125,125,125,0.1); }
 
+    /* --- PREVIEW CONTENT STYLES --- */
     .hero { position: relative; padding-bottom: 20px; }
     .bannerWrap { padding: 12px; }
-
-    .banner {
-      border-radius: 24px;
-      height: 180px;
-      background: #2a2a2a;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .banner img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .heroHead {
-      padding: 0 24px;
-      margin-top: var(--heroOverlap);
-      position: relative;
-      z-index: 2;
-      display: flex;
-      align-items: flex-end;
-      gap: 16px;
-    }
-
-    .avatar {
-      width: var(--avatar);
-      height: var(--avatar);
-      border-radius: 50%;
-      border: 4px solid var(--p-bg);
-      background: var(--p-bg);
-      overflow: hidden;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-    }
-
-    .avatarInner {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #eee;
-      color: #333;
-    }
-
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .nm {
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1.1;
-      margin: 0;
-      color: var(--p-text);
-      pointer-events: none;
-    }
-
-    .rl {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--p-text-muted);
-      margin-top: 4px;
-      letter-spacing: 0.05em;
-      pointer-events: none;
-    }
-
+    .banner { border-radius: 24px; height: 180px; background: #2a2a2a; overflow: hidden; position: relative; }
+    .banner img { width: 100%; height: 100%; object-fit: cover; }
+    .heroHead { padding: 0 24px; margin-top: var(--heroOverlap); position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 16px; }
+    .avatar { width: var(--avatar); height: var(--avatar); border-radius: 50%; border: 4px solid var(--p-bg); background: var(--p-bg); overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+    .avatarInner { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #eee; color: #333; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .nm { font-size: 20px; font-weight: 800; line-height: 1.1; margin: 0; color: var(--p-text) !important; pointer-events: none; }
+    .rl { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--p-text-muted); margin-top: 4px; letter-spacing: 0.05em; pointer-events: none;}
     .about { padding: 20px 24px; }
-
-    .aboutText {
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--p-text);
-      opacity: 0.9;
-      margin-bottom: 20px;
-      font-weight: 500;
-      pointer-events: none;
-    }
-
-    .cta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      pointer-events: none;
-    }
-
-    .ctaBtn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 20px;
-      border-radius: 16px;
-      font-weight: 700;
-      font-size: 13px;
-      text-decoration: none;
-      transition: 0.2s;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(125,125,125,0.1);
-      color: var(--p-text);
-    }
-
+    .aboutText { font-size: 14px; line-height: 1.6; color: var(--p-text); opacity: 0.9; margin-bottom: 20px; font-weight: 500; pointer-events: none;}
+    
+    .cta { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
+    .ctaBtn { padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 13px; text-decoration: none; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); background: rgba(125,125,125,0.1); color: var(--p-text); }
     .ctaBtn--glass { background: rgba(125,125,125,0.1); backdrop-filter: blur(10px); }
     .ctaBtn--metal { background: linear-gradient(180deg, #333, #111); color: #fff; border: none; }
     html[data-theme="soft"] .ctaBtn--metal { background: linear-gradient(180deg, #fff, #ddd); color: #000; }
     .ctaBtn--accent { background: var(--accent-grad); color: #fff; border: none; box-shadow: 0 8px 16px -4px rgba(109,92,255,0.4); }
 
-    .ctaBtn--call {
-      position: relative;
-      font-weight: 800;
-      letter-spacing: 0.01em;
-      min-width: 150px;
-      padding: 14px 22px;
-      border-radius: 18px;
-    }
-
-    .ctaBtn--call::before {
-      content: "●";
-      display: inline-block;
-      margin-right: 8px;
-      font-size: 10px;
-      vertical-align: middle;
-      opacity: 0.9;
-    }
-
-    .ctaBtn--call-glass {
-      background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08));
-      border: 1px solid rgba(255,255,255,0.22);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 12px 24px rgba(0,0,0,0.18);
-    }
-
-    .ctaBtn--call-accent {
-      background: var(--accent-grad);
-      color: #fff;
-      border: none;
-      box-shadow: 0 10px 24px rgba(109,92,255,0.30), 0 4px 10px rgba(255,77,157,0.18);
-    }
-
-    .ctaBtn--call-metal {
-      background: linear-gradient(180deg, #4b5563 0%, #111827 100%);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 26px rgba(0,0,0,0.28);
-    }
-
-    html[data-theme="soft"] .ctaBtn--call-glass {
-      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,247,250,0.72));
-      border: 1px solid rgba(0,0,0,0.08);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 10px 22px rgba(0,0,0,0.08);
-    }
-
-    html[data-theme="soft"] .ctaBtn--call-metal {
-      background: linear-gradient(180deg, #ffffff 0%, #d6dbe3 100%);
-      color: #111827;
-      border: 1px solid rgba(0,0,0,0.10);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 10px 22px rgba(0,0,0,0.10);
-    }
-
-    .chipsRow {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 0 24px 24px;
-      pointer-events: none;
-    }
-
-    .chipA {
-      padding: 8px 14px;
-      border-radius: 99px;
-      font-size: 12px;
-      font-weight: 700;
-      text-decoration: none;
-      border: 1px solid var(--p-border);
-      color: var(--p-text);
-    }
-
+    .chipsRow { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 24px 24px; pointer-events: none; }
+    .chipA { padding: 8px 14px; border-radius: 99px; font-size: 12px; font-weight: 700; text-decoration: none; border: 1px solid var(--p-border); color: var(--p-text); }
     .chipA--accent { background: var(--accent-grad); color: #fff; border: none; }
     .chipA--outline { background: transparent; border-color: var(--p-border); opacity: 0.8; }
 
     .section { padding: 0 24px 24px; }
-
-    .secTitle {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--p-text-muted);
-      font-weight: 800;
-      margin-bottom: 12px;
-      pointer-events: none;
-    }
-
-    .list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      pointer-events: none;
-    }
-
-    .item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px;
-      border-radius: 16px;
-      background: var(--p-card);
-      border: 1px solid var(--p-border);
-      color: var(--p-text);
-      text-decoration: none;
-    }
-
-    .check {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--accent-grad);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 12px;
-      flex-shrink: 0;
-      font-weight: 800;
-    }
-
+    .secTitle { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--p-text-muted); font-weight: 800; margin-bottom: 12px; pointer-events: none; }
+    
+    .list { display: flex; flex-direction: column; gap: 8px; pointer-events: none;}
+    .item { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; background: var(--p-card); border: 1px solid var(--p-border); color: var(--p-text); text-decoration: none; }
+    .check { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-grad); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; flex-shrink: 0; font-weight: 800; }
     .itT { font-size: 14px; font-weight: 700; margin: 0; }
     .itD { font-size: 12px; opacity: 0.7; margin: 2px 0 0; font-weight: 500; }
 
-    .grid3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      pointer-events: none;
-    }
-
-    .work {
-      aspect-ratio: 1;
-      border-radius: 12px;
-      overflow: hidden;
-      position: relative;
-      background: #333;
-    }
-
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; pointer-events: none;}
+    .work { aspect-ratio: 1; border-radius: 12px; overflow: hidden; position: relative; background: #333; }
     .workImg { width: 100%; height: 100%; }
     .workImg img { width: 100%; height: 100%; object-fit: cover; }
+    .workBody { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: #fff; }
+    .workT { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;}
+    .workM { display: none; }
 
-    .workBody {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 8px;
-      background: linear-gradient(transparent, rgba(0,0,0,0.8));
-      color: #fff;
-    }
-
-    .workT {
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin: 0;
-    }
-
-    .footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 11px;
-      opacity: 0.4;
-      color: var(--p-text);
-      font-weight: 600;
-    }
+    .footer { text-align: center; padding: 20px; font-size: 11px; opacity: 0.4; color: var(--p-text); font-weight: 600; }
 
     .hide { display: none !important; }
-    .editorSpacer { height: 100px; }
+    .editorSpacer { height: 60px; }
 
-    .saveStatus {
-      margin-top: 16px;
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-muted);
-      font-weight: 700;
-    }
-
-    .saveDot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #00c853;
-      transition: background 0.3s;
-    }
-
+    .saveStatus { margin-top: 16px; font-size: 11px; display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-weight: 700; }
+    .saveDot { width: 6px; height: 6px; border-radius: 50%; background: #00c853; transition: background 0.3s;}
     [data-state="dirty"] .saveDot { background: #ffab00; }
     [data-state="saving"] .saveDot { background: #2979ff; }
     [data-state="error"] .saveDot { background: #ff4d4d; }
 
+    /* Mobile FAB Button */
     .fab-edit {
       display: none;
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 999;
-      background: var(--text-main);
-      color: var(--bg-app);
-      padding: 16px 32px;
-      border-radius: 99px;
-      font-weight: 800;
-      font-size: 14px;
-      border: none;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      transition: transform 0.2s, opacity 0.2s;
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999;
+      background: var(--text-main); color: var(--bg-app); padding: 16px 32px; border-radius: 99px;
+      font-weight: 800; font-size: 14px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      align-items: center; gap: 10px; cursor: pointer; transition: transform 0.2s, opacity 0.2s;
     }
-
     .fab-edit.hide-fab { transform: translate(-50%, 150%); opacity: 0; }
 
+    /* ========================================================
+       MOBILE APP EXPERIENCE (BOTTOM SHEET + INLINE CLICKS)
+       ======================================================== */
     @media (max-width: 980px) {
-      .abqdRoot { padding: 0; background: var(--p-bg); color: var(--p-text); }
+      .abqdRoot { padding: 0; background: var(--p-bg); color: var(--p-text); overflow-y: auto;} 
       .wrap { padding: 0; }
-
-      .top {
-        padding: 16px 20px;
-        margin-bottom: 0;
-        background: var(--p-bg);
-        position: sticky;
-        top: 0;
-        z-index: 50;
-        border-bottom: 1px solid var(--p-border);
-        align-items: center;
-      }
-
-      h1, .subline { display: none; }
-
+      
+      .top { padding: 16px 20px; margin-bottom: 0; background: var(--p-bg); position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--p-border); align-items: center;}
+      h1 { display: none; }
+      .subline { display: none; }
+      
       .grid { display: block; }
-      #previewMount { padding: 0 0 100px 0; }
+      #previewMount { padding: 0 0 100px 0; height: auto; }
+      
+      #previewCard { border: none; border-radius: 0; box-shadow: none; top: 0; min-height: auto; max-height: none; overflow-y: visible; position: relative;}
+      #previewCard .cardHdPhone { display: none; } 
 
-      #previewCard {
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-        top: 0;
-        min-height: auto;
-      }
-
-      #previewCard .cardHdPhone { display: none; }
-
-      .fab-edit {
-        display: flex;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
+      .fab-edit { display: flex; text-transform: uppercase; letter-spacing: 0.05em;}
 
       .editorCard {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 85vh !important;
+        bottom: 0; left: 0; right: 0;
+        height: 70vh !important;
         margin: 0;
         border-radius: 32px 32px 0 0;
         z-index: 10000;
@@ -805,271 +350,220 @@
         box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
         color: var(--text-main);
       }
-
       .editorCard.sheet-open { transform: translateY(0); }
 
-      .cardHd {
-        padding: 12px 20px;
-        border-radius: 32px 32px 0 0;
-        flex-direction: column;
-        gap: 12px;
-        align-items: center;
+      .cardHd { 
+        padding: 12px 20px; border-radius: 32px 32px 0 0; 
+        flex-direction: column; gap: 12px; align-items: center; 
+        position: sticky; top: 0; z-index: 100;
       }
-
       .cardHd b { display: none; }
-
-      .sheet-handle {
-        display: block;
-        width: 40px;
-        height: 5px;
-        background: var(--text-muted);
-        border-radius: 99px;
-        opacity: 0.4;
-        margin-bottom: 4px;
-      }
-
+      .sheet-handle { display: block; width: 40px; height: 5px; background: var(--text-muted); border-radius: 99px; opacity: 0.4; margin-bottom: 4px; }
       .close-sheet-btn { display: block; margin-left: 12px; }
-      .editorSticky { position: relative; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+      
+      .editorSticky { position: static; height: calc(100% - 70px); overflow-y: auto; }
     }
 
-    .toastWrap {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 100000;
-    }
-
-    .toast {
-      background: var(--bg-app);
-      border: 1px solid var(--border-panel);
-      color: var(--text-main);
-      padding: 12px 20px;
-      border-radius: 12px;
-      margin-top: 10px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      font-size: 13px;
-      font-weight: 700;
-    }
+    .toastWrap { position: fixed; bottom: 20px; right: 20px; z-index: 100000; }
+    .toast { background: var(--bg-app); border: 1px solid var(--border-panel); color: var(--text-main); padding: 12px 20px; border-radius: 12px; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-size: 13px; font-weight: 700; }
   </style>
 </head>
 <body>
 
-<div class="abqdRoot" data-abqd-constructor>
-  <div class="wrap" id="appWrap">
-    <div class="top">
-      <div class="brand-block">
-        <a href="https://abqd.ru" target="_blank" class="brand-logo-link">
-          <picture>
-            <source srcset="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" media="(min-width: 981px)">
-            <img src="https://static.tildacdn.com/tild6464-3131-4736-b938-656238643465/_abqd.png" alt="ABQD" class="brand-logo">
-          </picture>
-        </a>
-        <div>
-          <h1>Конструктор профиля</h1>
-          <p class="subline">Настройки синхронизируются автоматически между устройствами.</p>
+  <div class="abqdRoot" data-abqd-constructor>
+    <div class="wrap" id="appWrap">
+      
+      <!-- HEADER -->
+      <div class="top">
+        <div class="brand-block">
+          <a href="https://abqd.ru" target="_blank" class="brand-logo-link">
+            <picture>
+              <source srcset="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" media="(min-width: 981px)">
+              <img src="https://static.tildacdn.com/tild6464-3131-4736-b938-656238643465/_abqd.png" alt="ABQD" class="brand-logo">
+            </picture>
+          </a>
+          <div>
+            <h1>Конструктор профиля</h1>
+            <p class="subline">Настройки синхронизируются автоматически между устройствами.</p>
+          </div>
+        </div>
+        <div class="seg" id="themeSeg">
+          <button type="button" data-theme="dark">Тёмная</button>
+          <button type="button" data-theme="soft">Светлая</button>
         </div>
       </div>
 
-      <div class="seg" id="themeSeg">
-        <button type="button" data-theme="dark">Dark</button>
-        <button type="button" data-theme="soft">Light</button>
+      <div class="grid">
+        <!-- EDITOR -->
+        <div class="card editorCard" id="editorCard">
+          <div class="cardHd">
+            <div class="sheet-handle"></div>
+            <b id="editorTitle">Редактор</b>
+            <div style="display:flex; width: 100%; align-items: center; justify-content: space-between;">
+              <div class="tabs" id="tabs">
+                <button class="tab active" data-tab="profile" type="button">Профиль</button>
+                <button class="tab" data-tab="buttons" type="button">Кнопки</button>
+                <button class="tab" data-tab="contacts" type="button">Контакты</button>
+                <button class="tab" data-tab="points" type="button">Ссылки</button>
+                <button class="tab" data-tab="gallery" type="button">Работа</button>
+              </div>
+              <button class="btn small outline close-sheet-btn" id="closeSheetBtn">Готово</button>
+            </div>
+          </div>
+
+          <div class="editorSticky" id="editorSticky">
+            <div class="editorInner" id="editorInner">
+              
+              <div class="pad" id="tab-profile">
+                <div class="row">
+                  <div><label>Имя Фамилия</label><input id="fullName" placeholder="Александр Петров" /></div>
+                  <div><label>Должность / Статус</label><input id="role" placeholder="CEO & Founder" /></div>
+                </div>
+                <div class="row">
+                  <div><label>Аватар (800×800)</label><input id="avatarFile" type="file" accept="image/*" /><input id="avatarUrl" placeholder="или ссылка на фото" style="margin-top:8px" /></div>
+                  <div><label>Баннер (1600×800)</label><input id="bannerFile" type="file" accept="image/*" /><input id="bannerUrl" placeholder="или ссылка на баннер" style="margin-top:8px" /></div>
+                </div>
+                <div class="row">
+                  <div><label>Логотип (PNG)</label><input id="logoFile" type="file" accept="image/*" /><input id="logoUrl" placeholder="или ссылка" style="margin-top:8px" /></div>
+                  <div><label>Ссылка с логотипа</label><input id="logoLink" placeholder="https://site.com" /></div>
+                </div>
+                <div style="margin-top:20px">
+                  <label>Обо мне</label>
+                  <textarea id="about" maxlength="500" placeholder="Расскажите о себе кратко..."></textarea>
+                  <div class="mini" style="text-align:right"><span id="aboutCount">0</span>/500</div>
+                </div>
+                <div class="row" style="margin-top:20px">
+                  <div><label>Slug (адрес страницы)</label><input id="slug" placeholder="alex-petrov" /><div class="help">app.abqd.ru/u/<b id="slugFull">...</b></div></div>
+                </div>
+                <div class="btnRow">
+                  <button class="btn" id="save" type="button">Сохранить изменения</button>
+                  <button class="btn outline" id="profileLink" type="button">Открыть ссылку</button>
+                  <button class="resetLink" id="reset" type="button">Сброс</button>
+                </div>
+                <div class="saveStatus" id="saveStatus" data-state="saved"><span class="saveDot"></span><span id="saveStatusText">Инициализация...</span></div>
+              </div>
+
+              <!-- OTHER TABS -->
+              <div class="pad hide" id="tab-buttons">
+                <div class="row">
+                  <div><label>Стиль кнопок</label><div class="seg" id="ctaThemeSeg"><button type="button" data-ctatheme="auto">Авто</button><button type="button" data-ctatheme="glass">Glass</button><button type="button" data-ctatheme="accent">Accent</button></div></div>
+                  <div><label>Цветовая схема</label><select id="accentPreset"><option value="brand">Brand (Default)</option><option value="royal">Royal Blue</option><option value="ruby">Ruby Red</option><option value="custom">Custom...</option></select></div>
+                </div>
+                <div class="row hide" id="accentCustomRow">
+                   <div><label>Color 1</label><input id="accentC1" type="color" value="#2563eb"></div>
+                   <div><label>Color 2</label><input id="accentC2" type="color" value="#7c3aed"></div>
+                </div>
+                <div style="margin: 20px 0; border-top: 1px solid var(--border-panel);"></div>
+                <div class="row">
+                  <div><label>Телефон для связи</label><input id="callPhone" placeholder="+7 999 000-00-00" /></div>
+                  <div><label>Превью</label><a id="callPhoneChip" class="btn outline small" href="#" style="pointer-events:none">Позвонить</a></div>
+                </div>
+
+                <div class="row">
+                  <div>
+                    <label>Стиль кнопки «Позвонить»</label>
+                    <div class="seg" id="callStyleSeg">
+                      <button type="button" data-callstyle="glass">Glass</button>
+                      <button type="button" data-callstyle="accent">Accent</button>
+                      <button type="button" data-callstyle="metal">Metal</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label>Описание</label>
+                    <div class="mini">Отдельный стиль только для кнопки «Позвонить».</div>
+                  </div>
+                </div>
+
+                <div id="buttonsList" style="margin-top:20px;"></div>
+                <div class="btnRow"><button class="btn" id="addButton" type="button">+ Добавить кнопку</button></div>
+              </div>
+
+              <div class="pad hide" id="tab-contacts">
+                <div class="help" style="margin-bottom:16px">Маленькие "чипсы" для соцсетей (TG, WA, Insta).</div>
+                <div id="contactsList"></div>
+                <div class="btnRow"><button class="btn" id="addChip" type="button">+ Добавить контакт</button></div>
+              </div>
+
+              <div class="pad hide" id="tab-points">
+                 <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="pointsTitle" placeholder="Полезные ссылки" /></div>
+                 <div id="pointsList"></div>
+                 <div class="btnRow"><button class="btn" id="addPoint" type="button">+ Добавить ссылку</button></div>
+              </div>
+
+              <div class="pad hide" id="tab-gallery">
+                 <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="galleryTitle" placeholder="Мое портфолио" /></div>
+                 <div id="galleryList"></div>
+                 <div class="btnRow"><button class="btn" id="addGallery" type="button">+ Добавить работу</button></div>
+              </div>
+              
+              <div class="editorSpacer"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREVIEW -->
+        <div id="previewMount">
+          <div class="card" id="previewCard">
+            <div class="cardHdPhone">
+              <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" class="phone-brand-logo" alt="ABQD">
+            </div>
+
+            <div class="hero">
+              <div class="bannerWrap" data-edit="profile">
+                <div class="banner" id="bannerBox">
+                  <div class="bannerPlh" id="bannerPlh" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.3; font-weight:700; font-size:10px; text-transform:uppercase;">COVER</div>
+                </div>
+              </div>
+
+              <div class="heroHead" data-edit="profile">
+                <div class="avatar" id="avatarBox"><div class="avatarInner"><span class="fallback" style="font-size:24px; font-weight:800;">A</span></div></div>
+              </div>
+              
+              <div class="about" data-edit="profile">
+                <h2 class="nm" id="nameEl">Загрузка...</h2>
+                <div class="rl" id="roleEl">...</div>
+                <div style="height:12px"></div>
+                <p class="aboutText" id="aboutEl"></p>
+              </div>
+              
+              <div style="padding: 0 24px 20px" data-edit="buttons">
+                <div class="cta" id="ctaRow"></div>
+              </div>
+            </div>
+
+            <div class="section" id="contactsSection" data-edit="contacts">
+              <div class="secTitle" id="contactsTitleEl">Connect</div>
+              <div class="chipsRow" id="contactsPreview" style="padding:0"></div>
+            </div>
+
+            <div class="section" id="pointsSection" data-edit="points">
+              <div class="secTitle" id="pointsTitleEl">Links</div>
+              <div class="list" id="pointsPreview"></div>
+            </div>
+
+            <div class="section" id="gallerySection" data-edit="gallery">
+              <div class="secTitle" id="galleryTitleEl">Gallery</div>
+              <div class="grid3" id="galleryPreview"></div>
+            </div>
+
+            <div class="footer" id="profileFooter"></div>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="grid">
-      <div class="card editorCard" id="editorCard">
-        <div class="cardHd">
-          <div class="sheet-handle"></div>
-          <b id="editorTitle">Редактор</b>
+    <!-- MOBILE FAB -->
+    <button id="fabEdit" class="fab-edit">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      Настроить профиль
+    </button>
 
-          <div style="display:flex; width:100%; align-items:center; justify-content:space-between;">
-            <div class="tabs" id="tabs">
-              <button class="tab active" data-tab="profile" type="button">Профиль</button>
-              <button class="tab" data-tab="buttons" type="button">Кнопки</button>
-              <button class="tab" data-tab="contacts" type="button">Контакты</button>
-              <button class="tab" data-tab="points" type="button">Ссылки</button>
-              <button class="tab" data-tab="gallery" type="button">Работа</button>
-            </div>
-            <button class="btn small outline close-sheet-btn" id="closeSheetBtn">Готово</button>
-          </div>
-        </div>
-
-        <div class="editorSticky" id="editorSticky">
-          <div class="editorInner" id="editorInner">
-
-            <div class="pad" id="tab-profile">
-              <div class="row">
-                <div><label>Имя Фамилия</label><input id="fullName" placeholder="Александр Петров"></div>
-                <div><label>Должность / Статус</label><input id="role" placeholder="CEO & Founder"></div>
-              </div>
-
-              <div class="row">
-                <div><label>Аватар (800×800)</label><input id="avatarFile" type="file" accept="image/*"><input id="avatarUrl" placeholder="или ссылка на фото" style="margin-top:8px"></div>
-                <div><label>Баннер (1600×800)</label><input id="bannerFile" type="file" accept="image/*"><input id="bannerUrl" placeholder="или ссылка на баннер" style="margin-top:8px"></div>
-              </div>
-
-              <div class="row">
-                <div><label>Логотип (PNG)</label><input id="logoFile" type="file" accept="image/*"><input id="logoUrl" placeholder="или ссылка" style="margin-top:8px"></div>
-                <div><label>Ссылка с логотипа</label><input id="logoLink" placeholder="https://site.com"></div>
-              </div>
-
-              <div style="margin-top:20px">
-                <label>Обо мне</label>
-                <textarea id="about" maxlength="500" placeholder="Расскажите о себе кратко..."></textarea>
-                <div class="mini" style="text-align:right"><span id="aboutCount">0</span>/500</div>
-              </div>
-
-              <div class="row" style="margin-top:20px">
-                <div>
-                  <label>Slug (адрес страницы)</label>
-                  <input id="slug" placeholder="alex-petrov">
-                  <div class="help">app.abqd.ru/u/<b id="slugFull">...</b></div>
-                </div>
-              </div>
-
-              <div class="btnRow">
-                <button class="btn" id="save" type="button">Сохранить изменения</button>
-                <button class="btn outline" id="profileLink" type="button">Копировать ссылку</button>
-                <button class="resetLink" id="reset" type="button">Сброс</button>
-              </div>
-
-              <div class="saveStatus" id="saveStatus" data-state="saved"><span class="saveDot"></span><span id="saveStatusText">Инициализация...</span></div>
-            </div>
-
-            <div class="pad hide" id="tab-buttons">
-              <div class="row">
-                <div>
-                  <label>Стиль кнопок</label>
-                  <div class="seg" id="ctaThemeSeg">
-                    <button type="button" data-ctatheme="auto">Auto</button>
-                    <button type="button" data-ctatheme="glass">Glass</button>
-                    <button type="button" data-ctatheme="accent">Accent</button>
-                    <button type="button" data-ctatheme="metal">Metal</button>
-                  </div>
-                </div>
-                <div>
-                  <label>Цветовая схема</label>
-                  <select id="accentPreset">
-                    <option value="brand">Brand (Default)</option>
-                    <option value="royal">Royal Blue</option>
-                    <option value="ruby">Ruby Red</option>
-                    <option value="graphite">Graphite</option>
-                    <option value="custom">Custom...</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="row hide" id="accentCustomRow">
-                <div><label>Color 1</label><input id="accentC1" type="color" value="#2563eb"></div>
-                <div><label>Color 2</label><input id="accentC2" type="color" value="#7c3aed"></div>
-              </div>
-
-              <div style="margin:20px 0; border-top:1px solid var(--border-panel);"></div>
-
-              <div class="row">
-                <div><label>Телефон для связи</label><input id="callPhone" placeholder="+7 999 000-00-00"></div>
-                <div><label>Превью</label><a id="callPhoneChip" class="btn outline small" href="#" style="pointer-events:none">Позвонить</a></div>
-              </div>
-
-              <div class="row">
-                <div>
-                  <label>Стиль кнопки «Позвонить»</label>
-                  <div class="seg" id="callStyleSeg">
-                    <button type="button" data-callstyle="glass">Glass</button>
-                    <button type="button" data-callstyle="accent">Accent</button>
-                    <button type="button" data-callstyle="metal">Metal</button>
-                  </div>
-                </div>
-                <div></div>
-              </div>
-
-              <div id="buttonsList" style="margin-top:20px;"></div>
-              <div class="btnRow"><button class="btn" id="addButton" type="button">+ Добавить кнопку</button></div>
-            </div>
-
-            <div class="pad hide" id="tab-contacts">
-              <div class="help" style="margin-bottom:16px">Маленькие "чипсы" для соцсетей (TG, WA, Insta).</div>
-              <div id="contactsList"></div>
-              <div class="btnRow"><button class="btn" id="addChip" type="button">+ Добавить контакт</button></div>
-            </div>
-
-            <div class="pad hide" id="tab-points">
-              <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="pointsTitle" placeholder="Полезные ссылки"></div>
-              <div id="pointsList"></div>
-              <div class="btnRow"><button class="btn" id="addPoint" type="button">+ Добавить ссылку</button></div>
-            </div>
-
-            <div class="pad hide" id="tab-gallery">
-              <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="galleryTitle" placeholder="Мое портфолио"></div>
-              <div id="galleryList"></div>
-              <div class="btnRow"><button class="btn" id="addGallery" type="button">+ Добавить работу</button></div>
-            </div>
-
-            <div class="editorSpacer"></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="previewMount">
-        <div class="card" id="previewCard">
-          <div class="cardHdPhone">
-            <img src="https://static.tildacdn.com/tild3437-6438-4735-a331-343834336463/_abqd.svg" class="phone-brand-logo" alt="ABQD">
-          </div>
-
-          <div class="hero">
-            <div class="bannerWrap" data-edit="profile">
-              <div class="banner" id="bannerBox">
-                <div class="bannerPlh" id="bannerPlh" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.3; font-weight:700; font-size:10px; text-transform:uppercase;">COVER</div>
-              </div>
-            </div>
-
-            <div class="heroHead" data-edit="profile">
-              <div class="avatar" id="avatarBox"><div class="avatarInner"><span class="fallback" style="font-size:24px; font-weight:800;">A</span></div></div>
-            </div>
-
-            <div class="about" data-edit="profile">
-              <h2 class="nm" id="nameEl">Загрузка...</h2>
-              <div class="rl" id="roleEl">...</div>
-              <div style="height:12px"></div>
-              <p class="aboutText" id="aboutEl"></p>
-            </div>
-
-            <div style="padding:0 24px 20px" data-edit="buttons">
-              <div class="cta" id="ctaRow"></div>
-            </div>
-          </div>
-
-          <div class="section" id="contactsSection" data-edit="contacts">
-            <div class="secTitle" id="contactsTitleEl">Connect</div>
-            <div class="chipsRow" id="contactsPreview" style="padding:0"></div>
-          </div>
-
-          <div class="section" id="pointsSection" data-edit="points">
-            <div class="secTitle" id="pointsTitleEl">Links</div>
-            <div class="list" id="pointsPreview"></div>
-          </div>
-
-          <div class="section" id="gallerySection" data-edit="gallery">
-            <div class="secTitle" id="galleryTitleEl">Gallery</div>
-            <div class="grid3" id="galleryPreview"></div>
-          </div>
-
-          <div class="footer" id="profileFooter"></div>
-        </div>
-      </div>
-    </div>
+    <div class="toastWrap" id="toastWrap"></div>
   </div>
 
-  <button id="fabEdit" class="fab-edit">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-    Настроить профиль
-  </button>
-
-  <div class="toastWrap" id="toastWrap"></div>
-</div>
-
-<script>
-(() => {
+  <script>
+  (() => {
   const clone = (obj) => {
     try { return structuredClone(obj); } catch (e) {}
     return JSON.parse(JSON.stringify(obj));
