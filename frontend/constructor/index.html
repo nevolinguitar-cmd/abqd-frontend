@@ -562,15 +562,19 @@
 
     function initInstance(root){
       const $ = (id) => root.querySelector("#" + id);
+    const API_BASE = window.location.pathname.startsWith("/__stage/")
+      ? "/__stage/api/v1"
+      : "/api/v1";
 
-      // ==========================================
-      // НАСТРОЙКИ СИНХРОНИЗАЦИИ API (ЯНДЕКС VM)
-      // ==========================================
-      // Теперь, когда файл лежит на сервере Node.js, мы используем локальный роут
-      const API_ENDPOINT = "/api/profile"; 
-      
-      const USER_PROFILE_ID = "user_12345"; 
-      // ==========================================
+      const getToken = () => {
+        try {
+          return localStorage.getItem("abqd_token")
+            || localStorage.getItem("token")
+            || localStorage.getItem("auth_token")
+            || localStorage.getItem("access_token")
+            || "";
+        } catch (e) { return ""; }
+      };
 
 
       // --- MOBILE UI LOGIC ---
@@ -605,7 +609,15 @@
       });
 
       // --- CORE LOGIC & SYNC ---
-      const KEY = "abqd_constructor_data_" + USER_PROFILE_ID;
+      const ENV_SCOPE = window.location.pathname.startsWith("/__stage/") ? "stage" : "prod";
+      const KEY = (() => {
+        try {
+          const t = getToken();
+          return "abqd_constructor_backup_" + ENV_SCOPE + "_" + (t ? t.slice(0, 24) : "anon");
+        } catch (e) {
+          return "abqd_constructor_backup_" + ENV_SCOPE + "_anon";
+        }
+      })();
       const STYLE_LABELS = { glass: "Стекло", accent: "Акцент", metal: "Металл", outline: "Обводка" };
       const STYLE_SETS_CTA = { dark: ["glass", "accent", "metal"], soft: ["glass", "accent", "metal"] };
       const STYLE_SETS_CHIPS = { dark: ["outline", "accent"], soft: ["outline", "accent"] };
@@ -714,29 +726,38 @@
       }
 
       async function loadDataFromCloud() {
+        const token = getToken();
+        if (!token) return null;
         try {
-          const url = `${API_ENDPOINT}?userId=${USER_PROFILE_ID}`;
-          const res = await fetchWithTimeout(url, { method: "GET" }, 5000);
+          const res = await fetchWithTimeout(`${API_BASE}/constructor/me?t=${Date.now()}`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
+          }, 8000);
           if (res.ok) {
-            return await res.json();
+            const data = await res.json();
+            return data && data.state ? data.state : null;
           }
         } catch (e) {
-          console.warn("API Sync Load failed, falling back to local:", e);
+          console.warn("Constructor API load failed, falling back to local:", e);
         }
         return null;
       }
 
       async function saveDataToCloud(dataObj) {
+        const token = getToken();
+        if (!token) return false;
         try {
-          const url = `${API_ENDPOINT}?userId=${USER_PROFILE_ID}`;
-          const res = await fetchWithTimeout(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          const res = await fetchWithTimeout(`${API_BASE}/constructor/me`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
             body: JSON.stringify(dataObj)
-          }, 5000);
+          }, 8000);
           return res.ok;
         } catch (e) {
-          console.warn("API Sync Save failed:", e);
+          console.warn("Constructor API save failed:", e);
           return false;
         }
       }
