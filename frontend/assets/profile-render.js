@@ -75,6 +75,16 @@
     return '';
   }
 
+  function escapeHtml(s){
+    s = String(s == null ? '' : s);
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function normalizeBtnStyle(s){
     s = (s || '').toString().toLowerCase();
     if (s === 'primary' || s === 'accent') return 'primary';
@@ -89,8 +99,14 @@
     var st = payload && payload.state ? payload.state : (payload || {});
     if (!st || typeof st !== 'object') st = {};
 
-    // looks-like old constructor
-    var looksOld = (typeof st.fullName === 'string') || (typeof st.avatarDataUrl === 'string') || Array.isArray(st.points) || Array.isArray(st.gallery);
+    // looks-like old constructor only if HERO fields already exist on top-level
+    var looksOld =
+      (typeof st.fullName === 'string') ||
+      (typeof st.avatarDataUrl === 'string') ||
+      (typeof st.bannerDataUrl === 'string') ||
+      (typeof st.about === 'string') ||
+      (typeof st.role === 'string') ||
+      (typeof st.phone === 'string');
     if (looksOld) return st;
 
     // state-based -> build old-like to reuse renderer
@@ -109,6 +125,8 @@
     out.bannerDataUrl = pick(p.bannerUrl, p.bannerDataUrl, p.banner, '');
     out.logoDataUrl   = pick(p.logoUrl, p.logoDataUrl, '');
     out.logoLink      = pick(p.logoLink, '');
+    out.phone         = pick(p.phone, p.callPhone, st.callPhone, st.phone, '');
+    out.callStyle     = normalizeBtnStyle(pick(st.callButtonStyle, st.callStyle, st.ctaTheme, 'ghost'));
 
     out.buttons = Array.isArray(st.buttons) ? st.buttons : [];
     for (var i=0;i<out.buttons.length;i++){
@@ -130,32 +148,7 @@
     state = state || {};
     applyTheme(state.theme || 'soft');
 
-<<<<<<< HEAD
-     // --- ABQD_U_PROFILE_NORMALIZE_v1 ---
-=======
-    // --- ABQD_U_PROFILE_NORMALIZE_v1 ---
->>>>>>> 7df1fb6 (fix(u): normalize nested profile state and bust renderer cache)
-var profile = (state && state.profile && typeof state.profile === 'object') ? state.profile : {};
-
-if (!clean(state.fullName) && clean(profile.name)) state.fullName = profile.name;
-if (!clean(state.role) && clean(profile.role)) state.role = profile.role;
-if (!clean(state.about) && clean(profile.about)) state.about = profile.about;
-
-if (!clean(state.phone) && clean(state.callPhone)) state.phone = state.callPhone;
-if (!clean(state.phone) && clean(profile.phone)) state.phone = profile.phone;
-
-if (!clean(state.avatarDataUrl)) state.avatarDataUrl = clean(profile.avatarDataUrl) || clean(profile.avatarUrl) || clean(profile.avatar);
-if (!clean(state.bannerDataUrl)) state.bannerDataUrl = clean(profile.bannerDataUrl) || clean(profile.bannerUrl) || clean(profile.banner);
-if (!clean(state.logoDataUrl)) state.logoDataUrl = clean(profile.logoDataUrl) || clean(profile.logoUrl) || clean(profile.logo);
-
-if (!clean(state.logoLink)) state.logoLink = clean(profile.logoLink) || 'https://abqd.ru';
-if (!clean(state.callStyle) && clean(state.callButtonStyle)) state.callStyle = state.callButtonStyle;
-
-<<<<<<< HEAD
     var nameRaw = clean(state.fullName);
-=======
-var nameRaw = clean(state.fullName);
->>>>>>> 7df1fb6 (fix(u): normalize nested profile state and bust renderer cache)
     var nameEmpty = !nameRaw;
     var showName = nameEmpty ? 'Профиль' : nameRaw;
 
@@ -231,14 +224,15 @@ var nameRaw = clean(state.fullName);
     var cta = $('ctaRow');
     if (cta){
       cta.innerHTML = '';
-      var phoneRaw = clean(state.phone);
+      var phoneRaw = clean(state.phone || state.callPhone);
       var hasPhone = !!phoneRaw;
 
       if (hasPhone){
         var tel = phoneToTel(phoneRaw);
         var callBtn = document.createElement('a');
         callBtn.textContent = 'Позвонить';
-        callBtn.className = (state.callStyle === 'primary') ? 'primary' : '';
+        var callStyleRaw = clean(state.callStyle || state.callButtonStyle || state.ctaTheme);
+        callBtn.className = (callStyleRaw === 'primary' || callStyleRaw === 'accent') ? 'primary' : '';
         callBtn.href = tel || '#';
         callBtn.target = '_self';
         callBtn.rel = 'nofollow';
@@ -310,47 +304,29 @@ var nameRaw = clean(state.fullName);
 
     var pl2 = $('pointsPreview');
     var pts = Array.isArray(state.points) ? state.points : [];
-    if (pl2){
+    if (pl2) {
       pl2.innerHTML = '';
-      for (var pi=0; pi<pts.length && pi<12; pi++){
-        var p = pts[pi];
-        if (!p || !clean(p.title)) continue;
+      for (var pi=0; pi<pts.length && pi<12; pi++) {
+        var it = pts[pi] || {};
+        var ttl = clean(it.title || it.label || it.url);
+        var txt = clean(it.text || it.desc || '');
+        var href = normUrl(it.url || '');
+        if (!ttl && !href) continue;
 
-        var el = document.createElement('div');
-        el.className = 'item';
-
-        var chk = document.createElement('div');
-        chk.className = 'check';
-        chk.textContent = '✓';
-
-        var box = document.createElement('div');
-        box.style.minWidth = '0';
-
-        var t2 = document.createElement('p');
-        t2.className = 'itT';
-        t2.textContent = p.title;
-        box.appendChild(t2);
-
-        if (clean(p.text)){
-          var d = document.createElement('div');
-          d.className = 'itD';
-          d.textContent = p.text;
-          box.appendChild(d);
+        var node = document.createElement(href ? 'a' : 'div');
+        node.className = 'item';
+        if (href) {
+          node.href = href;
+          node.target = '_blank';
+          node.rel = 'noopener noreferrer';
         }
-
-        if (clean(p.url)){
-          var link2 = document.createElement('a');
-          link2.className = 'mini';
-          link2.href = normUrl(p.url);
-          link2.target = '_blank';
-          link2.rel = 'noopener';
-          link2.textContent = 'Открыть ссылку';
-          box.appendChild(link2);
-        }
-
-        el.appendChild(chk);
-        el.appendChild(box);
-        pl2.appendChild(el);
+        node.innerHTML =
+          '<div class="check">✓</div>' +
+          '<div>' +
+            '<p class="itT">' + escapeHtml(ttl || href) + '</p>' +
+            (txt ? '<p class="itD">' + escapeHtml(txt) + '</p>' : '') +
+          '</div>';
+        pl2.appendChild(node);
       }
     }
 
@@ -420,6 +396,7 @@ var nameRaw = clean(state.fullName);
 
   w.ABQDProfileRender = {
     applyTheme: applyTheme,
+    normalize: apiToConstructorState,
     render: render,
     apiToConstructorState: apiToConstructorState,
     normUrl: normUrl,
