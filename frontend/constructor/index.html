@@ -716,6 +716,9 @@
         return s.replace(/[^a-z0-9\-\.]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
       };
 
+      // --- ABQD_STAGE_READONLY_DRAFT_MIRROR_v1 ---
+      const IS_STAGE = location.pathname.startsWith("/__stage/");
+
       // --- СИНХРОНИЗАЦИЯ С API (ЯНДЕКС VM) ---
       async function fetchWithTimeout(url, options = {}, timeout = 5000) {
         const controller = new AbortController();
@@ -744,6 +747,7 @@
       }
 
       async function saveDataToCloud(dataObj) {
+        if (IS_STAGE) return true;
         const token = getToken();
         if (!token) return false;
         try {
@@ -762,6 +766,33 @@
         }
       }
 
+      // --- ABQD_PUBLISH_CHAIN_AFTER_DRAFT_v1 ---
+      function exactSlugFromState() {
+        const raw = clean(state && state.slug ? state.slug : "");
+        return raw;
+      }
+
+      async function publishDataToCloud(dataObj) {
+        if (IS_STAGE) return true;
+        const token = getToken();
+        const slug = exactSlugFromState();
+        if (!token || !slug) return false;
+        try {
+          const res = await fetchWithTimeout(`${API_BASE}/profile/${encodeURIComponent(slug)}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ slug, state: dataObj })
+          }, 10000);
+          return res.ok;
+        } catch (e) {
+          console.warn("Published profile API save failed:", e);
+          return false;
+        }
+      }
+
       let state = clone(defaultState); 
       let dirty = false;
       let saveTimer = null;
@@ -776,20 +807,42 @@
       };
 
       const persistNow = async () => {
+        if (IS_STAGE) {
+          dirty = false;
+          setSaveStatus("saved", "Stage: только чтение prod-draft");
+          toast("Stage: только чтение", "Сохранение и публикация отключены");
+          return true;
+        }
+
         storageSet(JSON.stringify(state));
         dirty = false;
         setSaveStatus("saving", "Синхронизация с сервером...");
 
         const isCloudSuccess = await saveDataToCloud(state);
-        
-        if (isCloudSuccess) {
-          setSaveStatus("saved", "Сохранено в облаке");
-        } else {
+        if (!isCloudSuccess) {
           setSaveStatus("error", "Сохранено локально (ошибка сети)");
+          return false;
+        }
+
+        setSaveStatus("saving", "Публикация профиля...");
+        const isPublishSuccess = await publishDataToCloud(state);
+
+        if (isPublishSuccess) {
+          setSaveStatus("saved", "Сохранено и опубликовано");
+          return true;
+        } else {
+          setSaveStatus("error", "Draft сохранен, publish не выполнен");
+          return false;
         }
       };
 
       const persist = () => {
+        if (IS_STAGE) {
+          dirty = false;
+          setSaveStatus("saved", "Stage: только чтение prod-draft");
+          return;
+        }
+
         dirty = true;
         setSaveStatus("dirty", "Сохранение...");
         if (saveTimer) clearTimeout(saveTimer);
@@ -874,9 +927,58 @@
           fr.readAsDataURL(file);
         });
       }
+
+      // --- ABQD_MEDIA_UPLOAD_URLS_v1 ---
+      async function uploadMediaToCloud(kind, file) {
+        if (!file) return "";
+        const token = getToken();
+        const slug = clean(state && state.slug ? state.slug : "");
+        if (!token) {
+          toast("Ошибка загрузки", "Нет токена");
+          return "";
+        }
+        if (!slug) {
+          toast("Ошибка загрузки", "Пустой slug");
+          return "";
+        }
+
+        const fd = new FormData();
+        fd.append("slug", slug);
+        fd.append("kind", kind);
+        fd.append("file", file, file.name || "file");
+
+        try {
+          const res = await fetchWithTimeout(`${API_BASE}/media/upload`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: fd
+          }, 20000);
+
+          const txt = await res.text();
+          let data = {};
+          try { data = txt ? JSON.parse(txt) : {}; } catch(_) {}
+
+          if (!res.ok) {
+            const detail = (data && (data.detail || data.error)) || (`upload failed (${res.status})`);
+            toast("Ошибка загрузки", String(detail));
+            return "";
+          }
+
+          const url = String((data && (data.public_url || data.url)) || "");
+          if (!url) {
+            toast("Ошибка загрузки", "public_url не вернулся");
+            return "";
+          }
+          return url;
+        } catch (e) {
+          toast("Ошибка загрузки", e && e.message ? e.message : "network error");
+          return "";
+        }
+      }
       function buildProfileUrl() {
-        const slug = normalizeSlug(state.slug || "");
-        return "https://app.abqd.ru/u/" + (slug || "");
+        // --- ABQD_EXACT_SLUG_PROFILELINK_v1 ---
+        const slug = clean(state.slug || "");
+        return "https://app.abqd.ru/u/" + encodeURIComponent(slug);
       }
 
       function renderPreview() {
@@ -1079,6 +1181,31 @@
       }
 
       // Handlers
+      function applyStageReadOnlyUI() {
+        if (!IS_STAGE) return;
+        document.documentElement.setAttribute("data-stage-readonly", "1");
+
+        const saveBtn = $("save");
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = "Stage: только чтение";
+        }
+
+        ["reset","addButton","addChip","addPoint","addGallery"].forEach((id) => {
+          const el = $(id);
+          if (el) el.disabled = true;
+        });
+
+        // --- ABQD_STAGE_THEME_PREVIEW_ONLY_v1 ---
+        // Theme/CTA theme stay clickable in stage for local preview only.
+        // --- ABQD_STAGE_EDIT_PREVIEW_ONLY_v1 ---
+        // In stage, fields stay editable for local preview only.
+        // Save/publish remain disabled by persist()/persistNow() stage guards.
+        setSaveStatus("saved", "Stage: локальное редактирование без сохранения");
+      }
+
+      applyStageReadOnlyUI();
+
       safeOn("themeSeg", "click", (e)=>{
         const b = e.target.closest("button[data-theme]"); if(!b) return;
         setTheme(b.dataset.theme); persist(); renderPreview();
@@ -1118,10 +1245,43 @@
       // File Inputs
       root.addEventListener("change", async (e)=>{
          const el = e.target;
-         if(el.id==="avatarFile") { state.avatarDataUrl = await readFileAsDataURL(el.files[0]); }
-         if(el.id==="bannerFile") { state.bannerDataUrl = await readFileAsDataURL(el.files[0]); }
-         if(el.id==="logoFile") { state.logoDataUrl = await readFileAsDataURL(el.files[0]); }
-         if(el.dataset.gfile) { state.gallery[el.dataset.i].img = await readFileAsDataURL(el.files[0]); }
+         if (el.id === "avatarFile") {
+           const file = el.files && el.files[0];
+           if (IS_STAGE) {
+             state.avatarDataUrl = await readFileAsDataURL(file);
+           } else {
+             const url = await uploadMediaToCloud("avatar", file);
+             if (url) state.avatarDataUrl = url;
+           }
+         }
+         if (el.id === "bannerFile") {
+           const file = el.files && el.files[0];
+           if (IS_STAGE) {
+             state.bannerDataUrl = await readFileAsDataURL(file);
+           } else {
+             const url = await uploadMediaToCloud("banner", file);
+             if (url) state.bannerDataUrl = url;
+           }
+         }
+         if (el.id === "logoFile") {
+           const file = el.files && el.files[0];
+           if (IS_STAGE) {
+             state.logoDataUrl = await readFileAsDataURL(file);
+           } else {
+             const url = await uploadMediaToCloud("logo", file);
+             if (url) state.logoDataUrl = url;
+           }
+         }
+         if (el.dataset.gfile) {
+           const idx = Number(el.dataset.i || 0);
+           const file = el.files && el.files[0];
+           if (IS_STAGE) {
+             state.gallery[idx].img = await readFileAsDataURL(file);
+           } else {
+             const url = await uploadMediaToCloud("gallery", file);
+             if (url) state.gallery[idx].img = url;
+           }
+         }
          
          if(el.dataset.b==="style") { state.buttons[el.dataset.i].style = el.value; }
          if(el.dataset.c==="style") { state.chips[el.dataset.i].style = el.value; }
