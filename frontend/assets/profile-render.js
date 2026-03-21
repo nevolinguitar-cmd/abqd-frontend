@@ -130,7 +130,32 @@
     state = state || {};
     applyTheme(state.theme || 'soft');
 
+<<<<<<< HEAD
+     // --- ABQD_U_PROFILE_NORMALIZE_v1 ---
+=======
+    // --- ABQD_U_PROFILE_NORMALIZE_v1 ---
+>>>>>>> 7df1fb6 (fix(u): normalize nested profile state and bust renderer cache)
+var profile = (state && state.profile && typeof state.profile === 'object') ? state.profile : {};
+
+if (!clean(state.fullName) && clean(profile.name)) state.fullName = profile.name;
+if (!clean(state.role) && clean(profile.role)) state.role = profile.role;
+if (!clean(state.about) && clean(profile.about)) state.about = profile.about;
+
+if (!clean(state.phone) && clean(state.callPhone)) state.phone = state.callPhone;
+if (!clean(state.phone) && clean(profile.phone)) state.phone = profile.phone;
+
+if (!clean(state.avatarDataUrl)) state.avatarDataUrl = clean(profile.avatarDataUrl) || clean(profile.avatarUrl) || clean(profile.avatar);
+if (!clean(state.bannerDataUrl)) state.bannerDataUrl = clean(profile.bannerDataUrl) || clean(profile.bannerUrl) || clean(profile.banner);
+if (!clean(state.logoDataUrl)) state.logoDataUrl = clean(profile.logoDataUrl) || clean(profile.logoUrl) || clean(profile.logo);
+
+if (!clean(state.logoLink)) state.logoLink = clean(profile.logoLink) || 'https://abqd.ru';
+if (!clean(state.callStyle) && clean(state.callButtonStyle)) state.callStyle = state.callButtonStyle;
+
+<<<<<<< HEAD
     var nameRaw = clean(state.fullName);
+=======
+var nameRaw = clean(state.fullName);
+>>>>>>> 7df1fb6 (fix(u): normalize nested profile state and bust renderer cache)
     var nameEmpty = !nameRaw;
     var showName = nameEmpty ? 'Профиль' : nameRaw;
 
