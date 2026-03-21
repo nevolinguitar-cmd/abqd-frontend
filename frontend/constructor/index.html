@@ -405,7 +405,7 @@
                 <button class="tab" data-tab="buttons" type="button">Кнопки</button>
                 <button class="tab" data-tab="contacts" type="button">Контакты</button>
                 <button class="tab" data-tab="points" type="button">Ссылки</button>
-                <button class="tab" data-tab="gallery" type="button">Работа</button>
+                <button class="tab" data-tab="gallery" type="button">Галерея</button>
               </div>
               <button class="btn small outline close-sheet-btn" id="closeSheetBtn">Готово</button>
             </div>
@@ -416,8 +416,8 @@
               
               <div class="pad" id="tab-profile">
                 <div class="row">
-                  <div><label>Имя Фамилия</label><input id="fullName" placeholder="Александр Петров" /></div>
-                  <div><label>Должность / Статус</label><input id="role" placeholder="CEO & Founder" /></div>
+                  <div><label>Имя Фамилия</label><input id="fullName" placeholder="Ваше имя или бренд" /></div>
+                  <div><label>Должность / Статус</label><input id="role" placeholder="Чем вы занимаетесь / ваша роль" /></div>
                 </div>
                 <div class="row">
                   <div><label>Аватар (800×800)</label><input id="avatarFile" type="file" accept="image/*" /><input id="avatarUrl" placeholder="или ссылка на фото" style="margin-top:8px" /></div>
@@ -429,11 +429,11 @@
                 </div>
                 <div style="margin-top:20px">
                   <label>Обо мне</label>
-                  <textarea id="about" maxlength="500" placeholder="Расскажите о себе кратко..."></textarea>
+                  <textarea id="about" maxlength="500" placeholder="Кратко: кто вы, чем полезны, как с вами связаться"></textarea>
                   <div class="mini" style="text-align:right"><span id="aboutCount">0</span>/500</div>
                 </div>
                 <div class="row" style="margin-top:20px">
-                  <div><label>Slug (адрес страницы)</label><input id="slug" placeholder="alex-petrov" /><div class="help">app.abqd.ru/u/<b id="slugFull">...</b></div></div>
+                  <div><label>Slug (адрес страницы)</label><input id="slug" placeholder="my-profile" /><div class="help">app.abqd.ru/u/<b id="slugFull">...</b></div></div>
                 </div>
                 <div class="btnRow">
                   <button class="btn" id="save" type="button">Сохранить изменения</button>
@@ -469,13 +469,13 @@
               </div>
 
               <div class="pad hide" id="tab-points">
-                 <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="pointsTitle" placeholder="Полезные ссылки" /></div>
+                 <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="pointsTitle" placeholder="Полезные ссылки / услуги" /></div>
                  <div id="pointsList"></div>
                  <div class="btnRow"><button class="btn" id="addPoint" type="button">+ Добавить ссылку</button></div>
               </div>
 
               <div class="pad hide" id="tab-gallery">
-                 <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="galleryTitle" placeholder="Мое портфолио" /></div>
+                 <div style="margin-bottom:16px"><label>Заголовок раздела</label><input id="galleryTitle" placeholder="Фото, кейсы, портфолио" /></div>
                  <div id="galleryList"></div>
                  <div class="btnRow"><button class="btn" id="addGallery" type="button">+ Добавить работу</button></div>
               </div>
@@ -674,7 +674,7 @@
       }
 
       const defaultState = {
-        slug: "ivan-ivanov", theme: "dark", ctaTheme: "auto", accentPreset: "brand",
+        slug: "", theme: "dark", ctaTheme: "accent", accentPreset: "custom",
         accentC1: "#2563eb", accentC2: "#7c3aed", metalPreset: "aluminum", callPhoneStyle: "metal",
         fullName: "Иванов Иван", role: "CREATIVE DIRECTOR",
         about: "Создаю цифровые продукты и архитектурные решения. Свяжитесь со мной для сотрудничества.",
@@ -683,7 +683,7 @@
         buttons: [ { label: "Telegram", url: "https://t.me/", style: "accent" } ],
         pointsTitle: "Ссылки",
         points: [ { title: "Мой сайт", text: "", url: "" }, { title: "Портфолио PDF", text: "", url: "" } ],
-        galleryTitle: "Работы",
+        galleryTitle: "Фото и кейсы",
         gallery: [ { title: "Проект А", text: "Описание", img: "", url: "" }, { title: "Проект Б", text: "Описание", img: "", url: "" } ],
         chips: [ { label: "TG", url: "https://t.me/", style: "outline" }, { label: "Mail", url: "mailto:", style: "outline" } ]
       };
@@ -1302,10 +1302,10 @@
          persist(); renderPreview();
       });
 
-      safeOn("addButton", "click", ()=>{ state.buttons.push({label:"New",url:"",style:"glass"}); renderButtonsList(); persist(); renderPreview(); });
-      safeOn("addChip", "click", ()=>{ state.chips.push({label:"Link",url:"",style:"outline"}); renderContactsList(); persist(); renderPreview(); });
-      safeOn("addPoint", "click", ()=>{ state.points.push({title:"Link",url:"",text:""}); renderPointsList(); persist(); renderPreview(); });
-      safeOn("addGallery", "click", ()=>{ state.gallery.push({title:"Work",img:""}); renderGalleryList(); persist(); renderPreview(); });
+      safeOn("addButton", "click", ()=>{ state.buttons.push({label:"Написать",url:"",style:"accent"}); renderButtonsList(); persist(); renderPreview(); });
+      safeOn("addChip", "click", ()=>{ state.chips.push({label:"Telegram",url:"",style:"outline"}); renderContactsList(); persist(); renderPreview(); });
+      safeOn("addPoint", "click", ()=>{ state.points.push({title:"Ссылка",url:"",text:"Короткое описание"}); renderPointsList(); persist(); renderPreview(); });
+      safeOn("addGallery", "click", ()=>{ state.gallery.push({title:"Проект",img:""}); renderGalleryList(); persist(); renderPreview(); });
 
       safeOn("save", "click", ()=>{ persistNow(); closeSheet(); });
       safeOn("reset", "click", ()=>{ if(confirm("Сбросить все?")) { state=clone(defaultState); persistNow(); renderAllLists(); renderPreview(); syncFieldsFromState(); }});
