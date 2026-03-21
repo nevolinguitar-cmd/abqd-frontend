@@ -456,24 +456,8 @@
                 <div style="margin: 20px 0; border-top: 1px solid var(--border-panel);"></div>
                 <div class="row">
                   <div><label>Телефон для связи</label><input id="callPhone" placeholder="+7 999 000-00-00" /></div>
-                  <div><label>Превью</label><a id="callPhoneChip" class="btn outline small" href="#" style="pointer-events:none">Позвонить</a></div>
+                  <div><label>Стиль кнопки "Позвонить"</label><select id="callPhoneStyle"></select></div>
                 </div>
-
-                <div class="row">
-                  <div>
-                    <label>Стиль кнопки «Позвонить»</label>
-                    <div class="seg" id="callStyleSeg">
-                      <button type="button" data-callstyle="glass">Glass</button>
-                      <button type="button" data-callstyle="accent">Accent</button>
-                      <button type="button" data-callstyle="metal">Metal</button>
-                    </div>
-                  </div>
-                  <div>
-                    <label>Описание</label>
-                    <div class="mini">Отдельный стиль только для кнопки «Позвонить».</div>
-                  </div>
-                </div>
-
                 <div id="buttonsList" style="margin-top:20px;"></div>
                 <div class="btnRow"><button class="btn" id="addButton" type="button">+ Добавить кнопку</button></div>
               </div>
@@ -564,1144 +548,645 @@
 
   <script>
   (() => {
-  const clone = (obj) => {
-    try { return structuredClone(obj); } catch (e) {}
-    return JSON.parse(JSON.stringify(obj));
-  };
+    "use strict";
 
-  const repAll = (s, a, b) => String(s).split(String(a)).join(String(b));
+    const clone = (obj) => {
+      try { return structuredClone(obj); } catch (e) {}
+      return JSON.parse(JSON.stringify(obj));
+    };
+    const repAll = (s, a, b) => String(s).split(String(a)).join(String(b));
 
-  document.querySelectorAll("[data-abqd-constructor]").forEach((root) => {
-    initInstance(root);
-  });
-
-  function initInstance(root) {
-    const $ = (id) => root.querySelector("#" + id);
-
-    function isMobile() {
-      return window.innerWidth <= 980;
-    }
-
-    function openSheet() {
-      if (!isMobile()) return;
-      $("editorCard")?.classList.add("sheet-open");
-      $("fabEdit")?.classList.add("hide-fab");
-    }
-
-    function closeSheet() {
-      $("editorCard")?.classList.remove("sheet-open");
-      $("fabEdit")?.classList.remove("hide-fab");
-    }
-
-    $("fabEdit")?.addEventListener("click", openSheet);
-    $("closeSheetBtn")?.addEventListener("click", closeSheet);
-
-    root.addEventListener("click", (e) => {
-      if (!isMobile()) return;
-      const editZone = e.target.closest("[data-edit]");
-      if (e.target.closest(".editorCard")) return;
-
-      if (editZone) {
-        e.preventDefault();
-        const targetTab = editZone.dataset.edit;
-        const tabBtn = root.querySelector(`.tab[data-tab="${targetTab}"]`);
-        if (tabBtn) tabBtn.click();
-        openSheet();
-      }
+    document.querySelectorAll("[data-abqd-constructor]").forEach((root) => {
+      initInstance(root);
     });
 
-    function getAuthTokenRaw() {
-      return (
-        localStorage.getItem("abqd_token") ||
-        localStorage.getItem("token") ||
-        localStorage.getItem("auth_token") ||
-        localStorage.getItem("access_token") ||
-        ""
-      );
-    }
+    function initInstance(root){
+      const $ = (id) => root.querySelector("#" + id);
+    const API_BASE = window.location.pathname.startsWith("/__stage/")
+      ? "/__stage/api/v1"
+      : "/api/v1";
 
-    function hashUserScope(str) {
-      str = String(str || "anon");
-      let h = 2166136261;
-      for (let i = 0; i < str.length; i++) {
-        h ^= str.charCodeAt(i);
-        h = Math.imul(h, 16777619);
-      }
-      return (h >>> 0).toString(36);
-    }
-
-    function getUserScope() {
-      const tok = getAuthTokenRaw();
-      if (!tok) return "";
-      return hashUserScope(tok);
-    }
-
-    function getConstructorStorageKey() {
-      const scope = getUserScope();
-      return scope ? "abqd_constructor_" + scope : "";
-    }
-
-    function getActiveSlugStorageKey() {
-      const scope = getUserScope();
-      return scope ? "abqd_active_slug_" + scope : "";
-    }
-
-    const KEY = getConstructorStorageKey();
-    const ACTIVE_SLUG_KEY = getActiveSlugStorageKey();
-
-    const STYLE_LABELS = {
-      glass: "Стекло",
-      accent: "Акцент",
-      metal: "Металл",
-      outline: "Обводка"
-    };
-
-    const STYLE_SETS_CTA = {
-      dark: ["glass", "accent", "metal"],
-      soft: ["glass", "accent", "metal"]
-    };
-
-    const STYLE_SETS_CHIPS = {
-      dark: ["outline", "accent"],
-      soft: ["outline", "accent"]
-    };
-
-    const THEME_ACCENT = {
-      dark: ["#ff4d9d", "#6d5cff"],
-      soft: ["#2563eb", "#7c3aed"]
-    };
-
-    const ACCENT_PRESETS = {
-      brand: (theme) => THEME_ACCENT[theme] || THEME_ACCENT.soft,
-      royal: () => ["#2563eb", "#7c3aed"],
-      ruby: () => ["#ef4444", "#a855f7"],
-      graphite: () => ["#64748b", "#0f172a"]
-    };
-
-    function clean(s) {
-      return String(s == null ? "" : s).trim();
-    }
-
-    function escapeHtml(s) {
-      s = String(s == null ? "" : s);
-      s = repAll(s, "&", "&amp;");
-      s = repAll(s, "<", "&lt;");
-      s = repAll(s, ">", "&gt;");
-      s = repAll(s, '"', "&quot;");
-      s = repAll(s, "'", "&#039;");
-      return s;
-    }
-
-    function hexToRgb(hex) {
-      hex = clean(hex);
-      if (!hex) return null;
-      if (hex[0] === "#") hex = hex.slice(1);
-      if (hex.length === 3) hex = hex.split("").map((c) => c + c).join("");
-      if (hex.length !== 6) return null;
-      const n = parseInt(hex, 16);
-      if (!Number.isFinite(n)) return null;
-      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-    }
-
-    function setAccentVars(c1, c2) {
-      const theme = state.theme || "soft";
-      const dflt = THEME_ACCENT[theme] || THEME_ACCENT.soft;
-      const safe1 = clean(c1) || dflt[0];
-      const safe2 = clean(c2) || dflt[1];
-      const r1 = hexToRgb(safe1) || hexToRgb(dflt[0]);
-      const r2 = hexToRgb(safe2) || hexToRgb(dflt[1]);
-      document.documentElement.style.setProperty("--accent-1", safe1);
-      document.documentElement.style.setProperty("--accent-2", safe2);
-      document.documentElement.style.setProperty("--ctaAcc1rgb", r1.join(","));
-      document.documentElement.style.setProperty("--ctaAcc2rgb", r2.join(","));
-    }
-
-    function applyButtonThemeVars() {
-      const theme = state.theme || "soft";
-      const preset = state.accentPreset || "brand";
-      let pair;
-
-      if (preset === "custom") {
-        pair = [state.accentC1, state.accentC2];
-      } else {
-        const fn = ACCENT_PRESETS[preset] || ACCENT_PRESETS.brand;
-        pair = fn(theme);
-      }
-
-      setAccentVars(pair[0], pair[1]);
-
-      const customRow = $("accentCustomRow");
-      if (customRow) {
-        customRow.classList.toggle("hide", (preset !== "custom") && (clean(state.ctaTheme) !== "accent"));
-      }
-    }
-
-    const defaultState = {
-      slug: "ivan-ivanov",
-      theme: "dark",
-      ctaTheme: "auto",
-      callButtonStyle: "metal",
-      accentPreset: "brand",
-      accentC1: "#2563eb",
-      accentC2: "#7c3aed",
-      metalPreset: "aluminum",
-      fullName: "Иванов Иван",
-      role: "CREATIVE DIRECTOR",
-      about: "Создаю цифровые продукты и архитектурные решения. Свяжитесь со мной для сотрудничества.",
-      avatarDataUrl: "",
-      bannerDataUrl: "",
-      logoDataUrl: "",
-      logoLink: "https://abqd.ru",
-      callPhone: "",
-      buttons: [{ label: "Telegram", url: "https://t.me/", style: "accent" }],
-      pointsTitle: "Ссылки",
-      points: [
-        { title: "Мой сайт", text: "", url: "" },
-        { title: "Портфолио PDF", text: "", url: "" }
-      ],
-      galleryTitle: "Работы",
-      gallery: [
-        { title: "Проект А", text: "Описание", img: "", url: "" },
-        { title: "Проект Б", text: "Описание", img: "", url: "" }
-      ],
-      chips: [
-        { label: "TG", url: "https://t.me/", style: "outline" },
-        { label: "Mail", url: "mailto:", style: "outline" }
-      ]
-    };
-
-    const storageGet = () => {
-      try { return KEY ? localStorage.getItem(KEY) : null; }
-      catch (e) { return null; }
-    };
-
-    const storageSet = (v) => {
-      try {
-        if (!KEY) return false;
-        localStorage.setItem(KEY, v);
-        return true;
-      } catch (e) { return false; }
-    };
-
-    const activeSlugGet = () => {
-      try { return ACTIVE_SLUG_KEY ? localStorage.getItem(ACTIVE_SLUG_KEY) : null; }
-      catch (e) { return null; }
-    };
-
-    const activeSlugSet = (v) => {
-      try {
-        if (!ACTIVE_SLUG_KEY) return false;
-        localStorage.setItem(ACTIVE_SLUG_KEY, v);
-        return true;
-      } catch (e) { return false; }
-    };
-
-    const normUrl = (u) => {
-      u = clean(u);
-      if (!u) return "";
-      const low = u.toLowerCase();
-      if (
-        low.startsWith("http://") ||
-        low.startsWith("https://") ||
-        low.startsWith("mailto:") ||
-        low.startsWith("tel:") ||
-        low.startsWith("tg://")
-      ) return u;
-      return "https://" + u;
-    };
-
-    const contactUrl = (u) => {
-      u = clean(u);
-      if (!u) return "";
-      const low = u.toLowerCase();
-
-      if (
-        low.startsWith("http://") ||
-        low.startsWith("https://") ||
-        low.startsWith("mailto:") ||
-        low.startsWith("tel:") ||
-        low.startsWith("tg://")
-      ) return u;
-
-      if (low.includes("@") && !low.includes(" ")) return "mailto:" + u;
-
-      const hasDigit = /\d/.test(u);
-      if (hasDigit && u.length > 6 && !u.includes("http")) {
-        const digits = u.replace(/[^\d+]/g, "");
-        return "tel:" + digits;
-      }
-
-      return "https://" + u;
-    };
-
-    const normalizeSlug = (s) => {
-      s = clean(s).toLowerCase();
-      if (!s) return "";
-      return s.replace(/[^a-z0-9\-\.]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-    };
-
-    async function fetchWithTimeout(url, options = {}, timeout = 8000) {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeout);
-      try {
-        return await fetch(url, { ...options, signal: controller.signal });
-      } finally {
-        clearTimeout(id);
-      }
-    }
-
-    function getAuthHeaders(extra = {}) {
-      const headers = { ...extra };
-      const token = getAuthTokenRaw();
-      if (token) headers["Authorization"] = "Bearer " + token;
-      return headers;
-    }
-
-    async function uploadMediaViaAPI(file, kind = "avatar") {
-      if (!file) return "";
-
-      const statusEl = $("saveStatusText");
-      if (statusEl) statusEl.innerHTML = "Загрузка фото...";
-
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("kind", kind);
-
-      const currentSlug = normalizeSlug(state.slug || activeSlugGet() || "");
-      if (currentSlug) fd.append("slug", currentSlug);
-
-      try {
-        const res = await fetchWithTimeout("/api/v1/media/upload", {
-          method: "POST",
-          headers: getAuthHeaders(),
-          credentials: "include",
-          body: fd
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (statusEl) statusEl.innerHTML = "Фото загружено";
-          return data.public_url || data.url || "";
-        }
-
-        const errText = await res.text();
-        console.error("Upload error:", errText);
-        if (statusEl) statusEl.innerHTML = "Ошибка API при загрузке фото";
-        alert("Сервер отклонил фото: " + errText);
-      } catch (e) {
-        console.error("Network error:", e);
-        if (statusEl) statusEl.innerHTML = "Ошибка сети при загрузке";
-      }
-
-      return "";
-    }
-
-    function mapStateFromAny(rawState = {}) {
-      const profile = rawState.profile || {};
-      return {
-        slug: normalizeSlug(rawState.slug || "") || "",
-        theme: rawState.theme || "dark",
-        ctaTheme: rawState.ctaTheme || "auto",
-        callButtonStyle: rawState.callButtonStyle || "metal",
-        accentPreset: rawState.accentPreset || "brand",
-        accentC1: rawState.accentC1 || "#2563eb",
-        accentC2: rawState.accentC2 || "#7c3aed",
-        metalPreset: rawState.metalPreset || "aluminum",
-        fullName: rawState.fullName || profile.name || "",
-        role: rawState.role || profile.role || "",
-        about: rawState.about || profile.about || "",
-        avatarDataUrl: rawState.avatarDataUrl || profile.avatar || rawState.avatarUrl || "",
-        bannerDataUrl: rawState.bannerDataUrl || profile.banner || rawState.bannerUrl || "",
-        logoDataUrl: rawState.logoDataUrl || profile.logo || rawState.logoUrl || "",
-        logoLink: rawState.logoLink || profile.logoLink || "",
-        callPhone: rawState.callPhone || profile.phone || "",
-        buttons: Array.isArray(rawState.buttons) ? rawState.buttons : [],
-        pointsTitle: rawState.pointsTitle || "Ссылки",
-        points: Array.isArray(rawState.points) ? rawState.points : [],
-        galleryTitle: rawState.galleryTitle || "Работы",
-        gallery: Array.isArray(rawState.gallery) ? rawState.gallery : [],
-        chips: Array.isArray(rawState.chips) ? rawState.chips : []
+      const getToken = () => {
+        try {
+          return localStorage.getItem("abqd_token")
+            || localStorage.getItem("token")
+            || localStorage.getItem("auth_token")
+            || localStorage.getItem("access_token")
+            || "";
+        } catch (e) { return ""; }
       };
-    }
 
-    async function loadDraftFromCloud() {
-      try {
-        const res = await fetchWithTimeout(`/api/v1/constructor/me?t=${Date.now()}`, {
-          method: "GET",
-          headers: getAuthHeaders(),
-          credentials: "include"
-        });
 
-        if (!res.ok) return null;
-
-        const raw = await res.json();
-        const st = raw?.state || {};
-        if (!st || typeof st !== "object") return null;
-        return mapStateFromAny(st);
-      } catch (e) {
-        return null;
+      // --- MOBILE UI LOGIC ---
+      function isMobile() { return window.innerWidth <= 980; }
+      function openSheet() {
+        if(!isMobile()) return;
+        $("editorCard").classList.add("sheet-open");
+        $("fabEdit").classList.add("hide-fab");
       }
-    }
-
-    async function saveDraftToCloud(dataObj) {
-      try {
-        const res = await fetchWithTimeout("/api/v1/constructor/me", {
-          method: "PUT",
-          headers: getAuthHeaders({ "Content-Type": "application/json" }),
-          credentials: "include",
-          body: JSON.stringify(clone(dataObj))
-        });
-        return res.ok;
-      } catch (e) {
-        return false;
+      function closeSheet() {
+        $("editorCard").classList.remove("sheet-open");
+        $("fabEdit").classList.remove("hide-fab");
       }
-    }
 
-    async function loadPublishedProfileFromCloud() {
-      try {
-        const typedSlug = normalizeSlug($("slug")?.value || "");
-        const rememberedSlug = normalizeSlug(activeSlugGet() || "");
-        const currentSlug = typedSlug || rememberedSlug;
-        if (!currentSlug) return null;
+      const fabBtn = $("fabEdit");
+      const closeBtn = $("closeSheetBtn");
+      if(fabBtn) fabBtn.addEventListener("click", openSheet);
+      if(closeBtn) closeBtn.addEventListener("click", closeSheet);
 
-        const res = await fetchWithTimeout(`/api/v1/profile/${currentSlug}?t=${Date.now()}`, {
-          method: "GET",
-          credentials: "include"
-        });
-
-        if (!res.ok) return null;
-
-        const raw = await res.json();
-        if (raw?.slug) activeSlugSet(raw.slug);
-
-        return mapStateFromAny({
-          ...(raw.state || {}),
-          slug: raw.slug || currentSlug
-        });
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function toPublishedPayload(dataObj) {
-      const slug = normalizeSlug(dataObj.slug || "") || "profile";
-      return {
-        state: {
-          slug,
-          theme: dataObj.theme || "dark",
-          ctaTheme: dataObj.ctaTheme || "auto",
-          callButtonStyle: dataObj.callButtonStyle || "metal",
-          accentPreset: dataObj.accentPreset || "brand",
-          accentC1: dataObj.accentC1 || "#2563eb",
-          accentC2: dataObj.accentC2 || "#7c3aed",
-          metalPreset: dataObj.metalPreset || "aluminum",
-          pointsTitle: dataObj.pointsTitle || "Ссылки",
-          galleryTitle: dataObj.galleryTitle || "Работы",
-          profile: {
-            name: dataObj.fullName || "",
-            role: dataObj.role || "",
-            about: dataObj.about || "",
-            phone: dataObj.callPhone || "",
-            avatar: dataObj.avatarDataUrl || "",
-            banner: dataObj.bannerDataUrl || "",
-            logo: dataObj.logoDataUrl || "",
-            logoLink: dataObj.logoLink || ""
-          },
-          buttons: dataObj.buttons || [],
-          chips: dataObj.chips || [],
-          points: dataObj.points || [],
-          gallery: dataObj.gallery || []
+      root.addEventListener("click", (e) => {
+        if(!isMobile()) return;
+        const editZone = e.target.closest("[data-edit]");
+        if(e.target.closest(".editorCard")) return;
+        
+        if (editZone) {
+          e.preventDefault();
+          const targetTab = editZone.dataset.edit;
+          const tabBtn = root.querySelector(`.tab[data-tab="${targetTab}"]`);
+          if(tabBtn) tabBtn.click();
+          openSheet();
         }
+      });
+
+      // --- CORE LOGIC & SYNC ---
+      const ENV_SCOPE = window.location.pathname.startsWith("/__stage/") ? "stage" : "prod";
+      const KEY = (() => {
+        try {
+          const t = getToken();
+          return "abqd_constructor_backup_" + ENV_SCOPE + "_" + (t ? t.slice(0, 24) : "anon");
+        } catch (e) {
+          return "abqd_constructor_backup_" + ENV_SCOPE + "_anon";
+        }
+      })();
+      const STYLE_LABELS = { glass: "Стекло", accent: "Акцент", metal: "Металл", outline: "Обводка" };
+      const STYLE_SETS_CTA = { dark: ["glass", "accent", "metal"], soft: ["glass", "accent", "metal"] };
+      const STYLE_SETS_CHIPS = { dark: ["outline", "accent"], soft: ["outline", "accent"] };
+      const THEME_ACCENT = { dark: ["#ff4d9d", "#6d5cff"], soft: ["#2563eb", "#7c3aed"] };
+
+      const ACCENT_PRESETS = {
+        brand: (theme) => THEME_ACCENT[theme] || THEME_ACCENT.soft,
+        royal: () => ["#2563eb", "#7c3aed"],
+        ruby:  () => ["#ef4444", "#a855f7"],
+        graphite: () => ["#64748b", "#0f172a"],
       };
-    }
 
-    async function publishProfileToCloud(dataObj) {
-      try {
-        const slug = normalizeSlug(dataObj.slug || "") || "profile";
-        activeSlugSet(slug);
-
-        const res = await fetchWithTimeout(`/api/v1/profile/${slug}`, {
-          method: "PUT",
-          headers: getAuthHeaders({ "Content-Type": "application/json" }),
-          credentials: "include",
-          body: JSON.stringify(toPublishedPayload({ ...dataObj, slug }))
-        });
-
-        return res.ok;
-      } catch (e) {
-        return false;
-      }
-    }
-
-    let state = clone(defaultState);
-    let dirty = false;
-    let saveTimer = null;
-    const AUTOSAVE_MS = 1200;
-
-    const syncHeights = () => {
-      if (isMobile()) {
-        root.style.setProperty("--matchH", "auto");
-        return;
-      }
-      const pv = $("previewCard");
-      if (!pv) return;
-      const h = Math.max(0, pv.getBoundingClientRect().height || 0);
-      if (h > 0) root.style.setProperty("--matchH", Math.round(h) + "px");
-    };
-
-    const setSaveStatus = (mode, note) => {
-      const box = $("saveStatus");
-      const tx = $("saveStatusText");
-      if (!box || !tx) return;
-      box.dataset.state = mode;
-      tx.textContent = note;
-    };
-
-    async function persistNow() {
-      storageSet(JSON.stringify(state));
-      dirty = false;
-      setSaveStatus("saving", "Синхронизация черновика с сервером...");
-
-      const ok = await saveDraftToCloud(state);
-      if (ok) {
-        setSaveStatus("saved", "Черновик синхронизирован");
-      } else {
-        setSaveStatus("error", "Черновик сохранён локально");
+      function clean(s){ return String((s === null || s === undefined) ? "" : s).trim(); }
+      function escapeHtml(s){
+        s = String((s === null || s === undefined) ? "" : s);
+        s = repAll(s, "&", "&amp;"); s = repAll(s, "<", "&lt;"); s = repAll(s, ">", "&gt;");
+        s = repAll(s, "\"", "&quot;"); s = repAll(s, "'", "&#039;");
+        return s;
       }
 
-      return ok;
-    }
-
-    function persist() {
-      dirty = true;
-      setSaveStatus("dirty", "Есть несохранённые изменения...");
-      if (saveTimer) clearTimeout(saveTimer);
-      saveTimer = window.setTimeout(() => { persistNow(); }, AUTOSAVE_MS);
-    }
-
-    window.addEventListener("beforeunload", () => {
-      if (dirty) storageSet(JSON.stringify(state));
-    });
-
-    function toast(title, subtitle) {
-      const wrap = $("toastWrap");
-      if (!wrap) return;
-      const t = document.createElement("div");
-      t.className = "toast";
-      t.innerHTML = "<div>" + escapeHtml(title) + "</div>" + (subtitle ? "<small>" + escapeHtml(subtitle) + "</small>" : "");
-      wrap.appendChild(t);
-      setTimeout(() => t.remove(), 2500);
-    }
-
-    function safeOn(id, evt, handler) {
-      const el = $(id);
-      if (!el) return;
-      el.addEventListener(evt, handler);
-    }
-
-    function sanitizeButtonStyles() {
-      const allowedBtn = new Set(["glass", "accent", "metal"]);
-      state.buttons = Array.isArray(state.buttons) ? state.buttons : [];
-      state.buttons.forEach((b) => {
-        if (b && !allowedBtn.has(b.style)) b.style = "glass";
-      });
-
-      state.chips = Array.isArray(state.chips) ? state.chips : [];
-      state.chips.forEach((c) => {
-        if (c && (c.style === "glass" || c.style === "metal")) c.style = "outline";
-      });
-
-      if (!["glass", "accent", "metal"].includes(state.callButtonStyle)) {
-        state.callButtonStyle = "metal";
+      function hexToRgb(hex){
+        hex = clean(hex); if (!hex) return null;
+        if (hex[0] === "#") hex = hex.slice(1);
+        if (hex.length === 3) hex = hex.split("").map(c => c + c).join("");
+        if (hex.length !== 6) return null;
+        const n = parseInt(hex, 16);
+        if (!Number.isFinite(n)) return null;
+        return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
       }
-    }
 
-    function setTheme(t) {
-      if (t !== "dark" && t !== "soft") t = "soft";
-      state.theme = t;
-      document.documentElement.setAttribute("data-theme", t);
-      $("themeSeg")?.querySelectorAll("button").forEach((b) => {
-        b.classList.toggle("active", b.dataset.theme === t);
-      });
-      applyButtonThemeVars();
-    }
-
-    function setCtaTheme(v) {
-      v = clean(v || "auto");
-      if (!["auto", "glass", "metal", "accent"].includes(v)) v = "auto";
-      state.ctaTheme = v;
-
-      if (v === "accent" && state.accentPreset !== "custom") {
+      function setAccentVars(c1, c2) {
         const theme = state.theme || "soft";
-        const fn = ACCENT_PRESETS[state.accentPreset] || ACCENT_PRESETS.brand;
-        const pair = fn(theme);
-        state.accentPreset = "custom";
-        state.accentC1 = pair[0];
-        state.accentC2 = pair[1];
+        const dflt = THEME_ACCENT[theme] || THEME_ACCENT.soft;
+        const r1 = hexToRgb(c1) || hexToRgb(dflt[0]);
+        const r2 = hexToRgb(c2) || hexToRgb(dflt[1]);
+        document.documentElement.style.setProperty("--accent-1", c1);
+        document.documentElement.style.setProperty("--accent-2", c2);
+        document.documentElement.style.setProperty("--ctaAcc1rgb", r1.join(","));
+        document.documentElement.style.setProperty("--ctaAcc2rgb", r2.join(","));
       }
 
-      $("ctaThemeSeg")?.querySelectorAll("button").forEach((b) => {
-        b.classList.toggle("active", b.dataset.ctatheme === v);
-      });
+      function applyButtonThemeVars(){
+        const theme = state.theme || "soft";
+        const preset = state.accentPreset || "brand";
+        let pair;
+        if (preset === "custom") pair = [state.accentC1, state.accentC2];
+        else {
+          const fn = ACCENT_PRESETS[preset] || ACCENT_PRESETS.brand;
+          pair = fn(theme);
+        }
+        setAccentVars(pair[0], pair[1]);
+        const customRow = $("accentCustomRow");
+        if (customRow) customRow.classList.toggle("hide", (preset !== "custom") && (clean(state.ctaTheme) !== "accent"));
+      }
 
-      applyButtonThemeVars();
-      renderButtonsList();
-      renderContactsList();
-      renderCallStyleSeg();
-    }
+      const defaultState = {
+        slug: "ivan-ivanov", theme: "dark", ctaTheme: "auto", accentPreset: "brand",
+        accentC1: "#2563eb", accentC2: "#7c3aed", metalPreset: "aluminum", callPhoneStyle: "metal",
+        fullName: "Иванов Иван", role: "CREATIVE DIRECTOR",
+        about: "Создаю цифровые продукты и архитектурные решения. Свяжитесь со мной для сотрудничества.",
+        avatarDataUrl: "", bannerDataUrl: "", logoDataUrl: "", logoLink: "https://abqd.ru",
+        callPhone: "",
+        buttons: [ { label: "Telegram", url: "https://t.me/", style: "accent" } ],
+        pointsTitle: "Ссылки",
+        points: [ { title: "Мой сайт", text: "", url: "" }, { title: "Портфолио PDF", text: "", url: "" } ],
+        galleryTitle: "Работы",
+        gallery: [ { title: "Проект А", text: "Описание", img: "", url: "" }, { title: "Проект Б", text: "Описание", img: "", url: "" } ],
+        chips: [ { label: "TG", url: "https://t.me/", style: "outline" }, { label: "Mail", url: "mailto:", style: "outline" } ]
+      };
 
-    function renderCallStyleSeg() {
-      $("callStyleSeg")?.querySelectorAll("button").forEach((b) => {
-        b.classList.toggle("active", b.dataset.callstyle === state.callButtonStyle);
-      });
-    }
+      const storageGet = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+      const storageSet = (v) => { try { localStorage.setItem(KEY, v); return true; } catch (e) { return false; } };
 
-    function resolveCtaStyle(styleRaw) {
-      styleRaw = clean(styleRaw) || "glass";
-      if (!["glass", "metal", "accent"].includes(styleRaw)) return "glass";
-      return styleRaw;
-    }
+      const normUrl = (u) => {
+        u = clean(u); if (!u) return "";
+        const low = u.toLowerCase();
+        if (low.startsWith("http://") || low.startsWith("https://") || low.startsWith("mailto:") || low.startsWith("tel:") || low.startsWith("tg://")) return u;
+        return "https://" + u;
+      };
 
-    function resolveChipStyle(styleRaw) {
-      styleRaw = clean(styleRaw) || "outline";
-      if (styleRaw === "glass" || styleRaw === "metal") styleRaw = "outline";
-      if (!["outline", "accent"].includes(styleRaw)) return "outline";
-      return styleRaw;
-    }
+      const contactUrl = (u) => {
+        u = clean(u); if (!u) return "";
+        const low = u.toLowerCase();
+        if (low.startsWith("http://") || low.startsWith("https://") || low.startsWith("mailto:") || low.startsWith("tel:") || low.startsWith("tg://")) return u;
+        if (low.includes("@") && !low.includes(" ")) return "mailto:" + u;
+        const hasDigit = /\d/.test(u);
+        if (hasDigit && u.length > 6 && !u.includes("http")) {
+           const digits = u.replace(/[^\d+]/g, "");
+           return "tel:" + digits;
+        }
+        return "https://" + u;
+      };
 
-    function buildProfileUrl() {
-      const slug = normalizeSlug(state.slug || "");
-      return "https://app.abqd.ru/u/" + slug;
-    }
+      const normalizeSlug = (s) => {
+        s = clean(s).toLowerCase(); if (!s) return "";
+        return s.replace(/[^a-z0-9\-\.]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      };
 
-    function renderPreview() {
-      if ($("nameEl")) $("nameEl").textContent = state.fullName || "Имя Фамилия";
-      if ($("roleEl")) $("roleEl").textContent = state.role || "Должность";
-      if ($("aboutEl")) $("aboutEl").textContent = state.about || "";
+      // --- СИНХРОНИЗАЦИЯ С API (ЯНДЕКС VM) ---
+      async function fetchWithTimeout(url, options = {}, timeout = 5000) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return response;
+      }
 
-      if ($("slug")) $("slug").value = state.slug || "";
-      if ($("slugFull")) $("slugFull").textContent = state.slug || "...";
+      async function loadDataFromCloud() {
+        const token = getToken();
+        if (!token) return null;
+        try {
+          const res = await fetchWithTimeout(`${API_BASE}/constructor/me?t=${Date.now()}`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
+          }, 8000);
+          if (res.ok) {
+            const data = await res.json();
+            return data && data.state ? data.state : null;
+          }
+        } catch (e) {
+          console.warn("Constructor API load failed, falling back to local:", e);
+        }
+        return null;
+      }
 
-      const bannerBox = $("bannerBox");
-      const bannerPlh = $("bannerPlh");
+      async function saveDataToCloud(dataObj) {
+        const token = getToken();
+        if (!token) return false;
+        try {
+          const res = await fetchWithTimeout(`${API_BASE}/constructor/me`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(dataObj)
+          }, 8000);
+          return res.ok;
+        } catch (e) {
+          console.warn("Constructor API save failed:", e);
+          return false;
+        }
+      }
 
-      if (bannerBox) {
-        bannerBox.querySelectorAll("img").forEach((x) => x.remove());
-        bannerBox.querySelectorAll(".bannerLogo").forEach((x) => x.remove());
+      let state = clone(defaultState); 
+      let dirty = false;
+      let saveTimer = null;
+      const AUTOSAVE_MS = 1200;
 
-        if (state.bannerDataUrl) {
-          const img = document.createElement("img");
-          img.src = state.bannerDataUrl;
-          bannerBox.appendChild(img);
-          bannerPlh?.classList.add("hide");
+      const setSaveStatus = (mode, note) => {
+        const box = $("saveStatus");
+        const tx = $("saveStatusText");
+        if (!box || !tx) return;
+        box.dataset.state = mode;
+        tx.textContent = note;
+      };
+
+      const persistNow = async () => {
+        storageSet(JSON.stringify(state));
+        dirty = false;
+        setSaveStatus("saving", "Синхронизация с сервером...");
+
+        const isCloudSuccess = await saveDataToCloud(state);
+        
+        if (isCloudSuccess) {
+          setSaveStatus("saved", "Сохранено в облаке");
         } else {
-          bannerPlh?.classList.remove("hide");
+          setSaveStatus("error", "Сохранено локально (ошибка сети)");
         }
+      };
 
-        if (state.logoDataUrl) {
-          const a = document.createElement("a");
-          a.className = "bannerLogo";
-          a.href = normUrl(state.logoLink) || "#";
-          a.target = "_blank";
-          a.style.position = "absolute";
-          a.style.top = "16px";
-          a.style.right = "16px";
-          a.style.display = "block";
-          a.style.maxHeight = "42px";
-          a.style.zIndex = "3";
+      const persist = () => {
+        dirty = true;
+        setSaveStatus("dirty", "Сохранение...");
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = window.setTimeout(() => {
+          persistNow();
+        }, AUTOSAVE_MS);
+      };
 
-          const im = document.createElement("img");
-          im.src = state.logoDataUrl;
-          im.style.maxHeight = "42px";
-          im.style.width = "auto";
-          im.style.display = "block";
+      window.addEventListener("beforeunload", () => { if (dirty) { storageSet(JSON.stringify(state)); } });
 
-          a.appendChild(im);
-          bannerBox.appendChild(a);
-        }
+      function toast(title, subtitle){
+        const wrap = $("toastWrap");
+        if (!wrap) return;
+        const t = document.createElement("div");
+        t.className = "toast";
+        t.innerHTML = "<div>" + escapeHtml(title) + "</div>" + (subtitle ? "<small>" + escapeHtml(subtitle) + "</small>" : "");
+        wrap.appendChild(t);
+        setTimeout(() => t.remove(), 2500);
       }
 
-      const av = $("avatarBox");
-      if (av) {
-        av.innerHTML = "";
-        const inner = document.createElement("div");
-        inner.className = "avatarInner";
-
-        if (state.avatarDataUrl) {
-          const img = document.createElement("img");
-          img.src = state.avatarDataUrl;
-          inner.appendChild(img);
-        } else {
-          const letter = (state.fullName || "A").slice(0, 1).toUpperCase();
-          inner.innerHTML = `<span class="fallback" style="font-size:24px; font-weight:800;">${escapeHtml(letter)}</span>`;
-        }
-
-        av.appendChild(inner);
+      function safeOn(id, evt, handler) {
+        const el = $(id); if (!el) return;
+        el.addEventListener(evt, handler);
       }
 
-      const forcedButtonsStyle = ["glass", "metal", "accent"].includes(state.ctaTheme) ? state.ctaTheme : "";
-      const phoneStyle = resolveCtaStyle(state.callButtonStyle || (forcedButtonsStyle || "metal"));
-
-      const cta = $("ctaRow");
-      if (cta) {
-        cta.innerHTML = "";
-
-        const phone = clean(state.callPhone);
-        if (phone) {
-          const a = document.createElement("a");
-          a.textContent = "Позвонить";
-          a.href = contactUrl(phone);
-          a.className = "ctaBtn ctaBtn--call ctaBtn--call-" + phoneStyle;
-          cta.appendChild(a);
-        }
-
-        (state.buttons || []).slice(0, 6).forEach((btn) => {
-          if (!btn || !clean(btn.label)) return;
-          const a = document.createElement("a");
-          a.textContent = btn.label;
-          a.href = normUrl(btn.url);
-          a.target = "_blank";
-          const st = forcedButtonsStyle || resolveCtaStyle(btn.style);
-          a.className = "ctaBtn ctaBtn--" + st;
-          cta.appendChild(a);
-        });
+      function sanitizeButtonStyles() {
+        const allowedBtn = new Set(["glass", "accent", "metal"]);
+        state.buttons = Array.isArray(state.buttons) ? state.buttons : [];
+        state.buttons.forEach(b => { if (b && !allowedBtn.has(b.style)) b.style = "glass"; });
+        state.chips = Array.isArray(state.chips) ? state.chips : [];
+        state.chips.forEach(c => { if(c && (c.style==="glass"||c.style==="metal")) c.style="outline"; });
       }
 
-      const chipPreviewBtn = $("callPhoneChip");
-      if (chipPreviewBtn) chipPreviewBtn.textContent = "Позвонить";
-
-      const contactsPreview = $("contactsPreview");
-      if (contactsPreview) {
-        contactsPreview.innerHTML = "";
-        (state.chips || []).slice(0, 20).forEach((c) => {
-          const lbl = clean(c?.label);
-          const url = clean(c?.url);
-          if (!lbl && !url) return;
-
-          const a = document.createElement("a");
-          const st = resolveChipStyle(c.style);
-          a.className = "chipA chipA--" + st;
-          a.textContent = lbl || url;
-          a.href = contactUrl(url);
-          a.target = "_blank";
-          contactsPreview.appendChild(a);
-        });
-
-        $("contactsSection")?.classList.toggle("hide", contactsPreview.children.length === 0);
-      }
-
-      const pointsPreview = $("pointsPreview");
-      if (pointsPreview) {
-        pointsPreview.innerHTML = "";
-        if ($("pointsTitleEl")) $("pointsTitleEl").textContent = state.pointsTitle || "Links";
-
-        (state.points || []).slice(0, 12).forEach((p) => {
-          if (!p || (!p.title && !p.url)) return;
-          const node = document.createElement("a");
-          node.className = "item";
-          node.href = normUrl(p.url);
-          node.target = "_blank";
-          node.innerHTML = `
-            <div class="check">✓</div>
-            <div>
-              <p class="itT">${escapeHtml(p.title || p.url)}</p>
-              <p class="itD">${escapeHtml(p.text || "")}</p>
-            </div>
-          `;
-          pointsPreview.appendChild(node);
-        });
-
-        $("pointsSection")?.classList.toggle("hide", pointsPreview.children.length === 0);
-      }
-
-      const galleryPreview = $("galleryPreview");
-      if (galleryPreview) {
-        galleryPreview.innerHTML = "";
-        if ($("galleryTitleEl")) $("galleryTitleEl").textContent = state.galleryTitle || "Gallery";
-
-        (state.gallery || []).slice(0, 12).forEach((g) => {
-          if (!g || (!g.img && !g.title)) return;
-          const card = document.createElement("div");
-          card.className = "work";
-          if (g.img) card.innerHTML = `<div class="workImg"><img src="${escapeHtml(g.img)}" alt=""></div>`;
-          card.innerHTML += `<div class="workBody"><p class="workT">${escapeHtml(g.title || "")}</p></div>`;
-          galleryPreview.appendChild(card);
-        });
-
-        $("gallerySection")?.classList.toggle("hide", galleryPreview.children.length === 0);
-      }
-
-      syncHeights();
-    }
-
-    function renderStyleOptions(theme, kind) {
-      const t = theme || "soft";
-      const list = kind === "chips" ? STYLE_SETS_CHIPS[t] : STYLE_SETS_CTA[t];
-      return list.map((v) => `<option value="${v}">${STYLE_LABELS[v] || v}</option>`).join("");
-    }
-
-    function renderButtonsList() {
-      const bl = $("buttonsList");
-      if (!bl) return;
-
-      const opts = renderStyleOptions(state.theme, "cta");
-      bl.innerHTML = "";
-
-      (state.buttons || []).forEach((b, i) => {
-        const div = document.createElement("div");
-        div.className = "card pad";
-        div.style.marginBottom = "10px";
-        div.innerHTML = `
-          <div class="row">
-            <div><label>Текст</label><input data-b="label" data-i="${i}" value="${escapeHtml(b.label || "")}"></div>
-            <div><label>URL</label><input data-b="url" data-i="${i}" value="${escapeHtml(b.url || "")}"></div>
-          </div>
-          <div class="row">
-            <div><label>Стиль</label><select data-b="style" data-i="${i}">${opts}</select></div>
-            <div style="text-align:right; align-self:end"><button class="btn danger small" data-act="rmButton" data-i="${i}">Del</button></div>
-          </div>
-        `;
-        bl.appendChild(div);
-        div.querySelector("select").value = resolveCtaStyle(b.style);
-      });
-
-      syncHeights();
-    }
-
-    function renderContactsList() {
-      const cl = $("contactsList");
-      if (!cl) return;
-
-      const opts = renderStyleOptions(state.theme, "chips");
-      cl.innerHTML = "";
-
-      (state.chips || []).forEach((c, i) => {
-        const div = document.createElement("div");
-        div.className = "card pad";
-        div.style.marginBottom = "10px";
-        div.innerHTML = `
-          <div class="row">
-            <div><label>Label</label><input data-c="label" data-i="${i}" value="${escapeHtml(c.label || "")}"></div>
-            <div><label>Link/Phone</label><input data-c="url" data-i="${i}" value="${escapeHtml(c.url || "")}"></div>
-          </div>
-          <div class="row">
-            <div><label>Стиль</label><select data-c="style" data-i="${i}">${opts}</select></div>
-            <div style="text-align:right; align-self:end"><button class="btn danger small" data-act="rmChip" data-i="${i}">Del</button></div>
-          </div>
-        `;
-        cl.appendChild(div);
-        div.querySelector("select").value = resolveChipStyle(c.style);
-      });
-
-      syncHeights();
-    }
-
-    function renderPointsList() {
-      const pl = $("pointsList");
-      if (!pl) return;
-
-      pl.innerHTML = "";
-
-      (state.points || []).forEach((p, i) => {
-        const div = document.createElement("div");
-        div.className = "card pad";
-        div.style.marginBottom = "10px";
-        div.innerHTML = `
-          <div class="row">
-            <div><label>Title</label><input data-p="title" data-i="${i}" value="${escapeHtml(p.title || "")}"></div>
-            <div><label>URL</label><input data-p="url" data-i="${i}" value="${escapeHtml(p.url || "")}"></div>
-          </div>
-          <div><label>Desc</label><textarea data-p="text" data-i="${i}" style="min-height:60px">${escapeHtml(p.text || "")}</textarea></div>
-          <div style="text-align:right; margin-top:10px"><button class="btn danger small" data-act="rmPoint" data-i="${i}">Del</button></div>
-        `;
-        pl.appendChild(div);
-      });
-
-      syncHeights();
-    }
-
-    function renderGalleryList() {
-      const gl = $("galleryList");
-      if (!gl) return;
-
-      gl.innerHTML = "";
-
-      (state.gallery || []).forEach((g, i) => {
-        const div = document.createElement("div");
-        div.className = "card pad";
-        div.style.marginBottom = "10px";
-        div.innerHTML = `
-          <div class="row">
-            <div><label>Название</label><input data-g="title" data-i="${i}" value="${escapeHtml(g.title || "")}"></div>
-            <div><label>Фото</label><input type="file" data-gfile="1" data-i="${i}"></div>
-          </div>
-          <div style="text-align:right"><button class="btn danger small" data-act="rmGallery" data-i="${i}">Del</button></div>
-        `;
-        gl.appendChild(div);
-      });
-
-      syncHeights();
-    }
-
-    function renderAllLists() {
-      renderButtonsList();
-      renderContactsList();
-      renderPointsList();
-      renderGalleryList();
-      renderCallStyleSeg();
-    }
-
-    function syncFieldsFromState() {
-      if ($("fullName")) $("fullName").value = state.fullName || "";
-      if ($("role")) $("role").value = state.role || "";
-      if ($("about")) $("about").value = state.about || "";
-      if ($("aboutCount")) $("aboutCount").textContent = String((state.about || "").length);
-      if ($("slug")) $("slug").value = state.slug || "";
-      if ($("callPhone")) $("callPhone").value = state.callPhone || "";
-      if ($("logoLink")) $("logoLink").value = state.logoLink || "";
-
-      if ($("avatarUrl")) $("avatarUrl").value = state.avatarDataUrl || "";
-      if ($("bannerUrl")) $("bannerUrl").value = state.bannerDataUrl || "";
-      if ($("logoUrl")) $("logoUrl").value = state.logoDataUrl || "";
-
-      if ($("pointsTitle")) $("pointsTitle").value = state.pointsTitle || "";
-      if ($("galleryTitle")) $("galleryTitle").value = state.galleryTitle || "";
-
-      if ($("accentPreset")) $("accentPreset").value = state.accentPreset || "brand";
-      if ($("accentC1")) $("accentC1").value = state.accentC1 || "#2563eb";
-      if ($("accentC2")) $("accentC2").value = state.accentC2 || "#7c3aed";
-
-      $("themeSeg")?.querySelectorAll("button").forEach((b) => {
-        b.classList.toggle("active", b.dataset.theme === (state.theme || "soft"));
-      });
-
-      syncHeights();
-    }
-
-    safeOn("themeSeg", "click", (e) => {
-      const b = e.target.closest("button[data-theme]");
-      if (!b) return;
-      setTheme(b.dataset.theme);
-      persist();
-      renderPreview();
-    });
-
-    safeOn("ctaThemeSeg", "click", (e) => {
-      const b = e.target.closest("button[data-ctatheme]");
-      if (!b) return;
-      setCtaTheme(b.dataset.ctatheme);
-      persist();
-      renderPreview();
-    });
-
-    root.addEventListener("click", (e) => {
-      const b = e.target.closest("#callStyleSeg button[data-callstyle]");
-      if (!b) return;
-      state.callButtonStyle = b.dataset.callstyle;
-      renderCallStyleSeg();
-      persist();
-      renderPreview();
-    });
-
-    safeOn("tabs", "click", (e) => {
-      const t = e.target.closest(".tab");
-      if (!t) return;
-
-      root.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
-      t.classList.add("active");
-
-      const n = t.dataset.tab;
-      ["profile","buttons","contacts","points","gallery"].forEach((k) => {
-        $("tab-" + k)?.classList.toggle("hide", k !== n);
-      });
-
-      syncHeights();
-    });
-
-    root.addEventListener("input", (e) => {
-      const el = e.target;
-
-      if (el.id === "fullName") state.fullName = el.value;
-      if (el.id === "role") state.role = el.value;
-      if (el.id === "about") {
-        state.about = el.value;
-        if ($("aboutCount")) $("aboutCount").textContent = String(el.value.length);
-      }
-      if (el.id === "slug") {
-        state.slug = normalizeSlug(el.value);
-        el.value = state.slug;
-      }
-      if (el.id === "callPhone") state.callPhone = el.value;
-      if (el.id === "logoLink") state.logoLink = el.value;
-
-      if (el.id === "avatarUrl") state.avatarDataUrl = clean(el.value);
-      if (el.id === "bannerUrl") state.bannerDataUrl = clean(el.value);
-      if (el.id === "logoUrl") state.logoDataUrl = clean(el.value);
-
-      if (el.id === "pointsTitle") state.pointsTitle = el.value;
-      if (el.id === "galleryTitle") state.galleryTitle = el.value;
-
-      if (el.id === "accentC1") { state.accentC1 = el.value; applyButtonThemeVars(); }
-      if (el.id === "accentC2") { state.accentC2 = el.value; applyButtonThemeVars(); }
-
-      if (el.dataset.b) state.buttons[el.dataset.i][el.dataset.b] = el.value;
-      if (el.dataset.c) state.chips[el.dataset.i][el.dataset.c] = el.value;
-      if (el.dataset.p) state.points[el.dataset.i][el.dataset.p] = el.value;
-      if (el.dataset.g) state.gallery[el.dataset.i][el.dataset.g] = el.value;
-
-      persist();
-      renderPreview();
-    });
-
-    root.addEventListener("change", async (e) => {
-      const el = e.target;
-
-      if (el.id === "avatarFile") state.avatarDataUrl = await uploadMediaViaAPI(el.files?.[0], "avatar");
-      if (el.id === "bannerFile") state.bannerDataUrl = await uploadMediaViaAPI(el.files?.[0], "banner");
-      if (el.id === "logoFile") state.logoDataUrl = await uploadMediaViaAPI(el.files?.[0], "logo");
-      if (el.dataset.gfile) state.gallery[el.dataset.i].img = await uploadMediaViaAPI(el.files?.[0], "gallery");
-
-      if (el.dataset.b === "style") state.buttons[el.dataset.i].style = el.value;
-      if (el.dataset.c === "style") state.chips[el.dataset.i].style = el.value;
-
-      if (el.id === "accentPreset") {
-        state.accentPreset = el.value;
+      function setTheme(t) {
+        if (t !== "dark" && t !== "soft") t = "soft";
+        state.theme = t;
+        document.documentElement.setAttribute("data-theme", t);
+        const seg = $("themeSeg");
+        if (seg) seg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.theme === t));
         applyButtonThemeVars();
       }
 
-      persist();
-      renderPreview();
-      syncFieldsFromState();
-    });
-
-    root.addEventListener("click", (e) => {
-      const b = e.target.closest("button[data-act]");
-      if (!b) return;
-
-      const i = Number(b.dataset.i);
-
-      if (b.dataset.act === "rmButton") { state.buttons.splice(i, 1); renderButtonsList(); }
-      if (b.dataset.act === "rmChip") { state.chips.splice(i, 1); renderContactsList(); }
-      if (b.dataset.act === "rmPoint") { state.points.splice(i, 1); renderPointsList(); }
-      if (b.dataset.act === "rmGallery") { state.gallery.splice(i, 1); renderGalleryList(); }
-
-      persist();
-      renderPreview();
-    });
-
-    safeOn("addButton", "click", () => {
-      state.buttons.push({ label: "New", url: "", style: "glass" });
-      renderButtonsList();
-      persist();
-      renderPreview();
-    });
-
-    safeOn("addChip", "click", () => {
-      state.chips.push({ label: "Link", url: "", style: "outline" });
-      renderContactsList();
-      persist();
-      renderPreview();
-    });
-
-    safeOn("addPoint", "click", () => {
-      state.points.push({ title: "Link", url: "", text: "" });
-      renderPointsList();
-      persist();
-      renderPreview();
-    });
-
-    safeOn("addGallery", "click", () => {
-      state.gallery.push({ title: "Work", img: "", text: "", url: "" });
-      renderGalleryList();
-      persist();
-      renderPreview();
-    });
-
-    safeOn("save", "click", async () => {
-      state.slug = normalizeSlug(state.slug || "") || "profile";
-      if ($("slug")) $("slug").value = state.slug;
-
-      await persistNow();
-
-      setSaveStatus("saving", "Публикация профиля...");
-      const ok = await publishProfileToCloud(state);
-
-      if (ok) {
-        setSaveStatus("saved", "Профиль опубликован");
-        toast("Опубликовано", buildProfileUrl());
-      } else {
-        setSaveStatus("error", "Ошибка публикации профиля");
-        toast("Ошибка", "Не удалось опубликовать профиль");
+      function setCtaTheme(v){
+        v = clean(v || "auto");
+        if (!["auto","glass","metal","accent"].includes(v)) v = "auto";
+        state.ctaTheme = v;
+        if (v === "accent") {
+          if (state.accentPreset !== "custom") {
+             const theme = state.theme || "soft";
+             const fn = ACCENT_PRESETS[state.accentPreset] || ACCENT_PRESETS.brand;
+             const pair = fn(theme);
+             state.accentPreset = "custom"; state.accentC1 = pair[0]; state.accentC2 = pair[1];
+             const ap = $("accentPreset"); if (ap) ap.value = "custom";
+             const c1 = $("accentC1"); if (c1) c1.value = state.accentC1;
+             const c2 = $("accentC2"); if (c2) c2.value = state.accentC2;
+          }
+        }
+        const seg = $("ctaThemeSeg");
+        if (seg) seg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.ctatheme === v));
+        applyButtonThemeVars();
+        renderButtonsList();
+        renderContactsList();
       }
 
-      closeSheet();
-      renderPreview();
-    });
-
-    safeOn("reset", "click", async () => {
-      if (!confirm("Сбросить все?")) return;
-      state = clone(defaultState);
-      syncFieldsFromState();
-      renderAllLists();
-      renderPreview();
-      await persistNow();
-    });
-
-    safeOn("profileLink", "click", () => {
-      const url = buildProfileUrl();
-      navigator.clipboard.writeText(url).then(() => toast("Скопировано", url));
-    });
-
-    async function init() {
-      setSaveStatus("saving", "Загрузка данных...");
-
-      let localData = null;
-      try {
-        const raw = storageGet();
-        localData = raw ? JSON.parse(raw) : null;
-      } catch (e) {
-        localData = null;
+      function resolveCtaStyle(styleRaw) {
+        styleRaw = clean(styleRaw) || "glass";
+        if (styleRaw !== "glass" && styleRaw !== "metal" && styleRaw !== "accent") return "glass";
+        return styleRaw;
+      }
+      function resolveChipStyle(styleRaw) {
+        styleRaw = clean(styleRaw) || "outline";
+        if (styleRaw === "glass" || styleRaw === "metal") styleRaw = "outline";
+        if (styleRaw !== "outline" && styleRaw !== "accent") return "outline";
+        return styleRaw;
+      }
+      function readFileAsDataURL(file) {
+        return new Promise((resolve) => {
+          if (!file) return resolve("");
+          const fr = new FileReader();
+          fr.onload = () => resolve(String(fr.result || ""));
+          fr.onerror = () => resolve("");
+          fr.readAsDataURL(file);
+        });
+      }
+      function buildProfileUrl() {
+        const slug = normalizeSlug(state.slug || "");
+        return "https://app.abqd.ru/u/" + (slug || "");
       }
 
-      const draftData = await loadDraftFromCloud();
-      const publishedData = draftData ? null : await loadPublishedProfileFromCloud();
+      function renderPreview() {
+        const nameEl = $("nameEl"); if (nameEl) nameEl.textContent = state.fullName || "Имя Фамилия";
+        const roleEl = $("roleEl"); if (roleEl) roleEl.textContent = state.role || "Должность";
+        const aboutEl = $("aboutEl"); if (aboutEl) aboutEl.textContent = state.about || "";
+        
+        const slugInput = $("slug"); if (slugInput) slugInput.value = state.slug || "";
+        const slugFull = $("slugFull"); if (slugFull) slugFull.textContent = (state.slug || "...");
 
-      const mergedData = draftData || localData || publishedData || clone(defaultState);
+        const bannerBox = $("bannerBox"); const bannerPlh = $("bannerPlh");
+        if (bannerBox) {
+           bannerBox.querySelectorAll("img").forEach(x => x.remove());
+           if (state.bannerDataUrl) {
+             const img = document.createElement("img"); img.src = state.bannerDataUrl;
+             bannerBox.appendChild(img);
+             if(bannerPlh) bannerPlh.classList.add("hide");
+           } else if(bannerPlh) bannerPlh.classList.remove("hide");
+           
+           bannerBox.querySelectorAll(".bannerLogo").forEach(x => x.remove());
+           if (state.logoDataUrl) {
+             const a = document.createElement("a"); a.className = "bannerLogo";
+             a.href = normUrl(state.logoLink) || "#"; a.target = "_blank";
+             const im = document.createElement("img"); im.src = state.logoDataUrl;
+             a.appendChild(im); bannerBox.appendChild(a);
+           }
+        }
 
-      state = {
-        ...clone(defaultState),
-        ...mergedData
-      };
+        const av = $("avatarBox");
+        if (av) {
+          av.innerHTML = "";
+          const inner = document.createElement("div"); inner.className = "avatarInner";
+          if (state.avatarDataUrl) {
+            const img = document.createElement("img"); img.src = state.avatarDataUrl; inner.appendChild(img);
+          } else {
+            const letter = (state.fullName || "A").slice(0, 1).toUpperCase();
+            inner.innerHTML = `<span class="fallback">${letter}</span>`;
+          }
+          av.appendChild(inner);
+        }
 
-      state.slug = normalizeSlug(state.slug || defaultState.slug) || defaultState.slug;
+        const forced = ["glass","metal","accent"].includes(state.ctaTheme) ? state.ctaTheme : "";
+        const cta = $("ctaRow");
+        if (cta) {
+          cta.innerHTML = "";
+          const phone = clean(state.callPhone);
+          if (phone) {
+             const a = document.createElement("a"); a.textContent = "Позвонить";
+             a.href = contactUrl(phone); 
+             const st = forced || resolveCtaStyle(state.callPhoneStyle || "metal");
+             a.className = "ctaBtn ctaBtn--" + st;
+             cta.appendChild(a);
+          }
+          (state.buttons || []).slice(0,6).forEach(btn => {
+             if(!btn || !clean(btn.label)) return;
+             const a = document.createElement("a"); a.textContent = btn.label;
+             a.href = normUrl(btn.url); a.target="_blank";
+             const st = forced || resolveCtaStyle(btn.style);
+             a.className = "ctaBtn ctaBtn--" + st;
+             cta.appendChild(a);
+          });
+        }
 
-      if (draftData) storageSet(JSON.stringify(state));
+        const contactsPreview = $("contactsPreview");
+        if (contactsPreview) {
+          contactsPreview.innerHTML = "";
+          (state.chips || []).slice(0,20).forEach(c => {
+             const lbl = clean(c?.label); const url = clean(c?.url);
+             if(!lbl && !url) return;
+             const a = document.createElement("a");
+             const st = resolveChipStyle(c.style);
+             a.className = "chipA chipA--" + st;
+             a.textContent = lbl || url; a.href = contactUrl(url); a.target="_blank";
+             contactsPreview.appendChild(a);
+          });
+          $("contactsSection").classList.toggle("hide", contactsPreview.children.length===0);
+        }
 
-      sanitizeButtonStyles();
-      setTheme(state.theme || "dark");
-      syncFieldsFromState();
-      setCtaTheme(state.ctaTheme || "auto");
-      renderAllLists();
-      renderPreview();
+        const pointsPreview = $("pointsPreview");
+        if (pointsPreview) {
+          pointsPreview.innerHTML = "";
+          const titleEl = $("pointsTitleEl"); if(titleEl) titleEl.textContent = state.pointsTitle || "Links";
+          (state.points || []).slice(0,12).forEach(p => {
+             if(!p || (!p.title && !p.url)) return;
+             const node = document.createElement("a"); node.className = "item";
+             node.href = normUrl(p.url); node.target="_blank";
+             node.innerHTML = `<div class="check">✓</div><div><p class="itT">${escapeHtml(p.title||p.url)}</p><p class="itD">${escapeHtml(p.text||"")}</p></div>`;
+             pointsPreview.appendChild(node);
+          });
+          $("pointsSection").classList.toggle("hide", pointsPreview.children.length===0);
+        }
 
-      if (draftData) {
-        setSaveStatus("saved", "Черновик синхронизирован");
-      } else if (localData) {
-        setSaveStatus("saved", "Загружено локально");
-      } else if (publishedData) {
-        setSaveStatus("saved", "Загружен опубликованный профиль");
-      } else {
-        setSaveStatus("saved", "Готово");
+        const galleryPreview = $("galleryPreview");
+        if (galleryPreview) {
+          galleryPreview.innerHTML = "";
+          const titleEl = $("galleryTitleEl"); if(titleEl) titleEl.textContent = state.galleryTitle || "Gallery";
+          (state.gallery || []).slice(0,12).forEach(g => {
+             if(!g || (!g.img && !g.title)) return;
+             const card = document.createElement("div"); card.className = "work";
+             if(g.img) card.innerHTML = `<div class="workImg"><img src="${g.img}"></div>`;
+             card.innerHTML += `<div class="workBody"><p class="workT">${escapeHtml(g.title)}</p></div>`;
+             galleryPreview.appendChild(card);
+          });
+          $("gallerySection").classList.toggle("hide", galleryPreview.children.length===0);
+        }
       }
 
-      try { new ResizeObserver(syncHeights).observe($("previewCard")); } catch (e) {}
-      window.addEventListener("resize", syncHeights);
+      function renderStyleOptions(theme, kind){
+        const t = theme || "soft";
+        const list = (kind === "chips") ? STYLE_SETS_CHIPS[t] : STYLE_SETS_CTA[t];
+        return list.map(v => `<option value="${v}">${STYLE_LABELS[v]||v}</option>`).join("");
+      }
+
+      function renderButtonsList() {
+        const bl = $("buttonsList"); if (!bl) return;
+        const opts = renderStyleOptions(state.theme, "cta");
+        bl.innerHTML = "";
+        (state.buttons || []).forEach((b, i) => {
+           const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
+           div.innerHTML = `
+             <div class="row">
+               <div><label>Текст</label><input data-b="label" data-i="${i}" value="${escapeHtml(b.label)}"></div>
+               <div><label>URL</label><input data-b="url" data-i="${i}" value="${escapeHtml(b.url)}"></div>
+             </div>
+             <div class="row">
+               <div><label>Стиль</label><select data-b="style" data-i="${i}">${opts}</select></div>
+               <div style="text-align:right; align-self:end"><button class="btn danger small" data-act="rmButton" data-i="${i}">Del</button></div>
+             </div>`;
+           bl.appendChild(div);
+           div.querySelector("select").value = resolveCtaStyle(b.style);
+        });
+      }
+
+      function renderContactsList() {
+        const cl = $("contactsList"); if (!cl) return;
+        const opts = renderStyleOptions(state.theme, "chips");
+        cl.innerHTML = "";
+        (state.chips || []).forEach((c, i) => {
+           const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
+           div.innerHTML = `
+             <div class="row">
+               <div><label>Label</label><input data-c="label" data-i="${i}" value="${escapeHtml(c.label)}"></div>
+               <div><label>Link/Phone</label><input data-c="url" data-i="${i}" value="${escapeHtml(c.url)}"></div>
+             </div>
+             <div class="row">
+               <div><label>Стиль</label><select data-c="style" data-i="${i}">${opts}</select></div>
+               <div style="text-align:right; align-self:end"><button class="btn danger small" data-act="rmChip" data-i="${i}">Del</button></div>
+             </div>`;
+           cl.appendChild(div);
+           div.querySelector("select").value = resolveChipStyle(c.style);
+        });
+      }
+
+      function renderPointsList() {
+        const pl = $("pointsList"); if(!pl) return;
+        pl.innerHTML = "";
+        (state.points||[]).forEach((p,i)=>{
+          const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
+          div.innerHTML = `
+            <div class="row">
+              <div><label>Title</label><input data-p="title" data-i="${i}" value="${escapeHtml(p.title)}"></div>
+              <div><label>URL</label><input data-p="url" data-i="${i}" value="${escapeHtml(p.url)}"></div>
+            </div>
+            <div><label>Desc</label><textarea data-p="text" data-i="${i}" style="min-height:60px">${escapeHtml(p.text)}</textarea></div>
+            <div style="text-align:right; margin-top:10px"><button class="btn danger small" data-act="rmPoint" data-i="${i}">Del</button></div>`;
+          pl.appendChild(div);
+        });
+      }
+
+      function renderGalleryList() {
+        const gl = $("galleryList"); if(!gl) return;
+        gl.innerHTML = "";
+        (state.gallery||[]).forEach((g,i)=>{
+          const div = document.createElement("div"); div.className="card pad"; div.style.marginBottom="10px";
+          div.innerHTML = `
+            <div class="row">
+               <div><label>Название</label><input data-g="title" data-i="${i}" value="${escapeHtml(g.title)}"></div>
+               <div><label>Фото</label><input type="file" data-gfile="1" data-i="${i}"></div>
+            </div>
+            <div style="text-align:right"><button class="btn danger small" data-act="rmGallery" data-i="${i}">Del</button></div>`;
+          gl.appendChild(div);
+        });
+      }
+
+      function renderAllLists(){ renderButtonsList(); renderContactsList(); renderPointsList(); renderGalleryList(); }
+      function syncFieldsFromState() {
+         $("fullName").value = state.fullName||""; $("role").value = state.role||"";
+         $("about").value = state.about||""; $("slug").value = state.slug||"";
+         $("callPhone").value = state.callPhone||""; $("logoLink").value = state.logoLink||"";
+         $("pointsTitle").value = state.pointsTitle||""; $("galleryTitle").value = state.galleryTitle||"";
+         
+         const cps = $("callPhoneStyle");
+         if (cps) {
+            cps.innerHTML = renderStyleOptions(state.theme, "cta");
+            cps.value = resolveCtaStyle(state.callPhoneStyle || "metal");
+         }
+
+         const theme = state.theme || "soft";
+         $("themeSeg").querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.theme===theme));
+      }
+
+      // Handlers
+      safeOn("themeSeg", "click", (e)=>{
+        const b = e.target.closest("button[data-theme]"); if(!b) return;
+        setTheme(b.dataset.theme); persist(); renderPreview();
+      });
+      safeOn("ctaThemeSeg", "click", (e)=>{
+        const b = e.target.closest("button[data-ctatheme]"); if(!b) return;
+        setCtaTheme(b.dataset.ctatheme); persist(); renderPreview();
+      });
+      safeOn("tabs", "click", (e)=>{
+        const t = e.target.closest(".tab"); if(!t) return;
+        root.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); t.classList.add("active");
+        const n = t.dataset.tab;
+        ["profile","buttons","contacts","points","gallery"].forEach(k=> $("tab-"+k).classList.toggle("hide", k!==n));
+      });
+      
+      // Inputs
+      root.addEventListener("input", (e)=>{
+        const el = e.target;
+        if(el.id === "fullName") state.fullName = el.value;
+        if(el.id === "role") state.role = el.value;
+        if(el.id === "about") { state.about = el.value; $("aboutCount").textContent=el.value.length; }
+        if(el.id === "slug") state.slug = el.value;
+        if(el.id === "callPhone") state.callPhone = el.value;
+        if(el.id === "logoLink") state.logoLink = el.value;
+        if(el.id === "pointsTitle") state.pointsTitle = el.value;
+        if(el.id === "galleryTitle") state.galleryTitle = el.value;
+        if(el.id === "accentC1") { state.accentC1 = el.value; applyButtonThemeVars(); }
+        
+        if(el.dataset.b) { state.buttons[el.dataset.i][el.dataset.b] = el.value; }
+        if(el.dataset.c) { state.chips[el.dataset.i][el.dataset.c] = el.value; }
+        if(el.dataset.p) { state.points[el.dataset.i][el.dataset.p] = el.value; }
+        if(el.dataset.g) { state.gallery[el.dataset.i][el.dataset.g] = el.value; }
+        
+        persist(); renderPreview();
+      });
+
+      // File Inputs
+      root.addEventListener("change", async (e)=>{
+         const el = e.target;
+         if(el.id==="avatarFile") { state.avatarDataUrl = await readFileAsDataURL(el.files[0]); }
+         if(el.id==="bannerFile") { state.bannerDataUrl = await readFileAsDataURL(el.files[0]); }
+         if(el.id==="logoFile") { state.logoDataUrl = await readFileAsDataURL(el.files[0]); }
+         if(el.dataset.gfile) { state.gallery[el.dataset.i].img = await readFileAsDataURL(el.files[0]); }
+         
+         if(el.dataset.b==="style") { state.buttons[el.dataset.i].style = el.value; }
+         if(el.dataset.c==="style") { state.chips[el.dataset.i].style = el.value; }
+         if(el.id==="accentPreset") { state.accentPreset = el.value; applyButtonThemeVars(); }
+         if(el.id==="callPhoneStyle") { state.callPhoneStyle = el.value; }
+         
+         persist(); renderPreview();
+      });
+
+      // Clicks
+      root.addEventListener("click", (e)=>{
+         const b = e.target.closest("button[data-act]"); if(!b) return;
+         const i = Number(b.dataset.i);
+         if(b.dataset.act==="rmButton") { state.buttons.splice(i,1); renderButtonsList(); }
+         if(b.dataset.act==="rmChip") { state.chips.splice(i,1); renderContactsList(); }
+         if(b.dataset.act==="rmPoint") { state.points.splice(i,1); renderPointsList(); }
+         if(b.dataset.act==="rmGallery") { state.gallery.splice(i,1); renderGalleryList(); }
+         persist(); renderPreview();
+      });
+
+      safeOn("addButton", "click", ()=>{ state.buttons.push({label:"New",url:"",style:"glass"}); renderButtonsList(); persist(); renderPreview(); });
+      safeOn("addChip", "click", ()=>{ state.chips.push({label:"Link",url:"",style:"outline"}); renderContactsList(); persist(); renderPreview(); });
+      safeOn("addPoint", "click", ()=>{ state.points.push({title:"Link",url:"",text:""}); renderPointsList(); persist(); renderPreview(); });
+      safeOn("addGallery", "click", ()=>{ state.gallery.push({title:"Work",img:""}); renderGalleryList(); persist(); renderPreview(); });
+
+      safeOn("save", "click", ()=>{ persistNow(); closeSheet(); });
+      safeOn("reset", "click", ()=>{ if(confirm("Сбросить все?")) { state=clone(defaultState); persistNow(); renderAllLists(); renderPreview(); syncFieldsFromState(); }});
+      safeOn("profileLink", "click", ()=>{ 
+         const url = buildProfileUrl(); 
+         window.open(url, '_blank'); 
+      });
+
+      // ИНИЦИАЛИЗАЦИЯ И ЗАГРУЗКА
+      async function init() {
+        setSaveStatus("saving", "Загрузка из облака...");
+        
+        // 1. Пытаемся получить данные с Yandex VM
+        const cloudData = await loadDataFromCloud();
+        
+        // 2. Если облако не ответило, берем из localStorage
+        const localDataRaw = storageGet();
+        const localData = localDataRaw ? JSON.parse(localDataRaw) : null;
+
+        // 3. Сливаем данные: Приоритет облаку -> потом локал -> потом дефолт
+        const mergedData = cloudData || localData || clone(defaultState);
+        state = { ...clone(defaultState), ...mergedData };
+
+        // Если загрузились успешно, сохраним локально актуальный стейт
+        if(cloudData) {
+           storageSet(JSON.stringify(state));
+        }
+
+        sanitizeButtonStyles();
+        setTheme(state.theme || "dark");
+        syncFieldsFromState();
+        setCtaTheme(state.ctaTheme);
+        renderAllLists();
+        renderPreview();
+        
+        setSaveStatus("saved", cloudData ? "Синхронизировано" : "Загружено локально");
+      }
+      
+      init();
     }
-
-    init();
-  }
-})();
-</script>
-
+  })();
+  </script>
 </body>
 </html>
