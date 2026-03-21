@@ -112,9 +112,12 @@
     // state-based -> build old-like to reuse renderer
     var p = (st && st.profile) ? st.profile : {};
     var out = {};
+    // --- ABQD_U_KEEP_SLUG_IN_NORMALIZE_V1 ---
+    out.slug = pick(st.slug, payload && payload.slug, '');
     out.theme = pick(st.theme, 'soft');
 
-    out.fullName = pick(p.name, p.fullName, payload && payload.title, 'Профиль');
+    // --- ABQD_U_NO_PROFILE_NAME_DEFAULT_V1 ---
+    out.fullName = pick(p.name, p.fullName, payload && payload.title, '');
     out.role     = pick(p.role, p.subtitle, p.tagline, '');
     out.about    = pick(p.about, p.bio, payload && payload.description, '');
 
@@ -148,25 +151,42 @@
     state = state || {};
     applyTheme(state.theme || 'soft');
 
+    // --- ABQD_U_EMPTY_BASELINE_V1 ---
+    function slugToDisplayName(slug){
+      slug = clean(slug || '');
+      if (!slug) return '';
+      slug = slug.replace(/[._-]+/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!slug) return '';
+      return slug.split(' ').map(function(part){
+        return part ? part.charAt(0).toUpperCase() + part.slice(1) : '';
+      }).join(' ');
+    }
+
     var nameRaw = clean(state.fullName);
+    var slugDisplay = slugToDisplayName(state.slug);
     var nameEmpty = !nameRaw;
-    var showName = nameEmpty ? 'Профиль' : nameRaw;
+    var showName = nameEmpty ? (slugDisplay || 'Профиль') : nameRaw;
 
     var nameEl = $('nameEl');
     if (nameEl){
       nameEl.textContent = showName;
-      if (nameEl.classList) nameEl.classList.toggle('ph', nameEmpty);
+      if (nameEl.classList) nameEl.classList.toggle('ph', !nameRaw && !slugDisplay);
     }
 
     var roleRaw = clean(state.role);
     var roleEl = $('roleEl');
     if (roleEl){
       roleEl.textContent = roleRaw || '';
+      roleEl.style.display = roleRaw ? '' : 'none';
       if (roleEl.classList) roleEl.classList.toggle('ph', !roleRaw);
     }
 
     var aboutEl = $('aboutEl');
-    if (aboutEl) aboutEl.textContent = state.about || '';
+    if (aboutEl){
+      var aboutRaw = clean(state.about);
+      aboutEl.textContent = aboutRaw || '';
+      aboutEl.style.display = aboutRaw ? '' : 'none';
+    }
 
     // banner + logo
     var banner = $('bannerBox');
@@ -212,7 +232,7 @@
         imgA.alt = 'avatar';
         av.appendChild(imgA);
       } else {
-        var letter = (nameRaw || 'A').slice(0,1).toUpperCase();
+        var letter = (showName || 'A').slice(0,1).toUpperCase();
         var span = document.createElement('span');
         span.className = 'fallback';
         span.textContent = letter;
