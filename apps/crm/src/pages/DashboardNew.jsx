@@ -1477,16 +1477,16 @@ export default function DashboardNew() {
 
         if (cancelled) return;
 
-        setDeals(state.deals.length ? state.deals : INITIAL_DEALS);
+        setDeals(Array.isArray(state.deals) ? state.deals : []);
         setStages(state.stages.length ? state.stages : INITIAL_STAGES);
         setCrmLoaded(true);
       } catch (e) {
         console.error('CRM LOAD ERROR', e);
         if (cancelled) return;
-        setDeals(INITIAL_DEALS);
+        setDeals([]);
         setStages(INITIAL_STAGES);
         setCrmLoaded(true);
-        addToast("error", "CRM не загрузилась", "Показаны стартовые данные.");
+        addToast("error", "CRM не загрузилась", "Показаны только базовые этапы без демо-сделок.");
       } finally {
         if (!cancelled) setIsSyncing(false);
       }
