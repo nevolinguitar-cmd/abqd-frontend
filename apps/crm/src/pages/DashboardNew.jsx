@@ -49,7 +49,7 @@ async function crmLoadState() {
   const state = data?.state || data || {};
 
   return {
-    deals: Array.isArray(state.deals) ? state.deals : [],
+    deals: Array.isArray(state.deals) ? state.deals.map(normalizeDeal) : [],
     stages: Array.isArray(state.stages) ? state.stages : [],
   };
 }
@@ -191,6 +191,39 @@ const Badge = ({ children, className = "" }) => (
   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all duration-300 ${className}`}>{children}</span>
 );
 
+const ensureArray = (v) => Array.isArray(v) ? v : [];
+const ensureObject = (v) => (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+
+const normalizeDeal = (d = {}) => ({
+  ...d,
+  id: d?.id || `D-${Date.now()}`,
+  company: d?.company || "Новая сделка",
+  contact: d?.contact || "-",
+  stage: d?.stage || "inbox",
+  amount: Number(d?.amount) || 0,
+  currency: d?.currency || "RUB",
+  score: Number(d?.score) || 50,
+  phone: d?.phone || "",
+  email: d?.email || "",
+  source: d?.source || "Неизвестно",
+  address: d?.address || "",
+  priority: d?.priority || "medium",
+  description: d?.description || "",
+  nextStep: d?.nextStep || "",
+  nextTaskAt: d?.nextTaskAt || "",
+  status: d?.status || "active",
+  fields: ensureObject(d?.fields),
+  tags: ensureArray(d?.tags),
+  plugins: ensureArray(d?.plugins),
+  participants: ensureArray(d?.participants),
+  externalContacts: ensureArray(d?.externalContacts),
+  attachments: ensureArray(d?.attachments),
+  connectedChannels: ensureArray(d?.connectedChannels),
+  messages: ensureArray(d?.messages),
+  activities: ensureArray(d?.activities),
+  touches: ensureArray(d?.touches),
+});
+
 // ==========================================
 // 3. ПОДКОМПОНЕНТЫ
 // ==========================================
@@ -219,7 +252,7 @@ function AnalyticsView({ deals, stages, themeStyles, theme, onOpenDeal }) {
   });
 
   const topTouches = [...deals]
-    .map(d => ({ ...d, touchCount: d.touches?.length || 0 }))
+    .map(d => ({ ...d, touchCount: ensureArray(d.touches).length }))
     .sort((a, b) => b.touchCount - a.touchCount)
     .slice(0, 5);
 
@@ -946,7 +979,7 @@ function BotsView({ themeStyles, theme }) {
 }
 
 const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, onDelete, onCallAI, isSyncing }) => {
-  const [draft, setDraft] = useState(deal);
+  const [draft, setDraft] = useState(normalizeDeal(deal));
   const [activeTab, setActiveTab] = useState('info');
   const [messageText, setMessageText] = useState("");
   const [selectedChannel, setSelectedChannel] = useState("telegram");
@@ -961,13 +994,19 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
   ];
 
   useEffect(() => {
-    if (JSON.stringify(draft) === JSON.stringify(deal)) return;
-    const timer = setTimeout(() => onSave(draft), 600);
+    const normalizedDeal = normalizeDeal(deal);
+    if (JSON.stringify(draft) === JSON.stringify(normalizedDeal)) return;
+    setDraft(normalizedDeal);
+  }, [deal]);
+
+  useEffect(() => {
+    if (JSON.stringify(draft) === JSON.stringify(normalizeDeal(deal))) return;
+    const timer = setTimeout(() => onSave(normalizeDeal(draft)), 600);
     return () => clearTimeout(timer);
   }, [draft, deal, onSave]);
 
   const togglePlugin = (pluginId) => {
-    const plugins = draft.plugins || [];
+    const plugins = ensureArray(draft.plugins);
     setDraft({ ...draft, plugins: plugins.includes(pluginId) ? plugins.filter(id => id !== pluginId) : [...plugins, pluginId] });
   };
 
@@ -975,10 +1014,10 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     const channelName = channels.find(c => c.id === channelId)?.label;
     setDraft(prev => ({
       ...prev,
-      connectedChannels: [...(prev.connectedChannels || []), channelId],
+      connectedChannels: [...ensureArray(prev.connectedChannels), channelId],
       activities: [
         { id: `act_${Date.now()}`, text: `Синхронизирован канал: ${channelName}`, date: getTodayDateStr(), time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), type: 'integration' },
-        ...(prev.activities || [])
+        ...ensureArray(prev.activities)
       ]
     }));
   };
@@ -995,7 +1034,7 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     };
     setDraft(prev => ({
       ...prev,
-      messages: [...(prev.messages || []), newMessage]
+      messages: [...ensureArray(prev.messages), newMessage]
     }));
     setMessageText("");
   };
@@ -1011,7 +1050,7 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
 
     setDraft(prev => ({
       ...prev,
-      attachments: [newFile, ...(prev.attachments || [])],
+      attachments: [newFile, ...ensureArray(prev.attachments)],
       activities: [
         {
           id: `act_${Date.now()}`,
@@ -1020,7 +1059,7 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           type: 'upload'
         },
-        ...(prev.activities || [])
+        ...ensureArray(prev.activities)
       ]
     }));
   };
@@ -1032,7 +1071,7 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
         ...prev,
         touches: [
           { id: `t_${Date.now()}`, user: 'Вы', action: 'Чтение сообщений', time: 'Только что' },
-          ...(prev.touches || [])
+          ...ensureArray(prev.touches)
         ]
       }));
     } else if (tabId === 'files') {
@@ -1040,7 +1079,7 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
         ...prev,
         touches: [
           { id: `t_${Date.now()}`, user: 'Вы', action: 'Просмотр файлов', time: 'Только что' },
-          ...(prev.touches || [])
+          ...ensureArray(prev.touches)
         ]
       }));
     }
@@ -1477,7 +1516,7 @@ export default function DashboardNew() {
 
         if (cancelled) return;
 
-        setDeals(Array.isArray(state.deals) ? state.deals : []);
+        setDeals(Array.isArray(state.deals) ? state.deals.map(normalizeDeal) : []);
         setStages(state.stages.length ? state.stages : INITIAL_STAGES);
         setCrmLoaded(true);
       } catch (e) {
@@ -1514,7 +1553,8 @@ export default function DashboardNew() {
     setIsSyncing(true);
 
     setDeals(prev => {
-      const newDeals = prev.map(d => d.id === updatedDeal.id ? updatedDeal : d);
+      const normalizedUpdatedDeal = normalizeDeal(updatedDeal);
+      const newDeals = prev.map(d => d.id === normalizedUpdatedDeal.id ? normalizedUpdatedDeal : d).map(normalizeDeal);
 
       crmSaveState({ deals: newDeals, stages })
         .then(() => {
@@ -1542,7 +1582,7 @@ export default function DashboardNew() {
     };
 
     setDeals(prev => {
-      const newDeals = [newDeal, ...prev];
+      const newDeals = [normalizeDeal(newDeal), ...prev.map(normalizeDeal)];
 
       setIsSyncing(true);
       crmSaveState({ deals: newDeals, stages })
@@ -1561,7 +1601,7 @@ export default function DashboardNew() {
 
   const handleDeleteDeal = (id) => {
     setDeals(prev => {
-      const newDeals = prev.filter(d => d.id !== id);
+      const newDeals = prev.filter(d => d.id !== id).map(normalizeDeal);
 
       setIsSyncing(true);
       crmSaveState({ deals: newDeals, stages })
@@ -1583,15 +1623,15 @@ export default function DashboardNew() {
     setDeals(prev => {
       const newDeals = prev.map(d =>
         d.id === dealId
-          ? {
+          ? normalizeDeal({
               ...d,
               stage: newStage,
               activities: [
                 { id: Date.now().toString(), text: `Смена этапа: ${newStage}`, date: getTodayDateStr(), time: 'Сейчас', type: 'stage_change' },
-                ...(d.activities || [])
+                ...ensureArray(d.activities)
               ]
-            }
-          : d
+            })
+          : normalizeDeal(d)
       );
 
       setIsSyncing(true);
@@ -1696,7 +1736,7 @@ export default function DashboardNew() {
 
   const filteredDeals = useMemo(() => {
     return deals.filter(d => {
-      const matchesSearch = (d.company || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = String(d.company || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesRole = currentRole === "novice" || d.stage !== "inbox";
       return matchesSearch && matchesRole;
     });
@@ -1709,7 +1749,10 @@ export default function DashboardNew() {
     return map;
   }, [filteredDeals, stages]);
 
-  const selectedDeal = useMemo(() => deals.find(d => d.id === selectedId), [deals, selectedId]);
+  const selectedDeal = useMemo(() => {
+    const found = deals.find(d => d.id === selectedId);
+    return found ? normalizeDeal(found) : null;
+  }, [deals, selectedId]);
 
   if (!crmLoaded) {
     return (
