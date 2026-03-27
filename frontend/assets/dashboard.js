@@ -24,11 +24,24 @@
     }
   }
 
-  function render(me){
+  function render(me, access){
     $("#meEmail").textContent = me.email || "—";
-    $("#mePlan").textContent = me.plan || "none";
+
+    let planLabel = "none";
+    let expValue = "—";
+    if (access) {
+      if (access.paid_active) {
+        planLabel = access.paid_plan || "paid";
+        expValue = access.paid_until ? fmtDate(new Date(Number(access.paid_until) * 1000).toISOString()) : "—";
+      } else if (access.trial_active) {
+        planLabel = "trial";
+        expValue = access.trial_until ? fmtDate(new Date(Number(access.trial_until) * 1000).toISOString()) : "—";
+      }
+    }
+
+    $("#mePlan").textContent = planLabel;
     $("#meRole").textContent = me.role || "user";
-    $("#meExp").textContent = fmtDate(me.expires_at);
+    $("#meExp").textContent = expValue;
 
     const admin = (me.role === "admin" || me.role === "team");
     const adminCard = $("#adminCard");
@@ -39,13 +52,27 @@
     window.ABQD.theme?.initThemeSeg();
     setTopButtons();
 
+    async function getAccess(){
+      try{
+        const token = window.ABQD?.api?.getToken ? window.ABQD.api.getToken() : "";
+        const res = await fetch((window.ABQD?.api?.API_BASE || "https://api.abqd.ru") + "/api/v1/access/status", {
+          method: "GET",
+          headers: token ? { "Authorization": "Bearer " + token } : {}
+        });
+        if (!res.ok) return null;
+        return await res.json();
+      }catch(_e){
+        return null;
+      }
+    }
+
     // guard already put ABQD.me, but we keep safe
     if (window.ABQD?.me) {
-      render(window.ABQD.me);
+      render(window.ABQD.me, await getAccess());
       return;
     }
 
     const r = await window.ABQD.api.getMe();
-    if (r.ok) render(r.data);
+    if (r.ok) render(r.data, await getAccess());
   });
 })();
