@@ -38,8 +38,27 @@
 
     if (!requireAccess) return;
 
-    const plan = (me && me.plan) ? String(me.plan) : "none";
-    const ok = allowPlans.includes(plan);
+    let access = null;
+    try {
+      const token = window.ABQD?.api?.getToken ? window.ABQD.api.getToken() : "";
+      const r2 = await fetch((window.ABQD?.api?.API_BASE || "https://api.abqd.ru") + "/api/v1/access/status", {
+        method: "GET",
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
+      if (r2.ok) {
+        access = await r2.json();
+      }
+    } catch (e) {
+      console.warn("ABQD.guard: access/status failed, skip redirect", e);
+    }
+
+    if (!access) return;
+
+    const accessKinds = [];
+    if (access.trial_active) accessKinds.push("trial");
+    if (access.paid_active) accessKinds.push("paid");
+
+    const ok = accessKinds.some(v => allowPlans.includes(v));
     if (!ok){
       go("/tariffs/");
     }
