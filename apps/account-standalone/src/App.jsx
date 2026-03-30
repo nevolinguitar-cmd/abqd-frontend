@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Key, CreditCard, Clock, User, CheckCircle2, Sun, Moon } from 'lucide-react';
 
 import useAccountData from "./useAccountData";
@@ -28,6 +28,12 @@ export default function App() {
   const [isUnlinkingCard, setIsUnlinkingCard] = useState(false);
   const [tokenCopied, setTokenCopied] = useState(false);
   const [accountToken, setAccountToken] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setAccountToken(localStorage.getItem("abqd_token") || "");
+    }
+  }, []);
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
 
