@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Key, CreditCard, Clock, User, CheckCircle2, Sun, Moon } from 'lucide-react';
 
 import useAccountData from "./useAccountData";
+import useBillingStatus from "./useBillingStatus";
 
 export default function App() {
-  // Данные из API (персональные)
   const { loading, userData } = useAccountData();
+  const {
+    loading: billingLoading,
+    billing,
+    enableAutorenew,
+    disableAutorenew,
+    linkCard,
+  } = useBillingStatus();
 
-  // Состояния
-  const [isDarkTheme, setIsDarkTheme] = useState(true); // Состояние темы
-  
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
+
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
@@ -17,16 +23,49 @@ export default function App() {
   });
   const [passwordSaved, setPasswordSaved] = useState(false);
 
-  const [autoRenew, setAutoRenew] = useState(true);
   const [isLoadingRenew, setIsLoadingRenew] = useState(false);
+  const [isPayingRenew, setIsPayingRenew] = useState(false);
+  const [isUnlinkingCard, setIsUnlinkingCard] = useState(false);
+  const [tokenCopied, setTokenCopied] = useState(false);
+  const [accountToken, setAccountToken] = useState("");
 
-  // Расчет остатка подписки для светящегося кластера (без ошибок и отрицательных значений)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setAccountToken(localStorage.getItem("abqd_token") || "");
+    }
+  }, []);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+
+  const isStageAccount = typeof window !== "undefined" && window.location.pathname.startsWith("/__stage/account/");
+  const stageMockCardEnabled = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mockCard") === "1";
+
+  const previewBilling = (isStageAccount && stageMockCardEnabled)
+    ? {
+        ...(billing || {}),
+        autorenew_enabled: true,
+        payment_method: {
+          brand: "Visa",
+          last4: "4242",
+          expiry_month: "12",
+          expiry_year: "2027",
+        },
+      }
+    : billing;
+
+  const autoRenew = !!previewBilling?.autorenew_enabled;
+  const hasPaymentMethod = !!previewBilling?.payment_method;
+
+  const paidUntilDate = userData?.paidUntil || null;
+  const planName = previewBilling?.plan || billing?.plan || userData?.plan || "—";
+  const statusLabel = userData?.status || "—";
+
   const calculateProgress = () => {
-    if (!userData?.paidUntil) return { remainingPercentage: 0, daysLeft: null };
+    if (!paidUntilDate) return { remainingPercentage: 0, daysLeft: null };
 
     const now = Date.now();
     const start = (userData.startDate || new Date()).getTime();
-    const end = userData.paidUntil.getTime();
+    const end = paidUntilDate.getTime();
 
     const totalMs = Math.max(1, end - start);
     const remainingMs = Math.max(0, end - now);
@@ -40,19 +79,18 @@ export default function App() {
 
   const { remainingPercentage, daysLeft } = calculateProgress();
 
-  // Определение цвета кластера в зависимости от остатка дней
   const getClusterColor = (percentage) => {
     if (percentage > 20) return {
-       dark: 'bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.9)]',
-       light: 'bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]'
+      dark: 'bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.9)]',
+      light: 'bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]'
     };
     if (percentage > 5) return {
-       dark: 'bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.9)]',
-       light: 'bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.5)]'
+      dark: 'bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.9)]',
+      light: 'bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.5)]'
     };
     return {
-       dark: 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.9)]',
-       light: 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]'
+      dark: 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.9)]',
+      light: 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]'
     };
   };
 
@@ -63,15 +101,62 @@ export default function App() {
     setPasswords({ current: '', new: '', confirm: '' });
   };
 
-  const handleToggleAutoRenew = () => {
-    setIsLoadingRenew(true);
-    setTimeout(() => {
-      setAutoRenew(!autoRenew);
-      setIsLoadingRenew(false);
-    }, 1000);
-  };
+  async function handleUnlinkCard() {
+    try {
+      setIsUnlinkingCard(true);
+      const API = "https://api.abqd.ru";
+      const token = accountToken || localStorage.getItem("abqd_token") || "";
+      if (!token) {
+        window.location.href = "/auth/?next=%2Faccount%2F";
+        return;
+      }
 
-  // Объект с классами для светлой и темной темы для чистоты кода
+      const r = await fetch(API + "/api/v1/billing/payment-method/unlink", {
+        method: "POST",
+        headers: { authorization: "Bearer " + token }
+      });
+
+      if (r.status === 401) {
+        window.location.href = "/auth/?next=%2Faccount%2F";
+        return;
+      }
+
+      if (!r.ok) {
+        const txt = await r.text().catch(() => "");
+        throw new Error(txt || ("HTTP " + r.status));
+      }
+
+      window.location.reload();
+    } catch (e) {
+      console.warn(e);
+      alert("Не удалось отвязать карту: " + String(e));
+    } finally {
+      setIsUnlinkingCard(false);
+    }
+  }
+
+  async function handleToggleAutoRenew() {
+    try {
+      setIsLoadingRenew(true);
+
+      if (autoRenew) {
+        await disableAutorenew();
+      } else {
+        if (hasPaymentMethod) {
+          await enableAutorenew();
+        } else {
+          await linkCard();
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn(e);
+      alert("Не удалось изменить автопродление: " + String(e));
+    } finally {
+      setIsLoadingRenew(false);
+    }
+  }
+
   const t = {
     bgRoot: isDarkTheme ? 'bg-[#0b0f19] text-gray-300' : 'bg-slate-50 text-slate-600',
     title: isDarkTheme ? 'text-white' : 'text-slate-900',
@@ -96,59 +181,85 @@ export default function App() {
     iconPurple: isDarkTheme ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600',
   };
 
-  // --- ABQD_RENEW_CURRENT_PLAN_v1 ---
-  const [isPayingRenew, setIsPayingRenew] = useState(false);
+  function handlePromoActivate(e) {
+    e.preventDefault();
+    if (!promoCode.trim()) {
+      alert("Введите промокод.");
+      return;
+    }
+    setPromoApplied(true);
+    setTimeout(() => setPromoApplied(false), 2500);
+  }
 
-  async function renewCurrentPlan(){
-    try{
+  async function copyAccountToken() {
+    try {
+      const token = localStorage.getItem("abqd_token") || "";
+      if (!token) {
+        alert("Токен не найден.");
+        return;
+      }
+      await navigator.clipboard.writeText(token);
+      setTokenCopied(true);
+      setTimeout(() => setTokenCopied(false), 2000);
+    } catch (e) {
+      console.warn(e);
+      alert("Не удалось скопировать токен.");
+    }
+  }
+
+  async function renewCurrentPlan() {
+    try {
       setIsPayingRenew(true);
       const API = "https://api.abqd.ru";
       const token = localStorage.getItem("abqd_token") || "";
-      if (!token){
+      if (!token) {
         window.location.href = "/auth/?next=%2Faccount%2F";
         return;
       }
-      const planRaw = String(userData?.plan || "").toLowerCase();
+      const planRaw = String(planName || "").toLowerCase();
       const plan = planRaw.includes("full") ? "full" : (planRaw.includes("pro") ? "pro" : "full");
       const return_url = window.location.origin + "/pay/return/?next=%2Faccount%2F";
 
       const r = await fetch(API + "/api/v1/payments/create", {
         method: "POST",
-        headers: { "content-type":"application/json", authorization:"Bearer " + token },
+        headers: { "content-type": "application/json", authorization: "Bearer " + token },
         body: JSON.stringify({ plan, return_url })
       });
 
-      const j = await r.json().catch(()=>null);
-      if (r.status === 401){
+      const j = await r.json().catch(() => null);
+      if (r.status === 401) {
         window.location.href = "/auth/?next=%2Faccount%2F";
         return;
       }
       const url = j && j.confirmation_url;
-      if (!url){
+      if (!url) {
         alert("Не удалось начать оплату (нет confirmation_url).");
         setIsPayingRenew(false);
         return;
       }
       window.location.href = url;
-    } catch(e){
+    } catch (e) {
       console.warn(e);
       alert("Ошибка запуска оплаты: " + String(e));
       setIsPayingRenew(false);
     }
   }
-  // --- end ABQD_RENEW_CURRENT_PLAN_v1 ---
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${t.bgRoot}`}>
+        Загрузка аккаунта…
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen font-sans selection:bg-blue-500/30 transition-colors duration-300 ${t.bgRoot}`}>
-      
-      {/* Основной контент */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
-        
-        {/* Заголовок и переключатель темы */}
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <h1 className={`text-2xl sm:text-3xl font-bold transition-colors ${t.title}`}>Аккаунт</h1>
-          
-          <button 
+
+          <button
             onClick={() => setIsDarkTheme(!isDarkTheme)}
             className={`p-2.5 rounded-xl transition-colors ${t.btnThemeToggle}`}
             title={isDarkTheme ? "Светлая тема" : "Тёмная тема"}
@@ -159,11 +270,7 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Левая колонка (Информация и подписка) */}
           <div className="lg:col-span-2 space-y-6">
-            
-            {/* Карточка подписки */}
             <div className={`border rounded-2xl p-5 sm:p-6 shadow-lg transition-colors ${t.card}`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
@@ -176,7 +283,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className={`self-start sm:self-auto px-4 py-1.5 font-bold rounded-lg uppercase tracking-wide text-xs sm:text-sm shadow-sm transition-colors ${t.badge}`}>
-                  План: {userData.plan}
+                  План: {planName}
                 </div>
               </div>
 
@@ -185,36 +292,40 @@ export default function App() {
                   <div className={`text-xs uppercase font-semibold mb-1 transition-colors ${t.textLabel}`}>Статус</div>
                   <div className="text-green-500 font-medium flex items-center gap-1.5">
                     <CheckCircle2 size={16} />
-                    {userData.status}
+                    {statusLabel}
                   </div>
                 </div>
                 <div>
                   <div className={`text-xs uppercase font-semibold mb-1 transition-colors ${t.textLabel}`}>Оплачено до</div>
                   <div className={`font-medium transition-colors ${t.textHighlight}`}>
-                    {((userData.paidUntil) ? userData.paidUntil.toLocaleDateString('ru-RU') : '—')} <span className={`text-xs sm:text-sm sm:ml-1 block sm:inline transition-colors ${t.textLabel}`}>{((userData.paidUntil) ? userData.paidUntil.toLocaleTimeString('ru-RU') : '—')}</span>
+                    {paidUntilDate ? paidUntilDate.toLocaleDateString('ru-RU') : '—'}{" "}
+                    <span className={`text-xs sm:text-sm sm:ml-1 block sm:inline transition-colors ${t.textLabel}`}>
+                      {paidUntilDate ? paidUntilDate.toLocaleTimeString('ru-RU') : '—'}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Светящийся кластер (остаток подписки) */}
               <div className="mb-6">
                 <div className="flex justify-between items-end text-xs sm:text-sm mb-3">
                   <span className={`transition-colors font-medium ${t.textMuted}`}>Остаток подписки</span>
-                  <span className={`font-bold text-lg leading-none transition-colors ${t.textHighlight}`}>{daysLeft} <span className="text-sm font-normal">дней</span></span>
+                  <span className={`font-bold text-lg leading-none transition-colors ${t.textHighlight}`}>
+                    {daysLeft ?? 0} <span className="text-sm font-normal">дней</span>
+                  </span>
                 </div>
-                
+
                 <div className="flex justify-between items-center gap-[2px] sm:gap-1 h-3 sm:h-3.5 mb-2">
                   {Array.from({ length: 40 }).map((_, i) => {
                     const activeSegmentsCount = Math.ceil((remainingPercentage / 100) * 40);
                     const isActive = i < activeSegmentsCount;
                     const isLastActive = i === activeSegmentsCount - 1;
                     const clusterColors = getClusterColor(remainingPercentage);
-                    
+
                     return (
-                      <div 
+                      <div
                         key={i}
                         className={`flex-1 h-full rounded-[1px] transition-all duration-700 ease-out ${
-                          isActive 
+                          isActive
                             ? isDarkTheme ? clusterColors.dark : clusterColors.light
                             : t.clusterEmpty
                         } ${isLastActive && autoRenew ? 'animate-pulse' : ''}`}
@@ -222,44 +333,117 @@ export default function App() {
                     );
                   })}
                 </div>
-                
+
                 <div className={`flex justify-between text-[10px] sm:text-xs transition-colors ${t.textLabel}`}>
                   <span>Сегодня</span>
-                  <span>{((userData.paidUntil) ? userData.paidUntil.toLocaleDateString('ru-RU') : '—')}</span>
+                  <span>{paidUntilDate ? paidUntilDate.toLocaleDateString('ru-RU') : '—'}</span>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 px-4 rounded-xl transition-colors shadow-lg shadow-blue-900/20" type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); renewCurrentPlan(); }} disabled={isPayingRenew}>{isPayingRenew ? "Переходим к оплате…" : "Продлить тариф"}</button></div>
+              <div className={`rounded-xl border p-4 transition-colors ${t.innerBox}`}>
+                <div className={`text-xs uppercase font-semibold mb-1 transition-colors ${t.textLabel}`}>Токен аккаунта</div>
+                <div className={`text-xs sm:text-sm break-all font-mono mb-4 transition-colors ${t.textHighlight}`}>
+                  {accountToken || "—"}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={copyAccountToken}
+                  className={`w-full py-2.5 px-4 rounded-xl font-medium text-sm border justify-center transition-all duration-300 ${t.btnSecondary}`}
+                >
+                  {tokenCopied ? "Скопировано" : "Скопировать токен"}
+                </button>
+              </div>
             </div>
 
-            {/* Профиль пользователя */}
-             <div className={`border rounded-2xl p-5 sm:p-6 shadow-lg transition-colors ${t.card}`}>
+            <div className={`border rounded-2xl p-5 sm:p-6 shadow-lg transition-colors ${t.card}`}>
               <div className="flex items-center gap-3 mb-6">
-                 <div className={`p-2.5 rounded-lg transition-colors ${t.iconBoxGray}`}>
-                    <User size={24} />
-                  </div>
+                <div className={`p-2.5 rounded-lg transition-colors ${t.iconBoxGray}`}>
+                  <User size={24} />
+                </div>
                 <h2 className={`text-lg sm:text-xl font-semibold transition-colors ${t.cardTitle}`}>Профиль</h2>
               </div>
               <div className="space-y-4">
                 <div>
                   <label className={`block text-sm font-medium mb-1 transition-colors ${t.textMuted}`}>Email пользователя</label>
-                  <input 
-                    type="text" 
-                    readOnly 
-                    value={userData.email} 
+                  <input
+                    type="text"
+                    readOnly
+                    value={userData.email}
                     className={`w-full border rounded-xl px-4 py-3 focus:outline-none opacity-80 cursor-not-allowed transition-colors ${t.inputDisabled}`}
                   />
                 </div>
               </div>
             </div>
 
+            <div className={`border rounded-2xl p-5 sm:p-6 shadow-lg transition-colors ${t.card}`}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className={`p-2.5 rounded-lg transition-colors ${t.iconBlue}`}>
+                  <CreditCard size={24} />
+                </div>
+                <h2 className={`text-lg sm:text-xl font-semibold transition-colors ${t.cardTitle}`}>Привязанная карта</h2>
+              </div>
+
+              {hasPaymentMethod ? (
+                <>
+                  <div className={`rounded-xl border p-4 mb-4 transition-colors ${t.innerBox}`}>
+                    <div className={`text-xs uppercase font-semibold mb-1 transition-colors ${t.textLabel}`}>Статус</div>
+                    <div className={`font-medium transition-colors ${t.textHighlight}`}>Карта привязана</div>
+
+                    <div className={`text-xs uppercase font-semibold mt-4 mb-1 transition-colors ${t.textLabel}`}>Карта</div>
+                    <div className={`font-medium transition-colors ${t.textHighlight}`}>
+                      {(previewBilling?.payment_method?.brand || 'Карта')} •••• {previewBilling?.payment_method?.last4 || '****'}
+                    </div>
+
+                    <div className={`text-xs mt-4 transition-colors ${t.textMuted}`}>
+                      После отвязки автопродление будет отключено.
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleUnlinkCard}
+                    disabled={isUnlinkingCard}
+                    className={`w-full py-2.5 px-4 rounded-xl font-medium text-sm border justify-center transition-all duration-300 ${
+                      isDarkTheme
+                        ? 'border-red-900/50 bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                        : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+                    } ${isUnlinkingCard ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isUnlinkingCard ? 'Отвязываем карту…' : 'Отвязать карту'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className={`rounded-xl border p-4 mb-4 transition-colors ${t.innerBox}`}>
+                    <div className={`text-xs uppercase font-semibold mb-1 transition-colors ${t.textLabel}`}>Статус</div>
+                    <div className={`font-medium transition-colors ${t.textHighlight}`}>Карта не привязана</div>
+
+                    <div className={`text-xs mt-4 transition-colors ${t.textMuted}`}>
+                      Чтобы включить автопродление, сначала привяжите карту.
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await linkCard();
+                      } catch (e) {
+                        console.warn(e);
+                        alert("Не удалось начать привязку карты: " + String(e));
+                      }
+                    }}
+                    className={`w-full py-2.5 px-4 rounded-xl font-medium text-sm border justify-center transition-all duration-300 ${t.btnEnableRenew}`}
+                  >
+                    Привязать карту
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Правая колонка (Безопасность) */}
           <div className="space-y-6">
-            
-            {/* Карточка смены пароля */}
             <div className={`border rounded-2xl p-5 sm:p-6 shadow-lg transition-colors ${t.card}`}>
               <div className="flex items-center gap-3 mb-6">
                 <div className={`p-2.5 rounded-lg transition-colors ${t.iconPurple}`}>
@@ -275,11 +459,11 @@ export default function App() {
                     <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors ${t.textLabel}`}>
                       <Key size={16} />
                     </div>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       placeholder="••••••••"
                       value={passwords.current}
-                      onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                      onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
                       className={`w-full border rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors ${t.input}`}
                       required
                     />
@@ -288,11 +472,11 @@ export default function App() {
 
                 <div className="pt-2">
                   <label className={`block text-sm font-medium mb-1.5 transition-colors ${t.textMuted}`}>Новый пароль</label>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     placeholder="Минимум 8 символов"
                     value={passwords.new}
-                    onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                    onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
                     className={`w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors ${t.input}`}
                     required
                   />
@@ -300,19 +484,19 @@ export default function App() {
 
                 <div>
                   <label className={`block text-sm font-medium mb-1.5 transition-colors ${t.textMuted}`}>Подтвердите пароль</label>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     placeholder="Повторите новый пароль"
                     value={passwords.confirm}
-                    onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                    onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
                     className={`w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors ${t.input}`}
                     required
                   />
                 </div>
 
                 <div className="pt-4">
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className={`w-full font-semibold py-2.5 px-4 rounded-xl transition-colors flex justify-center items-center gap-2 ${t.btnPrimary}`}
                   >
                     {passwordSaved ? (
@@ -328,48 +512,38 @@ export default function App() {
               </form>
             </div>
 
-            {/* Карточка автопродления */}
             <div className={`bg-gradient-to-br border rounded-2xl p-5 sm:p-6 relative overflow-hidden transition-all duration-300 ${t.autoRenewCard}`}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-              
-              <Clock className={autoRenew ? "text-blue-500 mb-4" : `mb-4 transition-colors ${t.textLabel}`} size={28} />
-              <h3 className={`font-medium mb-2 transition-colors ${t.cardTitle}`}>Автопродление {autoRenew ? 'включено' : 'отключено'}</h3>
-              
+
+              <Clock className={`mb-4 transition-colors ${t.textLabel}`} size={28} />
+              <h3 className={`font-medium mb-2 transition-colors ${t.cardTitle}`}>Промокод</h3>
+
               <p className={`text-sm mb-6 leading-relaxed min-h-[60px] transition-colors ${t.textMuted}`}>
-                {autoRenew 
-                  ? `Ваша подписка будет автоматически продлена ${((userData.paidUntil) ? userData.paidUntil.toLocaleDateString('ru-RU') : '—')}. Вы можете отменить автопродление в любой момент.`
-                  : `Подписка будет активна до ${((userData.paidUntil) ? userData.paidUntil.toLocaleDateString('ru-RU') : '—')}, после чего доступ будет приостановлен. Новых списаний не будет.`
-                }
+                Введите промокод, чтобы активировать доступ или применить специальное предложение к аккаунту.
               </p>
 
-              <div className="flex justify-start">
-                <button 
-                  onClick={handleToggleAutoRenew}
-                  disabled={isLoadingRenew}
-                  className={`transition-all duration-300 flex items-center gap-2 ${
-                    autoRenew 
-                      ? `text-xs underline underline-offset-4 ${t.link}` 
-                      : `w-full py-2.5 px-4 rounded-xl font-medium text-sm border justify-center ${t.btnEnableRenew}`
-                  } ${isLoadingRenew ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isLoadingRenew ? (
-                    <>
-                      <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-                      {autoRenew ? 'Отмена...' : 'Включение...'}
-                    </>
-                  ) : autoRenew ? (
-                    'Отменить автопродление'
-                  ) : (
-                    'Включить автопродление'
-                  )}
-                </button>
-              </div>
-            </div>
+              <form onSubmit={handlePromoActivate} className="space-y-4">
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Введите промокод"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    className={`w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors ${t.input}`}
+                  />
+                </div>
 
+                <button
+                  type="submit"
+                  className={`w-full py-2.5 px-4 rounded-xl font-medium text-sm border justify-center transition-all duration-300 ${t.btnEnableRenew}`}
+                >
+                  {promoApplied ? 'Промокод активирован' : 'Активировать промокод'}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </main>
-
     </div>
   );
 }
