@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Search, Moon, Sun, Plus, CheckCircle2, AlertCircle, Clock, Zap, Bot,
   Calendar as CalendarIcon, BarChart3, X, Users, Target, Phone, Video, Briefcase, Bell, Globe, Check, Link2, Settings, Lock,
@@ -160,6 +160,93 @@ const getDueStatus = (dateStr) => {
   if (target < today) return "expired";
   if (target.getTime() === today.getTime()) return "today";
   return "future";
+};
+
+const getDealPriorityScore = (deal) => {
+  const amount = Number(deal?.amount) || 0;
+  const hasNextStep = String(deal?.nextStep || "").trim().length > 0;
+  const hasPhone = String(deal?.phone || "").trim().length > 0;
+  const hasBudget = String(deal?.fields?.budget || "").trim().length > 0;
+  const dueStatus = getDueStatus(deal?.nextTaskAt);
+
+  let score = 0;
+
+  if (dueStatus === "expired") score += 1000;
+  else if (dueStatus === "today") score += 600;
+  else if (dueStatus === "future") score += 200;
+
+  if (hasNextStep) score += 120;
+  else score -= 120;
+
+  if (hasPhone) score += 40;
+  if (hasBudget) score += 40;
+
+  score += Math.min(amount / 1000, 300);
+
+  return score;
+};
+
+const sortDealsWithinStage = (deals) => {
+  return [...deals].sort((a, b) => {
+    const scoreDiff = getDealPriorityScore(b) - getDealPriorityScore(a);
+    if (scoreDiff !== 0) return scoreDiff;
+
+    const amountDiff = (Number(b?.amount) || 0) - (Number(a?.amount) || 0);
+    if (amountDiff !== 0) return amountDiff;
+
+    const aName = String(a?.company || "");
+    const bName = String(b?.company || "");
+    return aName.localeCompare(bName, "ru");
+  });
+};
+
+const getDealPriorityMeta = (deal) => {
+  const amount = Number(deal?.amount) || 0;
+  const dueStatus = getDueStatus(deal?.nextTaskAt);
+  const hasNextStep = String(deal?.nextStep || "").trim().length > 0;
+
+  if (dueStatus === "expired") {
+    return {
+      label: "Срочно",
+      dotClass: "bg-rose-500",
+      textClass: "text-rose-500",
+      cardClass: "border-rose-500/35 bg-rose-500/[0.03]",
+    };
+  }
+
+  if (dueStatus === "today") {
+    return {
+      label: "Сегодня",
+      dotClass: "bg-amber-500",
+      textClass: "text-amber-500",
+      cardClass: "border-amber-500/35 bg-amber-500/[0.03]",
+    };
+  }
+
+  if (!hasNextStep) {
+    return {
+      label: "Нет шага",
+      dotClass: "bg-slate-400",
+      textClass: "text-slate-400",
+      cardClass: "border-slate-400/25",
+    };
+  }
+
+  if (amount >= 150000) {
+    return {
+      label: "Важно",
+      dotClass: "bg-indigo-500",
+      textClass: "text-indigo-500",
+      cardClass: "border-indigo-500/30 bg-indigo-500/[0.03]",
+    };
+  }
+
+  return {
+    label: "Планово",
+    dotClass: "bg-emerald-500",
+    textClass: "text-emerald-500",
+    cardClass: "border-emerald-500/25",
+  };
 };
 
 const getThemeStyles = (theme) => ({
@@ -984,6 +1071,11 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
   const [messageText, setMessageText] = useState("");
   const [selectedChannel, setSelectedChannel] = useState("telegram");
   const [storageProvider, setStorageProvider] = useState('google');
+  const [amountInput, setAmountInput] = useState(
+    deal?.amount != null && deal?.amount !== 0 ? String(deal.amount) : ""
+  );
+  const nextStepRef = useRef(null);
+  const noteRef = useRef(null);
 
   const channels = [
     { id: 'telegram', label: 'Telegram', color: 'bg-[#0088cc]' },
@@ -997,7 +1089,23 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     const normalizedDeal = normalizeDeal(deal);
     if (JSON.stringify(draft) === JSON.stringify(normalizedDeal)) return;
     setDraft(normalizedDeal);
+    setAmountInput(
+      normalizedDeal.amount != null && normalizedDeal.amount !== 0
+        ? String(normalizedDeal.amount)
+        : ""
+    );
   }, [deal]);
+
+  useEffect(() => {
+    if (nextStepRef.current) {
+      nextStepRef.current.style.height = "auto";
+      nextStepRef.current.style.height = `${nextStepRef.current.scrollHeight}px`;
+    }
+    if (noteRef.current) {
+      noteRef.current.style.height = "auto";
+      noteRef.current.style.height = `${noteRef.current.scrollHeight}px`;
+    }
+  }, [draft.nextStep, draft.fields?.note, activeTab]);
 
   useEffect(() => {
     if (JSON.stringify(draft) === JSON.stringify(normalizeDeal(deal))) return;
@@ -1085,6 +1193,28 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     }
   };
 
+  const commitAmountInput = () => {
+    const raw = String(amountInput || "").trim().replace(",", ".");
+    const parsed = raw === "" ? 0 : Number(raw);
+
+    setDraft((prev) => ({
+      ...prev,
+      amount: Number.isFinite(parsed) ? parsed : 0,
+    }));
+
+    setAmountInput(raw === "" ? "" : String(Number.isFinite(parsed) ? parsed : 0));
+  };
+
+  const handleNextTaskDateChange = (value) => {
+    const updatedDraft = normalizeDeal({
+      ...draft,
+      nextTaskAt: value,
+    });
+
+    setDraft(updatedDraft);
+    onSave(updatedDraft);
+  };
+
   const tabs = [
     { id: 'info', icon: <Target size={16} />, label: 'О проекте' },
     { id: 'chat', icon: <MessageSquare size={16} />, label: 'Сообщения', count: draft.messages?.length || 0 },
@@ -1094,11 +1224,14 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
   ];
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-[#0f0c1b]/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="absolute inset-0 cursor-pointer hidden sm:block" onClick={onClose} />
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center pt-[76px] sm:pt-0 p-0 sm:p-6 bg-black/40 sm:bg-[#0f0c1b]/80 backdrop-blur-sm sm:backdrop-blur-md animate-in fade-in duration-300">
+      <div className="absolute inset-0 cursor-pointer" onClick={onClose} />
 
-      <aside className={`relative w-full max-w-4xl h-[100dvh] sm:h-[85vh] overflow-hidden flex flex-col sm:flex-row rounded-none sm:rounded-[32px] border-0 sm:border-2 shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 ${themeStyles.panel} ${themeStyles.panelBorder}`}>
-        <div className={`flex sm:flex-col gap-2 p-4 sm:p-6 border-b sm:border-b-0 sm:border-r overflow-x-auto sm:overflow-visible shrink-0 custom-scrollbar ${theme === 'dark' ? 'border-[#2a2636]/50 bg-[#141120]' : 'border-slate-200/50 bg-slate-50'}`}>
+      <aside className={`relative w-full sm:max-w-5xl h-[calc(100dvh-76px)] max-h-[calc(100dvh-76px)] min-h-0 flex flex-col sm:flex-row overflow-hidden sm:h-[88vh] sm:max-h-[88vh] rounded-t-3xl sm:rounded-[32px] border-t sm:border shadow-2xl animate-in slide-in-from-bottom-full sm:zoom-in-95 duration-300 ${themeStyles.panel} ${themeStyles.panelBorder}`}>
+        <div className="w-full flex justify-center pt-3 pb-1 sm:hidden shrink-0">
+          <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
+        </div>
+        <div className={`hidden sm:flex flex-col gap-2 p-6 border-r shrink-0 w-48 lg:w-56 overflow-y-auto custom-scrollbar ${theme === 'dark' ? 'border-[#2a2636]/50 bg-[#141120]' : 'border-slate-200/50 bg-slate-50'}`}>
           <div className="hidden sm:block pb-6 mb-6 border-b border-current opacity-20">
             <div className={`w-12 h-12 rounded-2xl items-center justify-center flex ${theme === 'dark' ? 'bg-[#2a2636] text-white' : 'bg-indigo-100 text-indigo-600'}`}>
               <Briefcase size={24} />
@@ -1124,15 +1257,15 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <div className={`p-4 sm:p-6 border-b flex items-center justify-between shrink-0 ${theme === 'dark' ? 'border-[#2a2636]/50' : 'border-slate-200/50'}`}>
-            <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
               <div className="text-left min-w-0 flex-1">
                 <input
                   value={draft.company}
                   onChange={(e) => setDraft({...draft, company: e.target.value})}
-                  className={`font-black text-xl sm:text-2xl bg-transparent outline-none focus:text-indigo-400 w-full tracking-tight transition-colors truncate ${themeStyles.text}`}
+                  className={`font-black text-lg sm:text-2xl bg-transparent outline-none focus:text-indigo-400 w-full tracking-tight transition-colors truncate ${themeStyles.text}`}
                   placeholder="Название проекта/клиента"
                 />
-                <div className={`flex items-center gap-2 text-xs font-bold mt-1 uppercase tracking-widest truncate ${themeStyles.textMuted}`}>
+                <div className={`flex items-center gap-2 text-[10px] sm:text-xs font-bold mt-1 uppercase tracking-widest truncate ${themeStyles.textMuted}`}>
                   <span className="shrink-0">{draft.id}</span>
                   <span className="shrink-0">·</span>
                   <span className="truncate">{draft.contact}</span>
@@ -1140,14 +1273,36 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 ml-4">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-2">
               {isSyncing && <Cloud className="text-indigo-400 animate-pulse hidden sm:block mr-2" size={20} />}
-              <button onClick={() => onDelete(draft.id)} className="p-3 hover:bg-rose-500/10 text-rose-500 rounded-2xl transition-all" title="Удалить"><Trash2 size={18} /></button>
-              <button onClick={onClose} className={`p-3 rounded-2xl transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-[#888399] hover:text-white' : 'hover:bg-slate-200 text-slate-500 hover:text-slate-800'}`} title="Закрыть"><X size={20} /></button>
+              <button onClick={() => {
+                const ok = window.confirm('Вы действительно хотите удалить карточку?');
+                if (!ok) return;
+                onDelete(draft.id);
+              }} className="p-2.5 sm:p-3 hover:bg-rose-500/10 text-rose-500 rounded-xl transition-all" title="Удалить"><Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" /></button>
+              <button onClick={onClose} className={`p-2.5 sm:p-3 rounded-xl transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-[#888399] hover:text-white' : 'hover:bg-slate-200 text-slate-500 hover:text-slate-800'}`} title="Закрыть"><X size={18} className="sm:w-5 sm:h-5" /></button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
+          <div className={`sm:hidden flex flex-row gap-2 px-3 py-2 border-b overflow-x-auto no-scrollbar shrink-0 ${theme === 'dark' ? 'border-[#2a2636]/50 bg-[#141120]/50' : 'border-slate-200/50 bg-slate-50/50'}`}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all font-bold text-xs whitespace-nowrap shrink-0 ${activeTab === tab.id ? `${themeStyles.accentGradient} text-white shadow-md` : `hover:bg-black/5 dark:hover:bg-white/5 ${themeStyles.textMuted}`}`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+                {tab.count > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${activeTab === tab.id ? 'bg-white/20' : theme === 'dark' ? 'bg-[#2a2636]' : 'bg-slate-200'}`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 custom-scrollbar pb-24 sm:pb-8 overscroll-contain [-webkit-overflow-scrolling:touch]">
             {activeTab === 'info' && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1159,14 +1314,52 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
                   </div>
                   <div className="space-y-2">
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Дата (Слот в календаре)</label>
-                    <input type="date" value={draft.nextTaskAt || ""} onChange={(e) => setDraft({...draft, nextTaskAt: e.target.value})} className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`} />
+                    <input
+                      type="date"
+                      value={draft.nextTaskAt || ""}
+                      onChange={(e) => handleNextTaskDateChange(e.target.value)}
+                      className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`}
+                    />
+                    <p className={`text-[10px] px-1 ${themeStyles.textMuted}`}>
+                      Изменение даты сразу обновляет календарный слой CRM.
+                    </p>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Следующий шаг</label>
+                  <textarea
+                    ref={nextStepRef}
+                    rows={1}
+                    value={draft.nextStep || ""}
+                    onChange={(e) => setDraft({ ...draft, nextStep: e.target.value })}
+                    onInput={(e) => {
+                      e.currentTarget.style.height = "auto";
+                      e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                    }}
+                    placeholder="Например: созвониться, отправить КП, запросить документы..."
+                    className={`w-full min-h-[56px] p-4 rounded-2xl text-sm font-medium border outline-none transition-all resize-none overflow-hidden ${themeStyles.input} ${themeStyles.text}`}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2 text-left">
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Бюджет / Сумма</label>
-                    <input type="number" value={draft.amount} onChange={(e) => setDraft({...draft, amount: parseFloat(e.target.value) || 0})} className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`} />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={amountInput}
+                      onChange={(e) => setAmountInput(e.target.value)}
+                      onBlur={commitAmountInput}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          commitAmountInput();
+                        }
+                      }}
+                      placeholder="Введите сумму"
+                      className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`}
+                    />
                   </div>
                   <div className="space-y-2 text-left">
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Главный телефон</label>
@@ -1221,9 +1414,16 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
                     <button onClick={() => onCallAI(draft, setDraft)} className={`text-[10px] font-black uppercase tracking-tighter bg-indigo-500/10 ${themeStyles.accentText} px-3 py-1.5 rounded-full border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-2`}><Zap size={10} className="fill-current" /> AI Помощник</button>
                   </div>
                   <textarea
-                    value={draft.fields.note || ""} onChange={(e) => setDraft({...draft, fields: {...draft.fields, note: e.target.value}})}
+                    ref={noteRef}
+                    rows={4}
+                    value={draft.fields.note || ""}
+                    onChange={(e) => setDraft({...draft, fields: {...draft.fields, note: e.target.value}})}
+                    onInput={(e) => {
+                      e.currentTarget.style.height = "auto";
+                      e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                    }}
                     placeholder="Описание проекта, договоренности..."
-                    className={`w-full h-40 p-5 rounded-2xl text-sm leading-relaxed border outline-none resize-none transition-all ${themeStyles.input} ${themeStyles.text}`}
+                    className={`w-full min-h-[160px] p-5 rounded-2xl text-sm leading-relaxed border outline-none resize-none overflow-hidden transition-all ${themeStyles.input} ${themeStyles.text}`}
                   />
                 </div>
               </div>
@@ -1746,6 +1946,9 @@ export default function DashboardNew() {
     const map = {};
     stages.forEach(s => map[s.key] = []);
     filteredDeals.forEach(d => map[d.stage]?.push(d));
+    Object.keys(map).forEach((stageKey) => {
+      map[stageKey] = sortDealsWithinStage(map[stageKey]);
+    });
     return map;
   }, [filteredDeals, stages]);
 
@@ -1771,8 +1974,8 @@ export default function DashboardNew() {
   }
 
   return (
-    <div className={`flex h-screen w-full transition-colors duration-500 font-sans ${themeStyles.bg} ${themeStyles.text} ${theme === 'dark' ? 'dark' : ''}`}>
-      <aside className={`relative border-r flex flex-col p-4 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? 'w-20' : 'w-64'} ${themeStyles.sidebar} ${themeStyles.panelBorder}`}>
+    <div className={`flex h-[100dvh] w-full transition-colors duration-500 font-sans ${themeStyles.bg} ${themeStyles.text} ${theme === 'dark' ? 'dark' : ''} overflow-hidden`}>
+      <aside className={`hidden sm:flex relative border-r flex-col p-4 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? 'w-20' : 'w-64'} ${themeStyles.sidebar} ${themeStyles.panelBorder}`}>
         <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className={`absolute -right-3 top-10 z-50 w-6 h-6 rounded-full border flex items-center justify-center transition-all shadow-xl ${theme === 'dark' ? 'bg-[#2D3446] border-white/10 text-white hover:text-indigo-400' : 'bg-white border-slate-200 text-slate-400 hover:text-indigo-500'}`}>
           {isSidebarCollapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
         </button>
@@ -1822,7 +2025,7 @@ export default function DashboardNew() {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden pb-[68px] sm:pb-0">
         <header className={`h-16 border-b flex items-center justify-between px-4 sm:px-6 z-10 transition-colors ${themeStyles.panel} ${themeStyles.panelBorder}`}>
           <div className="flex items-center gap-4 flex-1 max-w-xl">
             <div className="relative w-full">
@@ -1913,6 +2116,7 @@ export default function DashboardNew() {
                     {stageDeals.map(deal => {
                       const score = getScoreInfo(deal.score);
                       const isDragged = dragType === 'deal' && draggedId === deal.id;
+                      const priorityMeta = getDealPriorityMeta(deal);
 
                       return (
                         <div key={deal.id} draggable
@@ -1931,11 +2135,18 @@ export default function DashboardNew() {
                             setDragOverId(null);
                           }}
                           onClick={() => setSelectedId(deal.id)}
-                          className={`group/card p-4 rounded-2xl border cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-lg ${selectedId === deal.id ? 'border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20' : isDragged ? 'opacity-50 border-indigo-500/50 bg-indigo-500/10 ring-2 ring-indigo-500/20' : `${themeStyles.card} ${themeStyles.panelBorder} ${themeStyles.cardHover} shadow-sm`}`}
+                          className={`group/card p-4 rounded-2xl border cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-lg ${selectedId === deal.id ? 'border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20' : isDragged ? 'opacity-50 border-indigo-500/50 bg-indigo-500/10 ring-2 ring-indigo-500/20' : `${themeStyles.card} ${themeStyles.panelBorder} ${priorityMeta.cardClass} ${themeStyles.cardHover} shadow-sm`}`}
                         >
+                          <div className="flex items-center justify-between mb-3 text-left">
+                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-wider ${priorityMeta.textClass}`}>
+                              <span className={`w-2 h-2 rounded-full ${priorityMeta.dotClass}`} />
+                              <span>{priorityMeta.label}</span>
+                            </div>
+                            <Badge className={score.color}>{deal.score}</Badge>
+                          </div>
+
                           <div className="flex justify-between items-start mb-2 text-left">
                             <h4 className={`font-bold text-sm truncate pr-2 ${themeStyles.text}`}>{deal.company}</h4>
-                            <Badge className={score.color}>{deal.score}</Badge>
                           </div>
                           <div className="flex items-center justify-between text-[11px] mb-3 text-left">
                             <span className={themeStyles.textMuted}>{deal.contact}</span>
@@ -2004,6 +2215,31 @@ export default function DashboardNew() {
           <AnalyticsView deals={filteredDeals} stages={stages} themeStyles={themeStyles} theme={theme} onOpenDeal={(id) => setSelectedId(id)} />
         )}
       </main>
+
+      <nav className={`sm:hidden fixed bottom-0 left-0 right-0 h-[68px] z-50 flex items-center justify-around px-2 border-t backdrop-blur-2xl ${theme === 'dark' ? 'bg-[#141120]/90 border-[#2a2636]' : 'bg-white/90 border-slate-200'}`}>
+        {[
+          { id: 'kanban', icon: <LayoutDashboard size={22} />, label: 'Доска' },
+          { id: 'calendar', icon: <CalendarDays size={22} />, label: 'Календарь' },
+          { id: 'bots', icon: <Bot size={22} />, label: 'Боты' },
+          { id: 'analytics', icon: <BarChart3 size={22} />, label: 'Аналитика' },
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setCurrentView(item.id)}
+            className={`flex flex-col items-center gap-1 p-2 w-16 transition-colors ${currentView === item.id ? themeStyles.accentText : themeStyles.textMuted}`}
+          >
+            {item.icon}
+            <span className="text-[9px] font-bold">{item.label}</span>
+          </button>
+        ))}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className={`flex flex-col items-center gap-1 p-2 w-16 transition-colors ${themeStyles.textMuted}`}
+        >
+          {theme === 'dark' ? <Sun size={22} className="text-amber-400" /> : <Moon size={22} />}
+          <span className="text-[9px] font-bold">Тема</span>
+        </button>
+      </nav>
 
       {selectedDeal && (
         <DealEditorModal
