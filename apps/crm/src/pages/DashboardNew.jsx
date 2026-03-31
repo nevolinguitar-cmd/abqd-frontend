@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Search, Moon, Sun, Plus, CheckCircle2, AlertCircle, Clock, Zap, Bot,
   Calendar as CalendarIcon, BarChart3, X, Users, Target, Phone, Video, Briefcase, Bell, Globe, Check, Link2, Settings, Lock,
@@ -984,6 +984,11 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
   const [messageText, setMessageText] = useState("");
   const [selectedChannel, setSelectedChannel] = useState("telegram");
   const [storageProvider, setStorageProvider] = useState('google');
+  const [amountInput, setAmountInput] = useState(
+    deal?.amount != null && deal?.amount !== 0 ? String(deal.amount) : ""
+  );
+  const nextStepRef = useRef(null);
+  const noteRef = useRef(null);
 
   const channels = [
     { id: 'telegram', label: 'Telegram', color: 'bg-[#0088cc]' },
@@ -997,7 +1002,23 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     const normalizedDeal = normalizeDeal(deal);
     if (JSON.stringify(draft) === JSON.stringify(normalizedDeal)) return;
     setDraft(normalizedDeal);
+    setAmountInput(
+      normalizedDeal.amount != null && normalizedDeal.amount !== 0
+        ? String(normalizedDeal.amount)
+        : ""
+    );
   }, [deal]);
+
+  useEffect(() => {
+    if (nextStepRef.current) {
+      nextStepRef.current.style.height = "auto";
+      nextStepRef.current.style.height = `${nextStepRef.current.scrollHeight}px`;
+    }
+    if (noteRef.current) {
+      noteRef.current.style.height = "auto";
+      noteRef.current.style.height = `${noteRef.current.scrollHeight}px`;
+    }
+  }, [draft.nextStep, draft.fields?.note, activeTab]);
 
   useEffect(() => {
     if (JSON.stringify(draft) === JSON.stringify(normalizeDeal(deal))) return;
@@ -1085,6 +1106,18 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     }
   };
 
+  const commitAmountInput = () => {
+    const raw = String(amountInput || "").trim().replace(",", ".");
+    const parsed = raw === "" ? 0 : Number(raw);
+
+    setDraft((prev) => ({
+      ...prev,
+      amount: Number.isFinite(parsed) ? parsed : 0,
+    }));
+
+    setAmountInput(raw === "" ? "" : String(Number.isFinite(parsed) ? parsed : 0));
+  };
+
   const tabs = [
     { id: 'info', icon: <Target size={16} />, label: 'О проекте' },
     { id: 'chat', icon: <MessageSquare size={16} />, label: 'Сообщения', count: draft.messages?.length || 0 },
@@ -1163,10 +1196,40 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Следующий шаг</label>
+                  <textarea
+                    ref={nextStepRef}
+                    rows={1}
+                    value={draft.nextStep || ""}
+                    onChange={(e) => setDraft({ ...draft, nextStep: e.target.value })}
+                    onInput={(e) => {
+                      e.currentTarget.style.height = "auto";
+                      e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                    }}
+                    placeholder="Например: созвониться, отправить КП, запросить документы..."
+                    className={`w-full min-h-[56px] p-4 rounded-2xl text-sm font-medium border outline-none transition-all resize-none overflow-hidden ${themeStyles.input} ${themeStyles.text}`}
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2 text-left">
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Бюджет / Сумма</label>
-                    <input type="number" value={draft.amount} onChange={(e) => setDraft({...draft, amount: parseFloat(e.target.value) || 0})} className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`} />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={amountInput}
+                      onChange={(e) => setAmountInput(e.target.value)}
+                      onBlur={commitAmountInput}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          commitAmountInput();
+                        }
+                      }}
+                      placeholder="Введите сумму"
+                      className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`}
+                    />
                   </div>
                   <div className="space-y-2 text-left">
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Главный телефон</label>
@@ -1221,9 +1284,16 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
                     <button onClick={() => onCallAI(draft, setDraft)} className={`text-[10px] font-black uppercase tracking-tighter bg-indigo-500/10 ${themeStyles.accentText} px-3 py-1.5 rounded-full border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-2`}><Zap size={10} className="fill-current" /> AI Помощник</button>
                   </div>
                   <textarea
-                    value={draft.fields.note || ""} onChange={(e) => setDraft({...draft, fields: {...draft.fields, note: e.target.value}})}
+                    ref={noteRef}
+                    rows={4}
+                    value={draft.fields.note || ""}
+                    onChange={(e) => setDraft({...draft, fields: {...draft.fields, note: e.target.value}})}
+                    onInput={(e) => {
+                      e.currentTarget.style.height = "auto";
+                      e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                    }}
                     placeholder="Описание проекта, договоренности..."
-                    className={`w-full h-40 p-5 rounded-2xl text-sm leading-relaxed border outline-none resize-none transition-all ${themeStyles.input} ${themeStyles.text}`}
+                    className={`w-full min-h-[160px] p-5 rounded-2xl text-sm leading-relaxed border outline-none resize-none overflow-hidden transition-all ${themeStyles.input} ${themeStyles.text}`}
                   />
                 </div>
               </div>
