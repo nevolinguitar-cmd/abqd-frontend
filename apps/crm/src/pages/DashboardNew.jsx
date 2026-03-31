@@ -162,6 +162,44 @@ const getDueStatus = (dateStr) => {
   return "future";
 };
 
+const getDealPriorityScore = (deal) => {
+  const amount = Number(deal?.amount) || 0;
+  const hasNextStep = String(deal?.nextStep || "").trim().length > 0;
+  const hasPhone = String(deal?.phone || "").trim().length > 0;
+  const hasBudget = String(deal?.fields?.budget || "").trim().length > 0;
+  const dueStatus = getDueStatus(deal?.nextTaskAt);
+
+  let score = 0;
+
+  if (dueStatus === "expired") score += 1000;
+  else if (dueStatus === "today") score += 600;
+  else if (dueStatus === "future") score += 200;
+
+  if (hasNextStep) score += 120;
+  else score -= 120;
+
+  if (hasPhone) score += 40;
+  if (hasBudget) score += 40;
+
+  score += Math.min(amount / 1000, 300);
+
+  return score;
+};
+
+const sortDealsWithinStage = (deals) => {
+  return [...deals].sort((a, b) => {
+    const scoreDiff = getDealPriorityScore(b) - getDealPriorityScore(a);
+    if (scoreDiff !== 0) return scoreDiff;
+
+    const amountDiff = (Number(b?.amount) || 0) - (Number(a?.amount) || 0);
+    if (amountDiff !== 0) return amountDiff;
+
+    const aName = String(a?.company || "");
+    const bName = String(b?.company || "");
+    return aName.localeCompare(bName, "ru");
+  });
+};
+
 const getThemeStyles = (theme) => ({
   dark: {
     bg: 'bg-[#0f0c1b]',
@@ -1834,6 +1872,9 @@ export default function DashboardNew() {
     const map = {};
     stages.forEach(s => map[s.key] = []);
     filteredDeals.forEach(d => map[d.stage]?.push(d));
+    Object.keys(map).forEach((stageKey) => {
+      map[stageKey] = sortDealsWithinStage(map[stageKey]);
+    });
     return map;
   }, [filteredDeals, stages]);
 
