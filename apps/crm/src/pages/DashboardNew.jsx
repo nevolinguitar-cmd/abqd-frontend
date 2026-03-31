@@ -162,6 +162,93 @@ const getDueStatus = (dateStr) => {
   return "future";
 };
 
+const getDealPriorityScore = (deal) => {
+  const amount = Number(deal?.amount) || 0;
+  const hasNextStep = String(deal?.nextStep || "").trim().length > 0;
+  const hasPhone = String(deal?.phone || "").trim().length > 0;
+  const hasBudget = String(deal?.fields?.budget || "").trim().length > 0;
+  const dueStatus = getDueStatus(deal?.nextTaskAt);
+
+  let score = 0;
+
+  if (dueStatus === "expired") score += 1000;
+  else if (dueStatus === "today") score += 600;
+  else if (dueStatus === "future") score += 200;
+
+  if (hasNextStep) score += 120;
+  else score -= 120;
+
+  if (hasPhone) score += 40;
+  if (hasBudget) score += 40;
+
+  score += Math.min(amount / 1000, 300);
+
+  return score;
+};
+
+const sortDealsWithinStage = (deals) => {
+  return [...deals].sort((a, b) => {
+    const scoreDiff = getDealPriorityScore(b) - getDealPriorityScore(a);
+    if (scoreDiff !== 0) return scoreDiff;
+
+    const amountDiff = (Number(b?.amount) || 0) - (Number(a?.amount) || 0);
+    if (amountDiff !== 0) return amountDiff;
+
+    const aName = String(a?.company || "");
+    const bName = String(b?.company || "");
+    return aName.localeCompare(bName, "ru");
+  });
+};
+
+const getDealPriorityMeta = (deal) => {
+  const amount = Number(deal?.amount) || 0;
+  const dueStatus = getDueStatus(deal?.nextTaskAt);
+  const hasNextStep = String(deal?.nextStep || "").trim().length > 0;
+
+  if (dueStatus === "expired") {
+    return {
+      label: "Срочно",
+      dotClass: "bg-rose-500",
+      textClass: "text-rose-500",
+      cardClass: "border-rose-500/35 bg-rose-500/[0.03]",
+    };
+  }
+
+  if (dueStatus === "today") {
+    return {
+      label: "Сегодня",
+      dotClass: "bg-amber-500",
+      textClass: "text-amber-500",
+      cardClass: "border-amber-500/35 bg-amber-500/[0.03]",
+    };
+  }
+
+  if (!hasNextStep) {
+    return {
+      label: "Нет шага",
+      dotClass: "bg-slate-400",
+      textClass: "text-slate-400",
+      cardClass: "border-slate-400/25",
+    };
+  }
+
+  if (amount >= 150000) {
+    return {
+      label: "Важно",
+      dotClass: "bg-indigo-500",
+      textClass: "text-indigo-500",
+      cardClass: "border-indigo-500/30 bg-indigo-500/[0.03]",
+    };
+  }
+
+  return {
+    label: "Планово",
+    dotClass: "bg-emerald-500",
+    textClass: "text-emerald-500",
+    cardClass: "border-emerald-500/25",
+  };
+};
+
 const getThemeStyles = (theme) => ({
   dark: {
     bg: 'bg-[#0f0c1b]',
@@ -1834,6 +1921,9 @@ export default function DashboardNew() {
     const map = {};
     stages.forEach(s => map[s.key] = []);
     filteredDeals.forEach(d => map[d.stage]?.push(d));
+    Object.keys(map).forEach((stageKey) => {
+      map[stageKey] = sortDealsWithinStage(map[stageKey]);
+    });
     return map;
   }, [filteredDeals, stages]);
 
@@ -2001,6 +2091,7 @@ export default function DashboardNew() {
                     {stageDeals.map(deal => {
                       const score = getScoreInfo(deal.score);
                       const isDragged = dragType === 'deal' && draggedId === deal.id;
+                      const priorityMeta = getDealPriorityMeta(deal);
 
                       return (
                         <div key={deal.id} draggable
@@ -2019,11 +2110,18 @@ export default function DashboardNew() {
                             setDragOverId(null);
                           }}
                           onClick={() => setSelectedId(deal.id)}
-                          className={`group/card p-4 rounded-2xl border cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-lg ${selectedId === deal.id ? 'border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20' : isDragged ? 'opacity-50 border-indigo-500/50 bg-indigo-500/10 ring-2 ring-indigo-500/20' : `${themeStyles.card} ${themeStyles.panelBorder} ${themeStyles.cardHover} shadow-sm`}`}
+                          className={`group/card p-4 rounded-2xl border cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-lg ${selectedId === deal.id ? 'border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20' : isDragged ? 'opacity-50 border-indigo-500/50 bg-indigo-500/10 ring-2 ring-indigo-500/20' : `${themeStyles.card} ${themeStyles.panelBorder} ${priorityMeta.cardClass} ${themeStyles.cardHover} shadow-sm`}`}
                         >
+                          <div className="flex items-center justify-between mb-3 text-left">
+                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-wider ${priorityMeta.textClass}`}>
+                              <span className={`w-2 h-2 rounded-full ${priorityMeta.dotClass}`} />
+                              <span>{priorityMeta.label}</span>
+                            </div>
+                            <Badge className={score.color}>{deal.score}</Badge>
+                          </div>
+
                           <div className="flex justify-between items-start mb-2 text-left">
                             <h4 className={`font-bold text-sm truncate pr-2 ${themeStyles.text}`}>{deal.company}</h4>
-                            <Badge className={score.color}>{deal.score}</Badge>
                           </div>
                           <div className="flex items-center justify-between text-[11px] mb-3 text-left">
                             <span className={themeStyles.textMuted}>{deal.contact}</span>
