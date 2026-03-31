@@ -1974,8 +1974,8 @@ export default function DashboardNew() {
   }
 
   return (
-    <div className={`flex h-screen w-full transition-colors duration-500 font-sans ${themeStyles.bg} ${themeStyles.text} ${theme === 'dark' ? 'dark' : ''}`}>
-      <aside className={`relative border-r flex flex-col p-4 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? 'w-20' : 'w-64'} ${themeStyles.sidebar} ${themeStyles.panelBorder}`}>
+    <div className={`flex h-[100dvh] w-full transition-colors duration-500 font-sans ${themeStyles.bg} ${themeStyles.text} ${theme === 'dark' ? 'dark' : ''} overflow-hidden`}>
+      <aside className={`hidden sm:flex relative border-r flex-col p-4 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? 'w-20' : 'w-64'} ${themeStyles.sidebar} ${themeStyles.panelBorder}`}>
         <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className={`absolute -right-3 top-10 z-50 w-6 h-6 rounded-full border flex items-center justify-center transition-all shadow-xl ${theme === 'dark' ? 'bg-[#2D3446] border-white/10 text-white hover:text-indigo-400' : 'bg-white border-slate-200 text-slate-400 hover:text-indigo-500'}`}>
           {isSidebarCollapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
         </button>
@@ -2025,7 +2025,7 @@ export default function DashboardNew() {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden pb-[68px] sm:pb-0">
         <header className={`h-16 border-b flex items-center justify-between px-4 sm:px-6 z-10 transition-colors ${themeStyles.panel} ${themeStyles.panelBorder}`}>
           <div className="flex items-center gap-4 flex-1 max-w-xl">
             <div className="relative w-full">
@@ -2215,6 +2215,31 @@ export default function DashboardNew() {
           <AnalyticsView deals={filteredDeals} stages={stages} themeStyles={themeStyles} theme={theme} onOpenDeal={(id) => setSelectedId(id)} />
         )}
       </main>
+
+      <nav className={`sm:hidden fixed bottom-0 left-0 right-0 h-[68px] z-50 flex items-center justify-around px-2 border-t backdrop-blur-2xl ${theme === 'dark' ? 'bg-[#141120]/90 border-[#2a2636]' : 'bg-white/90 border-slate-200'}`}>
+        {[
+          { id: 'kanban', icon: <LayoutDashboard size={22} />, label: 'Доска' },
+          { id: 'calendar', icon: <CalendarDays size={22} />, label: 'Календарь' },
+          { id: 'bots', icon: <Bot size={22} />, label: 'Боты' },
+          { id: 'analytics', icon: <BarChart3 size={22} />, label: 'Аналитика' },
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setCurrentView(item.id)}
+            className={`flex flex-col items-center gap-1 p-2 w-16 transition-colors ${currentView === item.id ? themeStyles.accentText : themeStyles.textMuted}`}
+          >
+            {item.icon}
+            <span className="text-[9px] font-bold">{item.label}</span>
+          </button>
+        ))}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className={`flex flex-col items-center gap-1 p-2 w-16 transition-colors ${themeStyles.textMuted}`}
+        >
+          {theme === 'dark' ? <Sun size={22} className="text-amber-400" /> : <Moon size={22} />}
+          <span className="text-[9px] font-bold">Тема</span>
+        </button>
+      </nav>
 
       {selectedDeal && (
         <DealEditorModal
