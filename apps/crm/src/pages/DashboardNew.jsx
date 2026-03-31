@@ -209,7 +209,7 @@ const normalizeDeal = (d = {}) => ({
   address: d?.address || "",
   priority: d?.priority || "medium",
   description: d?.description || "",
-  nextStep: d?.nextStep || "",
+  nextStep: d && d.nextStep ? d.nextStep : "",
   nextTaskAt: d?.nextTaskAt || "",
   status: d?.status || "active",
   fields: ensureObject(d?.fields),
