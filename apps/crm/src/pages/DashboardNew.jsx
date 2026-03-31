@@ -984,6 +984,9 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
   const [messageText, setMessageText] = useState("");
   const [selectedChannel, setSelectedChannel] = useState("telegram");
   const [storageProvider, setStorageProvider] = useState('google');
+  const [amountInput, setAmountInput] = useState(
+    deal?.amount != null && deal?.amount !== 0 ? String(deal.amount) : ""
+  );
 
   const channels = [
     { id: 'telegram', label: 'Telegram', color: 'bg-[#0088cc]' },
@@ -997,6 +1000,11 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     const normalizedDeal = normalizeDeal(deal);
     if (JSON.stringify(draft) === JSON.stringify(normalizedDeal)) return;
     setDraft(normalizedDeal);
+    setAmountInput(
+      normalizedDeal.amount != null && normalizedDeal.amount !== 0
+        ? String(normalizedDeal.amount)
+        : ""
+    );
   }, [deal]);
 
   useEffect(() => {
@@ -1085,6 +1093,18 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     }
   };
 
+  const commitAmountInput = () => {
+    const raw = String(amountInput || "").trim().replace(",", ".");
+    const parsed = raw === "" ? 0 : Number(raw);
+
+    setDraft((prev) => ({
+      ...prev,
+      amount: Number.isFinite(parsed) ? parsed : 0,
+    }));
+
+    setAmountInput(raw === "" ? "" : String(Number.isFinite(parsed) ? parsed : 0));
+  };
+
   const tabs = [
     { id: 'info', icon: <Target size={16} />, label: 'О проекте' },
     { id: 'chat', icon: <MessageSquare size={16} />, label: 'Сообщения', count: draft.messages?.length || 0 },
@@ -1166,7 +1186,21 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2 text-left">
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Бюджет / Сумма</label>
-                    <input type="number" value={draft.amount} onChange={(e) => setDraft({...draft, amount: parseFloat(e.target.value) || 0})} className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`} />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={amountInput}
+                      onChange={(e) => setAmountInput(e.target.value)}
+                      onBlur={commitAmountInput}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          commitAmountInput();
+                        }
+                      }}
+                      placeholder="Введите сумму"
+                      className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`}
+                    />
                   </div>
                   <div className="space-y-2 text-left">
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Главный телефон</label>
