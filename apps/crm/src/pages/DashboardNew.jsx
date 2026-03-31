@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Search, Moon, Sun, Plus, CheckCircle2, AlertCircle, Clock, Zap, Bot,
   Calendar as CalendarIcon, BarChart3, X, Users, Target, Phone, Video, Briefcase, Bell, Globe, Check, Link2, Settings, Lock,
@@ -987,6 +987,7 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
   const [amountInput, setAmountInput] = useState(
     deal?.amount != null && deal?.amount !== 0 ? String(deal.amount) : ""
   );
+  const nextStepRef = useRef(null);
 
   const channels = [
     { id: 'telegram', label: 'Telegram', color: 'bg-[#0088cc]' },
@@ -1006,6 +1007,12 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
         : ""
     );
   }, [deal]);
+
+  useEffect(() => {
+    if (!nextStepRef.current) return;
+    nextStepRef.current.style.height = "auto";
+    nextStepRef.current.style.height = `${nextStepRef.current.scrollHeight}px`;
+  }, [draft.nextStep, activeTab]);
 
   useEffect(() => {
     if (JSON.stringify(draft) === JSON.stringify(normalizeDeal(deal))) return;
@@ -1181,6 +1188,22 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Дата (Слот в календаре)</label>
                     <input type="date" value={draft.nextTaskAt || ""} onChange={(e) => setDraft({...draft, nextTaskAt: e.target.value})} className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`} />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Следующий шаг</label>
+                  <textarea
+                    ref={nextStepRef}
+                    rows={1}
+                    value={draft.nextStep || ""}
+                    onChange={(e) => setDraft({ ...draft, nextStep: e.target.value })}
+                    onInput={(e) => {
+                      e.currentTarget.style.height = "auto";
+                      e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                    }}
+                    placeholder="Например: созвониться, отправить КП, запросить документы..."
+                    className={`w-full min-h-[56px] p-4 rounded-2xl text-sm font-medium border outline-none transition-all resize-none overflow-hidden ${themeStyles.input} ${themeStyles.text}`}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
