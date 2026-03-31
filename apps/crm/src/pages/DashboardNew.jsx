@@ -988,6 +988,7 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     deal?.amount != null && deal?.amount !== 0 ? String(deal.amount) : ""
   );
   const nextStepRef = useRef(null);
+  const noteRef = useRef(null);
 
   const channels = [
     { id: 'telegram', label: 'Telegram', color: 'bg-[#0088cc]' },
@@ -1009,10 +1010,15 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
   }, [deal]);
 
   useEffect(() => {
-    if (!nextStepRef.current) return;
-    nextStepRef.current.style.height = "auto";
-    nextStepRef.current.style.height = `${nextStepRef.current.scrollHeight}px`;
-  }, [draft.nextStep, activeTab]);
+    if (nextStepRef.current) {
+      nextStepRef.current.style.height = "auto";
+      nextStepRef.current.style.height = `${nextStepRef.current.scrollHeight}px`;
+    }
+    if (noteRef.current) {
+      noteRef.current.style.height = "auto";
+      noteRef.current.style.height = `${noteRef.current.scrollHeight}px`;
+    }
+  }, [draft.nextStep, draft.fields?.note, activeTab]);
 
   useEffect(() => {
     if (JSON.stringify(draft) === JSON.stringify(normalizeDeal(deal))) return;
@@ -1278,9 +1284,16 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
                     <button onClick={() => onCallAI(draft, setDraft)} className={`text-[10px] font-black uppercase tracking-tighter bg-indigo-500/10 ${themeStyles.accentText} px-3 py-1.5 rounded-full border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-2`}><Zap size={10} className="fill-current" /> AI Помощник</button>
                   </div>
                   <textarea
-                    value={draft.fields.note || ""} onChange={(e) => setDraft({...draft, fields: {...draft.fields, note: e.target.value}})}
+                    ref={noteRef}
+                    rows={4}
+                    value={draft.fields.note || ""}
+                    onChange={(e) => setDraft({...draft, fields: {...draft.fields, note: e.target.value}})}
+                    onInput={(e) => {
+                      e.currentTarget.style.height = "auto";
+                      e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                    }}
                     placeholder="Описание проекта, договоренности..."
-                    className={`w-full h-40 p-5 rounded-2xl text-sm leading-relaxed border outline-none resize-none transition-all ${themeStyles.input} ${themeStyles.text}`}
+                    className={`w-full min-h-[160px] p-5 rounded-2xl text-sm leading-relaxed border outline-none resize-none overflow-hidden transition-all ${themeStyles.input} ${themeStyles.text}`}
                   />
                 </div>
               </div>
