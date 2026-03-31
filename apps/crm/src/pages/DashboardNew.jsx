@@ -1118,6 +1118,16 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     setAmountInput(raw === "" ? "" : String(Number.isFinite(parsed) ? parsed : 0));
   };
 
+  const handleNextTaskDateChange = (value) => {
+    const updatedDraft = normalizeDeal({
+      ...draft,
+      nextTaskAt: value,
+    });
+
+    setDraft(updatedDraft);
+    onSave(updatedDraft);
+  };
+
   const tabs = [
     { id: 'info', icon: <Target size={16} />, label: 'О проекте' },
     { id: 'chat', icon: <MessageSquare size={16} />, label: 'Сообщения', count: draft.messages?.length || 0 },
@@ -1192,7 +1202,15 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
                   </div>
                   <div className="space-y-2">
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Дата (Слот в календаре)</label>
-                    <input type="date" value={draft.nextTaskAt || ""} onChange={(e) => setDraft({...draft, nextTaskAt: e.target.value})} className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`} />
+                    <input
+                      type="date"
+                      value={draft.nextTaskAt || ""}
+                      onChange={(e) => handleNextTaskDateChange(e.target.value)}
+                      className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`}
+                    />
+                    <p className={`text-[10px] px-1 ${themeStyles.textMuted}`}>
+                      Изменение даты сразу обновляет календарный слой CRM.
+                    </p>
                   </div>
                 </div>
 
