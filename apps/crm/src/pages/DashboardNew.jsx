@@ -1619,7 +1619,7 @@ export default function DashboardNew() {
     addToast("warn", "Проект удален", "Данные контейнера перемещены в корзину.");
   };
 
-  const handleMoveDeal = (dealId, newStage) => {
+  const handleMoveDeal = (dealId, newStageKey) => {   setDeals(prev => {     const deal = prev.find(d => d.id === dealId);     const stage = stages.find(s => s.key === newStageKey);      if (!deal || !stage) return prev;      const required = stage.gates || [];      const ok = required.every(field => {       return deal.fields && deal.fields[field];     });      if (!ok) {       console.log("BLOCKED: missing fields", required);       return prev;     }      return prev.map(d =>       d.id === dealId         ? normalizeDeal({ ...d, stage: newStageKey })         : d     );   }); };
     setDeals(prev => {
       const newDeals = prev.map(d =>
         d.id === dealId
