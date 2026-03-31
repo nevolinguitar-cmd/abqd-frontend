@@ -982,8 +982,11 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
   const [draft, setDraft] = useState(normalizeDeal(deal));
   const [activeTab, setActiveTab] = useState('info');
   const [messageText, setMessageText] = useState("");
-  const [selectedChannel, setSelectedChannel] = useState("telegram");
-  const [storageProvider, setStorageProvider] = useState('google');
+const [selectedChannel, setSelectedChannel] = useState("telegram");
+const [storageProvider, setStorageProvider] = useState('google');
+const [amountInput, setAmountInput] = useState(
+  deal?.amount != null && deal?.amount !== 0 ? String(deal.amount) : ""
+);
 
   const channels = [
     { id: 'telegram', label: 'Telegram', color: 'bg-[#0088cc]' },
@@ -1064,26 +1067,25 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
     }));
   };
 
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    if (tabId === 'chat') {
-      setDraft(prev => ({
-        ...prev,
-        touches: [
-          { id: `t_${Date.now()}`, user: 'Вы', action: 'Чтение сообщений', time: 'Только что' },
-          ...ensureArray(prev.touches)
-        ]
-      }));
-    } else if (tabId === 'files') {
-      setDraft(prev => ({
-        ...prev,
-        touches: [
-          { id: `t_${Date.now()}`, user: 'Вы', action: 'Просмотр файлов', time: 'Только что' },
-          ...ensureArray(prev.touches)
-        ]
-      }));
-    }
-  };
+ const handleTabChange = (tabId) => {
+  setActiveTab(tabId);
+  if (tabId === 'chat') {
+    setDraft(prev => ({
+      ...prev,
+      touches: [
+        { id: `t_${Date.now()}`, user: 'Вы', action: 'Чтение сообщений', time: 'Только что' },
+        ...ensureArray(prev.touches)
+      ]
+    }));
+  } else if (tabId === 'files') {
+    setDraft(prev => ({
+      ...prev,
+      touches: [
+        { id: `t_${Date.now()}`, user: 'Вы', action: 'Просмотр файлов', time: 'Только что' },
+        ...ensureArray(prev.touches)
+      ]
+    }));
+  }
 
   const tabs = [
     { id: 'info', icon: <Target size={16} />, label: 'О проекте' },
@@ -1165,9 +1167,23 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2 text-left">
-                    <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Бюджет / Сумма</label>
-                    <input type="number" value={draft.amount} onChange={(e) => setDraft({...draft, amount: parseFloat(e.target.value) || 0})} className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`} />
-                  </div>
+  <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Бюджет / Сумма</label>
+  <input
+    type="text"
+    inputMode="decimal"
+    value={amountInput}
+    onChange={(e) => setAmountInput(e.target.value)}
+    onBlur={commitAmountInput}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitAmountInput();
+      }
+    }}
+    placeholder="Введите сумму"
+    className={`w-full p-4 rounded-2xl text-sm font-bold border outline-none transition-all ${themeStyles.input} ${themeStyles.text}`}
+  />
+</div>
                   <div className="space-y-2 text-left">
                     <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${themeStyles.textMuted}`}>Главный телефон</label>
                     <div className={`flex items-center gap-3 p-4 rounded-2xl border ${themeStyles.input}`}>
@@ -1619,7 +1635,7 @@ export default function DashboardNew() {
     addToast("warn", "Проект удален", "Данные контейнера перемещены в корзину.");
   };
 
-  const handleMoveDeal = (dealId, newStageKey) => {   const targetStage = stages.find((s) => s.key === newStageKey);   if (!targetStage) return;    setDeals((prev) => {     const deal = prev.find((d) => d.id === dealId);     if (!deal) return prev;      const missing = ensureArray(targetStage.gates).filter((field) => {       const value = deal?.fields?.[field];       return value == null || String(value).trim() === "";     });      if (missing.length) {       addToast(         "error",         "Переход заблокирован",         `Для этапа "${targetStage.title}" заполните: ${missing.join(", ")}`       );       return prev;     }      const activityTime = new Date().toLocaleTimeString([], {       hour: "2-digit",       minute: "2-digit",     });      const newDeals = prev.map((d) =>       d.id === dealId         ? normalizeDeal({             ...d,             stage: newStageKey,             activities: [               {                 id: `act_${Date.now()}`,                 text: `Смена этапа: ${targetStage.title}`,                 date: getTodayDateStr(),                 time: activityTime,                 type: "stage_change",               },               ...ensureArray(d.activities),             ],           })         : normalizeDeal(d)     );      setIsSyncing(true);     crmSaveState({ deals: newDeals, stages })       .then(() => setIsSyncing(false))       .catch((e) => {         console.error("CRM SAVE ERROR", e);         setIsSyncing(false);         addToast("error", "Ошибка сохранения", "Перемещение карточки не сохранилось.");       });      return newDeals;   }); };   const targetStage = stages.find((s) => s.key === newStageKey);   if (!targetStage) return;    setDeals((prev) => {     const deal = prev.find((d) => d.id === dealId);     if (!deal) return prev;      const missing = ensureArray(targetStage.gates).filter((field) => {       const value = deal?.fields?.[field];       return value == null || String(value).trim() === "";     });      if (missing.length) {       addToast(         "error",         "Переход заблокирован",         `Для этапа "${targetStage.title}" заполните: ${missing.join(", ")}`       );       return prev;     }      const activityTime = new Date().toLocaleTimeString([], {       hour: "2-digit",       minute: "2-digit",     });      const newDeals = prev.map((d) =>       d.id === dealId         ? normalizeDeal({             ...d,             stage: newStageKey,             activities: [               {                 id: `act_${Date.now()}`,                 text: `Смена этапа: ${targetStage.title}`,                 date: getTodayDateStr(),                 time: activityTime,                 type: "stage_change",               },               ...ensureArray(d.activities),             ],           })         : normalizeDeal(d)     );      setIsSyncing(true);     crmSaveState({ deals: newDeals, stages })       .then(() => setIsSyncing(false))       .catch((e) => {         console.error("CRM SAVE ERROR", e);         setIsSyncing(false);         addToast("error", "Ошибка сохранения", "Перемещение карточки не сохранилось.");       });      return newDeals;   }); };   setDeals(prev => {     const deal = prev.find(d => d.id === dealId);     const stage = stages.find(s => s.key === newStageKey);      if (!deal || !stage) return prev;      const required = stage.gates || [];      const ok = required.every(field => {       return deal.fields && deal.fields[field];     });      if (!ok) {       console.log("BLOCKED: missing fields", required);       return prev;     }      return prev.map(d =>       d.id === dealId         ? normalizeDeal({ ...d, stage: newStageKey })         : d     );   }); };
+  const handleMoveDeal = (dealId, newStageKey) => {   setDeals(prev => {     const deal = prev.find(d => d.id === dealId);     const stage = stages.find(s => s.key === newStageKey);      if (!deal || !stage) return prev;      const required = stage.gates || [];      const ok = required.every(field => {       return deal.fields && deal.fields[field];     });      if (!ok) {       console.log("BLOCKED: missing fields", required);       return prev;     }      return prev.map(d =>       d.id === dealId         ? normalizeDeal({ ...d, stage: newStageKey })         : d     );   }); };
     setDeals(prev => {
       const newDeals = prev.map(d =>
         d.id === dealId
@@ -2032,4 +2048,4 @@ export default function DashboardNew() {
       `}} />
     </div>
   );
-}
+}.  я даю тебе код dashbord в develop ветке -чтобы все правильно активировать и потом запустить продукт . Код тебе даю чтобы мы заенияли некоторые детали из него . если нужныы какие то команды в git - то сообщай заранее
