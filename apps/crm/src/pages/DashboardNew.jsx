@@ -1076,6 +1076,7 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
   );
   const nextStepRef = useRef(null);
   const noteRef = useRef(null);
+  const lastDealIdRef = useRef(deal?.id || null);
 
   const channels = [
     { id: 'telegram', label: 'Telegram', color: 'bg-[#0088cc]' },
@@ -1087,13 +1088,17 @@ const DealEditorModal = ({ deal, stages, themeStyles, theme, onSave, onClose, on
 
   useEffect(() => {
     const normalizedDeal = normalizeDeal(deal);
-    if (JSON.stringify(draft) === JSON.stringify(normalizedDeal)) return;
-    setDraft(normalizedDeal);
-    setAmountInput(
-      normalizedDeal.amount != null && normalizedDeal.amount !== 0
-        ? String(normalizedDeal.amount)
-        : ""
-    );
+    const incomingId = normalizedDeal?.id || null;
+
+    if (lastDealIdRef.current !== incomingId) {
+      lastDealIdRef.current = incomingId;
+      setDraft(normalizedDeal);
+      setAmountInput(
+        normalizedDeal.amount != null && normalizedDeal.amount !== 0
+          ? String(normalizedDeal.amount)
+          : ""
+      );
+    }
   }, [deal]);
 
   useEffect(() => {
